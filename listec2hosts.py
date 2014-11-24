@@ -67,7 +67,7 @@ for reservation in reservations:
       instance_type = instance.instance_type
       running_instances[ (instance_type, az ) ] = running_instances.get( (instance_type, az ) , 0 ) + 1
       if 'Name' in instance.tags:
-        instance_title = "%s %s" % ( instance.tags['Name'], instance.id )
+        instance_title = "%s %s %s %s %s %s" % ( instance.tags['Name'], instance.id, instance_type, az, instance.ip_address, instance.private_ip_address )
 
         # We're printing out non-name tags later, this doesn't delete in amazon
         del instance.tags['Name']
