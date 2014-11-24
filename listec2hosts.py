@@ -62,17 +62,5 @@ for reservation in reservations:
       # Might be interesting to show a count of disqualified instances?
       pass
     else:
-      # pprint (getmembers(instance))
-      az = instance.placement
-      instance_type = instance.instance_type
-      running_instances[ (instance_type, az ) ] = running_instances.get( (instance_type, az ) , 0 ) + 1
-      if 'Name' in instance.tags:
-        instance_title = "%s %s %s %s %s %s" % ( instance.tags['Name'], instance.id, instance_type, az, instance.ip_address, instance.private_ip_address )
-
-        # We're printing out non-name tags later, this doesn't delete in amazon
-        del instance.tags['Name']
-      else:
-        instance_title = "%s" % instance.id
+      instance_title = "%s %s %s %s %s %s" % ( instance.tags['Name'], instance.id, instance.instance_type, instance.placement, instance.ip_address, instance.private_ip_address )
       print "%s" % instance_title
-
-
