@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # Largely adapted from fec2din: https://github.com/epheph/fec2din
 
+from __future__ import print_function  # This makes Python 2 behave like Python 3 for print
 import argparse
 import sys
 import os
-import boto
 from datetime import datetime
+
 
 def main():
     parser = argparse.ArgumentParser(description="List EC2 instances")
@@ -21,49 +22,53 @@ def main():
     show_all_instances = args.all
     region = args.region
 
-
-    # You can uncomment and set these, or set the env variables AWS_ACCESS_KEY & AWS_SECRET_KEY
-    # AWS_ACCESS_KEY="aaaaaaaaaaaaaaaaaaaa"
-    # AWS_SECRET_KEY="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-
     # Set your region in here or set EC2_REGION as an environment variable:
     ec2_url = "https://{}.ec2.amazonaws.com".format(region)
 
-    try:
-        AWS_ACCESS_KEY
-    except NameError:
-        try:
-            AWS_ACCESS_KEY = os.environ['AWS_ACCESS_KEY']
-            AWS_SECRET_KEY = os.environ['AWS_SECRET_KEY']
-        except KeyError:
-            print("""Please set environment variables AWS_ACCESS_KEY & AWS_SECRET_KEY
+    # Check for AWS credentials
+    aws_access_key = os.environ.get('AWS_ACCESS_KEY_ID') or os.environ.get('AWS_ACCESS_KEY')
+    aws_secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY') or os.environ.get('AWS_SECRET_KEY')
+
+    if not aws_access_key or not aws_secret_key:
+        print("""Please set environment variables AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY
 This would look something like:
-  export AWS_ACCESS_KEY=JFIOQNAKEIFJJAKDLIJA
+  export AWS_ACCESS_KEY_ID=JFIOQNAKEIFJJAKDLIJA
   export AWS_SECRET_KEY=3jfioajkle+OnfAEV5OIvj5nLnRy2jfklZRop3nn
+Alternatively, you can use AWS_ACCESS_KEY & AWS_SECRET_KEY
 """)
-            sys.exit(1)
+        sys.exit(1)
 
+    # Override region from environment variable if set
+    region = os.environ.get('EC2_REGION', region)
+    ec2_url = "https://{}.ec2.amazonaws.com".format(region)
+
+    # Override URL from environment variable if set
+    ec2_url = os.environ.get('EC2_URL', ec2_url)
+
+    # Import boto only when we actually need it - after argument parsing and credential checks
+    try:
+        import boto
+    except ImportError:
+        print("Error: The 'boto' library is required to run this script.")
+        print("You can install it using: pip install boto")
+        sys.exit(1)
 
     try:
-        region = os.environ['EC2_REGION']
-        ec2_url = "https://{}.ec2.amazonaws.com".format(region)
-    except KeyError:
-        pass
+        ec2_conn = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
+    except Exception as e:
+        print("Error connecting to EC2: {}".format(str(e)))
+        sys.exit(1)
 
     try:
-        ec2_url = os.environ['EC2_URL']
-    except KeyError:
-        pass
-
-    ec2_conn = boto.connect_ec2_endpoint(ec2_url, AWS_ACCESS_KEY, AWS_SECRET_KEY)
-    reservations = ec2_conn.get_all_instances()
+        reservations = ec2_conn.get_all_instances()
+    except Exception as e:
+        print("Error retrieving instances: {}".format(str(e)))
+        sys.exit(1)
 
     instances = []
     for reservation in reservations:
         for instance in reservation.instances:
             if instance.state != "running" and not show_all_instances:
-                # sys.stderr.write("Disqualifying instance %s: not running" % ( instance.id ) )
-                # Might be interesting to show a count of disqualified instances?
                 continue  # Skip this instance
             else:
                 instance_info = {
@@ -101,7 +106,7 @@ This would look something like:
                         instance_info['public_ip'], 
                         instance_info['private_ip'],
                         instance_info['state'])
-                    print instance_title
+                    print(instance_title)
 
 if __name__ == "__main__":
     main()
