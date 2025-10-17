@@ -8,6 +8,7 @@ small utilities for your ~/bin/
 ### AWS EC2 Management
 - `listec2hosts.py`: List EC2 instances with options for region, output format, and instance state filtering
 - `ec2_manage.py`: Manage EC2 instances (start, stop, restart)
+- `terminate_instance.py`: Terminate an EC2 instance with user confirmation
 - `emptysgs.py`: Find unused AWS EC2 Security Groups
 - `grephosts.sh`: Filter EC2 host output based on a search query
 
@@ -72,3 +73,16 @@ generate_fstab.sh
 ```
 python emptysgs.py
 ```
+
+### terminate_instance.py
+```
+python terminate_instance.py [instance_id] [-r region]
+  instance_id: ID of the EC2 instance to terminate
+  -r, --region: Specify the AWS region (default: us-west-2)
+```
+
+Supported environment variables:
+  - `AWS_ACCESS_KEY_ID` or `AWS_ACCESS_KEY`: AWS access key
+  - `AWS_SECRET_ACCESS_KEY` or `AWS_SECRET_KEY`: AWS secret key
+  - `EC2_REGION`: Override the default region
+  - `EC2_URL`: Override the default EC2 URL

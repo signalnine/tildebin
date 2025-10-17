@@ -46,7 +46,7 @@ Alternatively, you can use AWS_ACCESS_KEY & AWS_SECRET_KEY
     # Override URL from environment variable if set
     ec2_url = os.environ.get('EC2_URL', ec2_url)
 
-    # Import boto only when we actually need it
+    # Import boto only when we actually need it - after argument parsing and credential checks
     try:
         import boto
     except ImportError:
