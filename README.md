@@ -7,6 +7,7 @@ small utilities for your ~/bin/
 
 ### AWS EC2 Management
 - `listec2hosts.py`: List EC2 instances with options for region, output format, and instance state filtering
+- `ec2_tag_summary.py`: Summarize EC2 instances by tags across regions
 - `ec2_manage.py`: Manage EC2 instances (start, stop, restart)
 - `terminate_instance.py`: Terminate an EC2 instance with user confirmation
 - `emptysgs.py`: Find unused AWS EC2 Security Groups
@@ -23,10 +24,11 @@ small utilities for your ~/bin/
 
 ### listec2hosts.py
 ```
-python listec2hosts.py [-a] [-r region] [--format format]
+python listec2hosts.py [-a] [-r region] [--format format] [--boto3]
   -a, --all: Include all instances, not just running instances
   -r, --region: Specify the AWS region (default: us-west-2)
   --format: Output format, either 'plain' or 'table' (default: plain)
+  --boto3: Use the newer boto3 library instead of boto (deprecated)
 ```
 
 Supported environment variables:
@@ -73,6 +75,20 @@ generate_fstab.sh
 ```
 python emptysgs.py
 ```
+
+### ec2_tag_summary.py
+```
+python ec2_tag_summary.py --tag-key TAG_KEY [--tag-value TAG_VALUE] [--regions REGION1 REGION2 ...] [--format FORMAT]
+  --tag-key: The tag key to group instances by (required)
+  --tag-value: Optional tag value to filter by
+  --regions: AWS regions to scan (default: us-west-2 us-east-1)
+  --format: Output format, either 'plain' or 'json' (default: plain)
+```
+
+Supported environment variables:
+  - `AWS_ACCESS_KEY_ID` or `AWS_ACCESS_KEY`: AWS access key
+  - `AWS_SECRET_ACCESS_KEY` or `AWS_SECRET_KEY`: AWS secret key
+  - `EC2_REGION`: Override the default region
 
 ### terminate_instance.py
 ```
