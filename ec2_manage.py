@@ -16,15 +16,15 @@ def main():
                         help="ID of the EC2 instance to manage")
     parser.add_argument("-r", "--region", default="us-west-2", 
                         help="Specify the AWS region (default: us-west-2)")
+    parser.add_argument("--boto3", action="store_true", 
+                        help="Use the newer boto3 library instead of boto (deprecated)")
     
     args = parser.parse_args()
 
     action = args.action
     instance_id = args.instance_id
     region = args.region
-
-    # Set your region in here or set EC2_REGION as an environment variable:
-    ec2_url = "https://{}.ec2.amazonaws.com".format(region)
+    use_boto3 = args.boto3
 
     # Check for AWS credentials
     aws_access_key = os.environ.get('AWS_ACCESS_KEY_ID') or os.environ.get('AWS_ACCESS_KEY')
@@ -34,45 +34,76 @@ def main():
         print("""Please set environment variables AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY
 This would look something like:
   export AWS_ACCESS_KEY_ID=JFIOQNAKEIFJJAKDLIJA
-  export AWS_SECRET_KEY=3jfioajkle+OnfAEV5OIvj5nLnRy2jfklZRop3nn
+  export AWS_SECRET_ACCESS_KEY=3jfioajkle+OnfAEV5OIvj5nLnRy2jfklZRop3nn
 Alternatively, you can use AWS_ACCESS_KEY & AWS_SECRET_KEY
 """)
         sys.exit(1)
 
     # Override region from environment variable if set
     region = os.environ.get('EC2_REGION', region)
-    ec2_url = "https://{}.ec2.amazonaws.com".format(region)
 
-    # Override URL from environment variable if set
-    ec2_url = os.environ.get('EC2_URL', ec2_url)
+    if use_boto3:
+        # Use the newer boto3 library
+        try:
+            import boto3
+        except ImportError:
+            print("Error: The 'boto3' library is required to run this script with --boto3 option.")
+            print("You can install it using: pip install boto3")
+            sys.exit(1)
 
-    # Import boto only when we actually need it - after argument parsing and credential checks
-    try:
-        import boto
-    except ImportError:
-        print("Error: The 'boto' library is required to run this script.")
-        print("You can install it using: pip install boto")
-        sys.exit(1)
+        try:
+            ec2_conn = boto3.client('ec2', region_name=region)
+        except Exception as e:
+            print("Error connecting to EC2 with boto3: {}".format(str(e)))
+            sys.exit(1)
 
-    try:
-        ec2_conn = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
-    except Exception as e:
-        print("Error connecting to EC2: {}".format(str(e)))
-        sys.exit(1)
+        try:
+            if action == "start":
+                ec2_conn.start_instances(InstanceIds=[instance_id])
+                print("Started instance: {}".format(instance_id))
+            elif action == "stop":
+                ec2_conn.stop_instances(InstanceIds=[instance_id])
+                print("Stopped instance: {}".format(instance_id))
+            elif action == "restart":
+                ec2_conn.reboot_instances(InstanceIds=[instance_id])
+                print("Restarted instance: {}".format(instance_id))
+        except Exception as e:
+            print("Error performing action '{}': {}".format(action, str(e)))
+            sys.exit(1)
+    else:
+        # Set your region in here or set EC2_REGION as an environment variable:
+        ec2_url = "https://{}.ec2.amazonaws.com".format(region)
 
-    try:
-        if action == "start":
-            ec2_conn.start_instances([instance_id])
-            print("Started instance: {}".format(instance_id))
-        elif action == "stop":
-            ec2_conn.stop_instances([instance_id])
-            print("Stopped instance: {}".format(instance_id))
-        elif action == "restart":
-            ec2_conn.reboot_instances([instance_id])
-            print("Restarted instance: {}".format(instance_id))
-    except Exception as e:
-        print("Error performing action '{}': {}".format(action, str(e)))
-        sys.exit(1)
+        # Override URL from environment variable if set
+        ec2_url = os.environ.get('EC2_URL', ec2_url)
+
+        # Import boto only when we actually need it - after argument parsing and credential checks
+        try:
+            import boto
+        except ImportError:
+            print("Error: The 'boto' library is required to run this script.")
+            print("You can install it using: pip install boto")
+            sys.exit(1)
+
+        try:
+            ec2_conn = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
+        except Exception as e:
+            print("Error connecting to EC2: {}".format(str(e)))
+            sys.exit(1)
+
+        try:
+            if action == "start":
+                ec2_conn.start_instances([instance_id])
+                print("Started instance: {}".format(instance_id))
+            elif action == "stop":
+                ec2_conn.stop_instances([instance_id])
+                print("Stopped instance: {}".format(instance_id))
+            elif action == "restart":
+                ec2_conn.reboot_instances([instance_id])
+                print("Restarted instance: {}".format(instance_id))
+        except Exception as e:
+            print("Error performing action '{}': {}".format(action, str(e)))
+            sys.exit(1)
 
 
 if __name__ == "__main__":

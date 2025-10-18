@@ -121,6 +121,20 @@ def test_region_option():
         return False
 
 
+def test_boto3_option():
+    """Test that the boto3 option is recognized"""
+    return_code, stdout, stderr = run_command([sys.executable, 'ec2_manage.py', 'start', 'i-1234567890', '--boto3'])
+    
+    # Should not fail at argument parsing level, but due to missing credentials or boto3 import
+    if return_code in [1, -1]:  # Missing credentials or boto3 not available error
+        print("[PASS] Boto3 option test passed")
+        return True
+    else:
+        print("[FAIL] Boto3 option test failed with return code: " + str(return_code))
+        print("stderr: " + stderr)
+        return False
+
+
 def test_environment_variable_handling():
     """Test that the script handles environment variables correctly"""
     # Temporarily set environment variables to test
@@ -166,6 +180,7 @@ if __name__ == "__main__":
         test_stop_action,
         test_restart_action,
         test_region_option,
+        test_boto3_option,
         test_environment_variable_handling
     ]
     

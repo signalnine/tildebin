@@ -39,10 +39,11 @@ Supported environment variables:
 
 ### ec2_manage.py
 ```
-python ec2_manage.py [action] [instance_id] [-r region]
+python ec2_manage.py [action] [instance_id] [-r region] [--boto3]
   action: Action to perform - 'start', 'stop', or 'restart'
   instance_id: ID of the EC2 instance to manage
   -r, --region: Specify the AWS region (default: us-west-2)
+  --boto3: Use the newer boto3 library instead of boto (deprecated)
 ```
 
 Supported environment variables:
