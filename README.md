@@ -11,6 +11,7 @@ small utilities for your ~/bin/
 - `ec2_manage.py`: Manage EC2 instances (start, stop, restart)
 - `terminate_instance.py`: Terminate an EC2 instance with user confirmation
 - `emptysgs.py`: Find unused AWS EC2 Security Groups
+- `listvolumes.py`: List EC2 EBS volumes with filtering and formatting options
 - `grephosts.sh`: Filter EC2 host output based on a search query
 
 ### SSH Operations
@@ -103,3 +104,17 @@ Supported environment variables:
   - `AWS_SECRET_ACCESS_KEY` or `AWS_SECRET_KEY`: AWS secret key
   - `EC2_REGION`: Override the default region
   - `EC2_URL`: Override the default EC2 URL
+
+### listvolumes.py
+```
+python listvolumes.py [-f filters] [-r region] [--format format] [--boto3]
+  -f, --filters: Filters to apply (e.g., 'status=available', 'attachment.status=attached')
+  -r, --region: Specify the AWS region (default: us-west-2)
+  --format: Output format, either 'plain', 'table', or 'json' (default: plain)
+  --boto3: Use the newer boto3 library instead of boto (deprecated)
+```
+
+Supported environment variables:
+  - `AWS_ACCESS_KEY_ID` or `AWS_ACCESS_KEY`: AWS access key
+  - `AWS_SECRET_ACCESS_KEY` or `AWS_SECRET_KEY`: AWS secret key
+  - `EC2_REGION`: Override the default region
