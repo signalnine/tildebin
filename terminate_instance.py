@@ -1,86 +1,75 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Script to terminate EC2 instances with user confirmation
 # This follows the same patterns as ec2_manage.py
 
-from __future__ import print_function  # This makes Python 2 behave like Python 3 for print
 import argparse
 import sys
 import os
 
+
 def confirm_action(instance_id, region):
     """Prompt user for confirmation before terminating an instance"""
-    response = raw_input if sys.version_info[0] == 2 else input
     print("You are about to TERMINATE instance: {}".format(instance_id))
     print("Region: {}".format(region))
-    confirmation = response("Are you sure you want to terminate this instance? This action cannot be undone. (yes/no): ")
+    confirmation = input("Are you sure you want to terminate this instance? This action cannot be undone. (yes/no): ")
     return confirmation.lower() in ['yes', 'y']
+
 
 def main():
     parser = argparse.ArgumentParser(description="Terminate an EC2 instance with confirmation")
-    parser.add_argument("instance_id", 
+    parser.add_argument("instance_id",
                         help="ID of the EC2 instance to terminate")
-    parser.add_argument("-r", "--region", default="us-west-2", 
+    parser.add_argument("-r", "--region", default="us-west-2",
                         help="Specify the AWS region (default: us-west-2)")
-    
+
     args = parser.parse_args()
 
     instance_id = args.instance_id
     region = args.region
 
-    # Set your region in here or set EC2_REGION as an environment variable:
-    ec2_url = "https://{}.ec2.amazonaws.com".format(region)
-
-    # Check for AWS credentials
-    aws_access_key = os.environ.get('AWS_ACCESS_KEY_ID') or os.environ.get('AWS_ACCESS_KEY')
-    aws_secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY') or os.environ.get('AWS_SECRET_KEY')
-
-    if not aws_access_key or not aws_secret_key:
-        print("""Please set environment variables AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY
-This would look something like:
-  export AWS_ACCESS_KEY_ID=JFIOQNAKEIFJJAKDLIJA
-  export AWS_SECRET_ACCESS_KEY=3jfioajkle+OnfAEV5OIvj5nLnRy2jfklZRop3nn
-Alternatively, you can use AWS_ACCESS_KEY & AWS_SECRET_KEY
-""")
-        sys.exit(1)
-
     # Override region from environment variable if set
     region = os.environ.get('EC2_REGION', region)
-    ec2_url = "https://{}.ec2.amazonaws.com".format(region)
 
-    # Override URL from environment variable if set
-    ec2_url = os.environ.get('EC2_URL', ec2_url)
-
-    # Import boto only when we actually need it - after argument parsing and credential checks
+    # Import boto3
     try:
-        import boto
+        import boto3
     except ImportError:
-        print("Error: The 'boto' library is required to run this script.")
-        print("You can install it using: pip install boto")
+        print("Error: The 'boto3' library is required to run this script.")
+        print("You can install it using: pip install boto3")
         sys.exit(1)
 
     try:
-        ec2_conn = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
+        ec2_conn = boto3.client('ec2', region_name=region)
     except Exception as e:
         print("Error connecting to EC2: {}".format(str(e)))
         sys.exit(1)
 
     # Get instance details to show user before confirmation
     try:
-        reservations = ec2_conn.get_all_instances(instance_ids=[instance_id])
-        instances = [inst for reservation in reservations for inst in reservation.instances]
-        
-        if not instances:
+        response = ec2_conn.describe_instances(InstanceIds=[instance_id])
+        reservations = response['Reservations']
+
+        if not reservations or not reservations[0]['Instances']:
             print("Error: Instance {} not found in region {}".format(instance_id, region))
             sys.exit(1)
-            
-        instance = instances[0]
+
+        instance = reservations[0]['Instances'][0]
+
+        # Extract instance name from tags
+        name_tag = 'N/A'
+        if 'Tags' in instance:
+            for tag in instance['Tags']:
+                if tag['Key'] == 'Name':
+                    name_tag = tag['Value']
+                    break
+
         print("Instance Details:")
-        print("  Name: {}".format(instance.tags.get('Name', 'N/A')))
-        print("  ID: {}".format(instance.id))
-        print("  Type: {}".format(instance.instance_type))
-        print("  State: {}".format(instance.state))
+        print("  Name: {}".format(name_tag))
+        print("  ID: {}".format(instance['InstanceId']))
+        print("  Type: {}".format(instance.get('InstanceType', 'N/A')))
+        print("  State: {}".format(instance['State']['Name']))
         print("")
-        
+
     except Exception as e:
         print("Error retrieving instance details: {}".format(str(e)))
         sys.exit(1)
@@ -91,7 +80,7 @@ Alternatively, you can use AWS_ACCESS_KEY & AWS_SECRET_KEY
         sys.exit(0)
 
     try:
-        ec2_conn.terminate_instances([instance_id])
+        ec2_conn.terminate_instances(InstanceIds=[instance_id])
         print("Terminated instance: {}".format(instance_id))
     except Exception as e:
         print("Error terminating instance '{}': {}".format(instance_id, str(e)))

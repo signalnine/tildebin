@@ -11,71 +11,50 @@ from datetime import datetime
 
 def main():
     parser = argparse.ArgumentParser(description="List EC2 EBS volumes")
-    parser.add_argument("-f", "--filters", nargs="*", 
+    parser.add_argument("-f", "--filters", nargs="*",
                         help="Filters to apply (e.g., 'status=available', 'attachment.status=attached')")
-    parser.add_argument("-r", "--region", default="us-west-2", 
+    parser.add_argument("-r", "--region", default="us-west-2",
                         help="Specify the AWS region (default: us-west-2)")
     parser.add_argument("--format", choices=["plain", "table", "json"], default="plain",
                         help="Output format (default: plain)")
-    parser.add_argument("--boto3", action="store_true", 
-                        help="Use the newer boto3 library instead of boto (deprecated)")
-    
+
     args = parser.parse_args()
 
     filters = args.filters or []
     region = args.region
-    use_boto3 = args.boto3
-
-    # Check for AWS credentials
-    aws_access_key = os.environ.get('AWS_ACCESS_KEY_ID') or os.environ.get('AWS_ACCESS_KEY')
-    aws_secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY') or os.environ.get('AWS_SECRET_KEY')
-
-    if not aws_access_key or not aws_secret_key:
-        print("""Please set environment variables AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY
-This would look something like:
-  export AWS_ACCESS_KEY_ID=JFIOQNAKEIFJJAKDLIJA
-  export AWS_SECRET_ACCESS_KEY=3jfioajkle+OnfAEV5OIvj5nLnRy2jfklZRop3nn
-Alternatively, you can use AWS_ACCESS_KEY & AWS_SECRET_KEY
-""")
-        sys.exit(1)
 
     # Override region from environment variable if set
     region = os.environ.get('EC2_REGION', region)
 
-    if use_boto3:
-        # Use the newer boto3 library
-        try:
-            import boto3
-        except ImportError:
-            print("Error: The 'boto3' library is required to run this script with --boto3 option.")
-            print("You can install it using: pip install boto3")
-            sys.exit(1)
+    # Import boto3
+    try:
+        import boto3
+    except ImportError:
+        print("Error: The 'boto3' library is required to run this script.")
+        print("You can install it using: pip install boto3")
+        sys.exit(1)
 
-        try:
-            ec2_conn = boto3.client('ec2', region_name=region)
-        except Exception as e:
-            print("Error connecting to EC2 with boto3: {}".format(str(e)))
-            sys.exit(1)
+    try:
+        ec2_conn = boto3.client('ec2', region_name=region)
+    except Exception as e:
+        print("Error connecting to EC2: {}".format(str(e)))
+        sys.exit(1)
 
-        try:
-            # Parse filters from command line arguments
-            parsed_filters = []
-            for f in filters:
-                if '=' in f:
-                    key, value = f.split('=', 1)
-                    parsed_filters.append({
-                        'Name': key,
-                        'Values': [value]
-                    })
-            
-            response = ec2_conn.describe_volumes(Filters=parsed_filters)
-            volumes = response['Volumes']
-        except Exception as e:
-            print("Error retrieving volumes: {}".format(str(e)))
-            sys.exit(1)
-    else:
-        # For backward compatibility with boto (though boto doesn't have volume management)
-        print("This script requires boto3 for volume management. Please use --boto3 flag.")
+    try:
+        # Parse filters from command line arguments
+        parsed_filters = []
+        for f in filters:
+            if '=' in f:
+                key, value = f.split('=', 1)
+                parsed_filters.append({
+                    'Name': key,
+                    'Values': [value]
+                })
+
+        response = ec2_conn.describe_volumes(Filters=parsed_filters)
+        volumes = response['Volumes']
+    except Exception as e:
+        print("Error retrieving volumes: {}".format(str(e)))
         sys.exit(1)
 
     # Process volumes and format output
