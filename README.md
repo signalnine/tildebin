@@ -75,8 +75,14 @@ generate_fstab.sh
 
 ### emptysgs.py
 ```
-python emptysgs.py
+python emptysgs.py [-r region]
+  -r, --region: Specify the AWS region (default: us-east-1)
 ```
+
+Supported environment variables:
+  - `AWS_ACCESS_KEY_ID` or `AWS_ACCESS_KEY`: AWS access key
+  - `AWS_SECRET_ACCESS_KEY` or `AWS_SECRET_KEY`: AWS secret key
+  - `EC2_REGION`: Override the default region
 
 ### ec2_tag_summary.py
 ```
