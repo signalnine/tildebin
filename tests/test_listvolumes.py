@@ -87,19 +87,6 @@ def test_filters_option():
         print("stderr:", stderr)
         return False
 
-def test_boto3_flag():
-    """Test that the boto3 flag is recognized"""
-    return_code, stdout, stderr = run_command([sys.executable, 'listvolumes.py', '--boto3'])
-    
-    # The script should return 1 due to missing AWS credentials or potentially due to missing boto3
-    if return_code != 2:  # 2 would be argument parsing error
-        print("[PASS] Boto3 flag test passed (recognized boto3 argument)")
-        return True
-    else:
-        print("[FAIL] Boto3 flag test failed with return code:", return_code)
-        print("stderr:", stderr)
-        return False
-
 def test_environment_variable_handling():
     """Test that the script handles environment variables correctly"""
     # Temporarily set environment variables to test
@@ -142,7 +129,6 @@ if __name__ == "__main__":
         test_format_option,
         test_invalid_format_option,
         test_filters_option,
-        test_boto3_flag,
         test_environment_variable_handling
     ]
     

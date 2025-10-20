@@ -3,6 +3,15 @@ tildebin
 
 small utilities for your ~/bin/
 
+## Testing
+
+Run all tests:
+```bash
+make test
+```
+
+See [tests/README.md](tests/README.md) for detailed testing documentation.
+
 ## Scripts
 
 ### AWS EC2 Management
@@ -18,6 +27,12 @@ small utilities for your ~/bin/
 ### SSH Operations
 - `acrosshosts.sh`: Execute a command on multiple hosts via SSH
 - `useradd.sh`: Create a user account with SSH access on multiple hosts
+
+### Baremetal System Monitoring
+- `disk_health_check.py`: Monitor disk health using SMART attributes
+- `check_raid.py`: Check status of hardware and software RAID arrays
+- `network_bond_status.sh`: Check status of network bonded interfaces
+- `system_inventory.py`: Generate hardware inventory for baremetal systems
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -138,3 +153,54 @@ Supported environment variables:
   - `AWS_ACCESS_KEY_ID` or `AWS_ACCESS_KEY`: AWS access key
   - `AWS_SECRET_ACCESS_KEY` or `AWS_SECRET_KEY`: AWS secret key
   - `EC2_REGION`: Override the default region
+
+### disk_health_check.py
+```
+python disk_health_check.py [-d disk] [-v] [--format format] [--warn-only]
+  -d, --disk: Specific disk to check (e.g., /dev/sda)
+  -v, --verbose: Show detailed SMART attributes
+  --format: Output format, either 'plain' or 'json' (default: plain)
+  --warn-only: Only show disks with warnings or failures
+```
+
+Requirements:
+  - smartmontools package (smartctl command)
+  - Ubuntu/Debian: `sudo apt-get install smartmontools`
+  - RHEL/CentOS: `sudo yum install smartmontools`
+
+### check_raid.py
+```
+python check_raid.py [-t type] [-v] [--format format] [--warn-only]
+  -t, --type: Type of RAID to check - 'all', 'software', or 'hardware' (default: all)
+  -v, --verbose: Show detailed information
+  --format: Output format, either 'plain' or 'json' (default: plain)
+  --warn-only: Only show arrays with warnings or failures
+```
+
+Requirements:
+  - Software RAID: /proc/mdstat (built-in on Linux)
+  - LSI/Broadcom hardware RAID: MegaCli
+  - HP hardware RAID: hpacucli/ssacli
+  - Requires root privileges for hardware RAID detection
+
+### network_bond_status.sh
+```
+network_bond_status.sh [-b bond] [-v] [-j]
+  -b, --bond: Check specific bond interface
+  -v, --verbose: Show detailed information
+  -j, --json: Output in JSON format
+```
+
+Requirements:
+  - Linux bonding module loaded
+  - /proc/net/bonding directory
+
+### system_inventory.py
+```
+python system_inventory.py [--format format] [-o output] [--include-pci]
+  --format: Output format, either 'plain' or 'json' (default: plain)
+  -o, --output: Output file (default: stdout)
+  --include-pci: Include PCI device listing
+```
+
+Note: Run as root for additional hardware details from dmidecode
