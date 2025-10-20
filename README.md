@@ -10,6 +10,7 @@ small utilities for your ~/bin/
 - `ec2_tag_summary.py`: Summarize EC2 instances by tags across regions
 - `ec2_manage.py`: Manage EC2 instances (start, stop, restart)
 - `terminate_instance.py`: Terminate an EC2 instance with user confirmation
+- `stop_all_instances.py`: Stop all running EC2 instances in a region with user confirmation
 - `emptysgs.py`: Find unused AWS EC2 Security Groups
 - `listvolumes.py`: List EC2 EBS volumes with filtering and formatting options
 - `grephosts.sh`: Filter EC2 host output based on a search query
@@ -110,6 +111,19 @@ Supported environment variables:
   - `AWS_SECRET_ACCESS_KEY` or `AWS_SECRET_KEY`: AWS secret key
   - `EC2_REGION`: Override the default region
   - `EC2_URL`: Override the default EC2 URL
+
+### stop_all_instances.py
+```
+python stop_all_instances.py [-r region] [--force] [--dry-run]
+  -r, --region: Specify the AWS region (default: us-west-2)
+  --force: Force stop without confirmation prompt
+  --dry-run: Show instances that would be stopped without actually stopping them
+```
+
+Supported environment variables:
+  - `AWS_ACCESS_KEY_ID` or `AWS_ACCESS_KEY`: AWS access key
+  - `AWS_SECRET_ACCESS_KEY` or `AWS_SECRET_KEY`: AWS secret key
+  - `EC2_REGION`: Override the default region
 
 ### listvolumes.py
 ```
