@@ -34,6 +34,9 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `system_inventory.py`: Generate hardware inventory for baremetal systems
 
+### Kubernetes Management
+- `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
+
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
 
@@ -204,3 +207,35 @@ python system_inventory.py [--format format] [-o output] [--include-pci]
 ```
 
 Note: Run as root for additional hardware details from dmidecode
+
+### kubernetes_node_health.py
+```
+python kubernetes_node_health.py [--format format] [--warn-only]
+  --format, -f: Output format, either 'plain' or 'json' (default: plain)
+  --warn-only, -w: Only show nodes with warnings or issues
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+  - Optional: metrics-server for resource usage metrics
+
+Exit codes:
+  - 0: All nodes healthy
+  - 1: One or more nodes unhealthy or warnings detected
+  - 2: Usage error or kubectl not available
+
+Examples:
+```bash
+# Check all nodes with plain output
+kubernetes_node_health.py
+
+# Show only problematic nodes
+kubernetes_node_health.py --warn-only
+
+# Get JSON output for monitoring integration
+kubernetes_node_health.py --format json
+
+# Combine options
+kubernetes_node_health.py -f json -w
+```

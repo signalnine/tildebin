@@ -112,6 +112,9 @@ Note: The codebase has fully migrated from deprecated `boto` (v2) to `boto3`. Al
 - network_bond_status.sh: Check status of network bonded interfaces
 - system_inventory.py: Generate comprehensive hardware inventory
 
+**Kubernetes Management** (Python, kubectl):
+- kubernetes_node_health.py: Check Kubernetes node health and resource availability
+
 **System Utilities** (Shell):
 - generate_fstab.sh: Generate /etc/fstab from /proc/mounts using UUIDs
 
@@ -177,6 +180,17 @@ This prevents accidents while still allowing automation when needed.
 4. **Handle missing dependencies gracefully**: With helpful error messages pointing to installation
 5. **Add corresponding test file**: In `tests/` directory
 6. **Exit code indicates status**: 0 for healthy/success, 1 for warnings/errors
+
+### When Adding New Kubernetes Scripts
+
+1. **Use kubectl subprocess calls**: Run kubectl commands via subprocess.run() with JSON output
+2. **Check for kubectl availability**: Handle FileNotFoundError gracefully
+3. **Support multiple output formats**: At minimum plain and json
+4. **Include `--warn-only` flag**: For filtering healthy resources in monitoring scenarios
+5. **Parse kubectl JSON output**: Use json.loads() to parse structured output from kubectl
+6. **Handle missing metrics-server**: Not all clusters have metrics-server; degrade gracefully
+7. **Add corresponding test file**: In `tests/` directory
+8. **Exit code indicates status**: 0 for healthy, 1 for warnings/errors, 2 for kubectl missing
 
 ### When Modifying Existing Scripts
 

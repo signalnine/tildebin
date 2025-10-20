@@ -39,7 +39,7 @@ test-ec2:
 
 # Run only baremetal-related tests
 test-baremetal:
-	@python3 tests/run_tests.py -f disk raid network system_inventory
+	@python3 tests/run_tests.py -f disk raid network system_inventory kubernetes
 
 # Run tests matching a pattern
 test-filter:
@@ -66,5 +66,6 @@ check-deps:
 	@echo "Checking optional system tools..."
 	@which smartctl >/dev/null 2>&1 && echo "✓ smartctl installed" || echo "✗ smartctl missing (for disk_health_check.py)"
 	@which mdadm >/dev/null 2>&1 && echo "✓ mdadm installed" || echo "✗ mdadm missing (for software RAID in check_raid.py)"
+	@which kubectl >/dev/null 2>&1 && echo "✓ kubectl installed" || echo "✗ kubectl missing (for kubernetes_node_health.py)"
 	@which lspci >/dev/null 2>&1 && echo "✓ lspci installed" || echo "✓ lspci installed"
 	@which dmidecode >/dev/null 2>&1 && echo "✓ dmidecode installed" || echo "✗ dmidecode missing (for system_inventory.py)"
