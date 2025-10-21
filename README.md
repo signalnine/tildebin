@@ -36,6 +36,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 
 ### Kubernetes Management
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
+- `k8s_pod_resource_audit.py`: Audit pod resource usage and identify resource issues
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -238,4 +239,52 @@ kubernetes_node_health.py --format json
 
 # Combine options
 kubernetes_node_health.py -f json -w
+```
+
+### k8s_pod_resource_audit.py
+```
+python k8s_pod_resource_audit.py [--namespace NAMESPACE] [--format format] [--warn-only] [--show-quotas]
+  --namespace, -n: Namespace to audit (default: all namespaces)
+  --format, -f: Output format, either 'plain' or 'json' (default: plain)
+  --warn-only, -w: Only show pods with warnings or issues
+  --show-quotas, -q: Show resource quota information
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+  - Optional: metrics-server for current resource usage metrics
+
+Exit codes:
+  - 0: No resource issues detected
+  - 1: Resource issues found (warnings)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Detects pods with no resource requests/limits set
+  - Identifies OOMKilled pods and excessive restarts
+  - Shows pods in CrashLoopBackOff or other error states
+  - Reports evicted pods
+  - Displays current resource usage (when metrics-server available)
+  - Shows namespace resource quota utilization
+
+Examples:
+```bash
+# Audit all pods across all namespaces
+k8s_pod_resource_audit.py
+
+# Audit pods in production namespace only
+k8s_pod_resource_audit.py -n production
+
+# Show only pods with issues
+k8s_pod_resource_audit.py --warn-only
+
+# Get JSON output for monitoring integration
+k8s_pod_resource_audit.py --format json
+
+# Show resource quotas along with pod status
+k8s_pod_resource_audit.py --show-quotas
+
+# Combine options: only problematic pods in JSON format
+k8s_pod_resource_audit.py -w -f json -n kube-system
 ```
