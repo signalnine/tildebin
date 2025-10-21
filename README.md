@@ -33,6 +33,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `system_inventory.py`: Generate hardware inventory for baremetal systems
+- `filesystem_usage_tracker.py`: Track filesystem usage and identify large directories
 
 ### Kubernetes Management
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
@@ -208,6 +209,49 @@ python system_inventory.py [--format format] [-o output] [--include-pci]
 ```
 
 Note: Run as root for additional hardware details from dmidecode
+
+### filesystem_usage_tracker.py
+```
+python filesystem_usage_tracker.py <path> [-d depth] [-n top] [--format format] [-q]
+  path: Root filesystem path to scan (required)
+  -d, --depth: Maximum directory depth to traverse (default: 3)
+  -n, --top: Number of top entries to display (default: 10)
+  --format: Output format, either 'plain', 'table', or 'json' (default: table)
+  -q, --quiet: Suppress progress messages
+```
+
+Requirements:
+  - du command-line tool (coreutils package, usually pre-installed)
+
+Exit codes:
+  - 0: Successful scan
+  - 1: Error during scanning (permission denied, path not found, etc.)
+  - 2: Usage error (invalid arguments)
+
+Features:
+  - Identifies large directories consuming the most disk space
+  - Multiple output formats for scripting and human readability
+  - Configurable depth and result count
+  - Parallel processing with du for performance
+  - Graceful error handling with helpful messages
+
+Examples:
+```bash
+# Scan /var for large directories (default: depth 3, show top 10)
+filesystem_usage_tracker.py /var
+
+# Show top 20 directories in /home with detailed tree (depth 5)
+filesystem_usage_tracker.py /home -d 5 -n 20
+
+# Get JSON output for monitoring or scripting
+filesystem_usage_tracker.py /opt --format json
+
+# Quiet mode - suppress progress messages
+filesystem_usage_tracker.py /var -q
+
+# Scan with plain format (space-separated values)
+filesystem_usage_tracker.py /usr --format plain
+```
 
 ### kubernetes_node_health.py
 ```
