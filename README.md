@@ -38,6 +38,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 ### Kubernetes Management
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
 - `k8s_pod_resource_audit.py`: Audit pod resource usage and identify resource issues
+- `k8s_pv_health_check.py`: Check persistent volume health and storage status
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -331,4 +332,43 @@ k8s_pod_resource_audit.py --show-quotas
 
 # Combine options: only problematic pods in JSON format
 k8s_pod_resource_audit.py -w -f json -n kube-system
+```
+
+### k8s_pv_health_check.py
+```
+python k8s_pv_health_check.py [--format format] [--warn-only]
+  --format, -f: Output format, either 'plain' or 'json' (default: plain)
+  --warn-only, -w: Only show PVs with warnings or issues
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: All persistent volumes healthy
+  - 1: One or more PVs unhealthy or warnings detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Detects persistent volumes in unhealthy states
+  - Verifies PVCs are bound to existing volumes
+  - Identifies released volumes with Retain policy
+  - Warns about unusually small storage capacity
+  - Cross-references PVs and PVCs for consistency
+  - Supports plain text and JSON output formats
+
+Examples:
+```bash
+# Check all persistent volumes with plain output
+k8s_pv_health_check.py
+
+# Show only volumes with issues
+k8s_pv_health_check.py --warn-only
+
+# Get JSON output for monitoring integration
+k8s_pv_health_check.py --format json
+
+# Combine options: only problematic volumes in JSON format
+k8s_pv_health_check.py -w -f json
 ```
