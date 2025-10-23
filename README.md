@@ -39,6 +39,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
 - `k8s_pod_resource_audit.py`: Audit pod resource usage and identify resource issues
 - `k8s_pv_health_check.py`: Check persistent volume health and storage status
+- `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -371,4 +372,47 @@ k8s_pv_health_check.py --format json
 
 # Combine options: only problematic volumes in JSON format
 k8s_pv_health_check.py -w -f json
+```
+
+### k8s_deployment_status.py
+```
+python k8s_deployment_status.py [--namespace NAMESPACE] [--format format] [--warn-only]
+  --namespace, -n: Namespace to check (default: all namespaces)
+  --format, -f: Output format, either 'plain' or 'json' (default: plain)
+  --warn-only, -w: Only show deployments/statefulsets with issues
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: All deployments/statefulsets healthy and fully rolled out
+  - 1: One or more deployments/statefulsets not ready or unhealthy
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Monitors Deployment and StatefulSet rollout status
+  - Tracks replica availability (desired, ready, updated, available)
+  - Detects stalled rollouts and pending replicas
+  - Shows currently deployed image versions
+  - Checks Progressing and Available conditions
+  - Supports plain text and JSON output formats
+
+Examples:
+```bash
+# Check all deployments and statefulsets with plain output
+k8s_deployment_status.py
+
+# Show only deployments with issues
+k8s_deployment_status.py --warn-only
+
+# Check specific namespace
+k8s_deployment_status.py -n production
+
+# Get JSON output for monitoring integration
+k8s_deployment_status.py --format json
+
+# Combine options: production namespace, only problematic, JSON format
+k8s_deployment_status.py -n production -w -f json
 ```
