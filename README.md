@@ -40,6 +40,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_pod_resource_audit.py`: Audit pod resource usage and identify resource issues
 - `k8s_pv_health_check.py`: Check persistent volume health and storage status
 - `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
+- `k8s_event_monitor.py`: Monitor Kubernetes events to track cluster issues and anomalies
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -415,4 +416,55 @@ k8s_deployment_status.py --format json
 
 # Combine options: production namespace, only problematic, JSON format
 k8s_deployment_status.py -n production -w -f json
+```
+
+### k8s_event_monitor.py
+```
+python k8s_event_monitor.py [--namespace NAMESPACE] [--minutes MINUTES] [--format format] [--warn-only] [--categories]
+  --namespace, -n: Namespace to monitor (default: all namespaces)
+  --minutes, -m: Show events from last N minutes (default: all events)
+  --format, -f: Output format, either 'plain' or 'json' (default: plain)
+  --warn-only, -w: Only show warnings and errors
+  --categories, -c: Show event category summary
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No critical events found
+  - 1: Warning or error events detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Aggregates all events from a Kubernetes cluster
+  - Filters events by namespace and time window
+  - Categorizes events by type and reason
+  - Tracks repeated events with count
+  - Separates errors from warnings for quick identification
+  - Supports multiple output formats (plain text and JSON)
+
+Examples:
+```bash
+# Show all events across all namespaces
+k8s_event_monitor.py
+
+# Monitor only production namespace
+k8s_event_monitor.py -n production
+
+# Show events from the last 30 minutes
+k8s_event_monitor.py --minutes 30
+
+# Only show warnings and errors
+k8s_event_monitor.py --warn-only
+
+# Get JSON output for monitoring integration
+k8s_event_monitor.py --format json
+
+# Combine options: recent errors/warnings in JSON format
+k8s_event_monitor.py -w -f json -m 60
+
+# Show event category summary
+k8s_event_monitor.py --categories
 ```
