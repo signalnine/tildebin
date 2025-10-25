@@ -42,6 +42,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
 - `k8s_event_monitor.py`: Monitor Kubernetes events to track cluster issues and anomalies
 - `k8s_node_capacity_planner.py`: Analyze cluster capacity and forecast resource allocation
+- `k8s_cpu_throttling_detector.py`: Detect pods experiencing or at risk of CPU throttling
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -536,3 +537,53 @@ Use Cases:
   - **Cost Optimization**: Identify opportunities to consolidate workloads
   - **Monitoring Integration**: Export metrics via JSON for dashboards and alerting
   - **Baremetal Deployments**: Critical for on-premises K8s where adding hardware is expensive
+
+### k8s_cpu_throttling_detector.py
+```
+python k8s_cpu_throttling_detector.py [--namespace NAMESPACE] [--format format] [--warn-only]
+  --namespace, -n: Namespace to check (default: all namespaces)
+  --format, -f: Output format, either 'plain', 'table', or 'json' (default: table)
+  --warn-only, -w: Only show pods at risk of throttling
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+  - Optional: metrics-server for current CPU usage metrics
+
+Exit codes:
+  - 0: No throttled pods detected
+  - 1: One or more pods experiencing throttling or at risk
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Detects pods with very low CPU limits that may cause throttling
+  - Identifies pods with no CPU requests/limits set (at risk)
+  - Tracks pods currently using >75% of their CPU limit (when metrics available)
+  - Flags pods using >90% of limit as HIGH priority
+  - Multiple output formats for integration with monitoring systems
+
+Examples:
+```bash
+# Check all pods with table output
+k8s_cpu_throttling_detector.py
+
+# Show only at-risk pods
+k8s_cpu_throttling_detector.py --warn-only
+
+# Check specific namespace
+k8s_cpu_throttling_detector.py -n production
+
+# Get JSON output for monitoring integration
+k8s_cpu_throttling_detector.py --format json
+
+# Combine options: production namespace, only problematic, JSON format
+k8s_cpu_throttling_detector.py -n production -w -f json
+```
+
+Use Cases:
+  - **Performance Troubleshooting**: Identify workloads being throttled due to CPU limits
+  - **Resource Optimization**: Find pods with insufficient CPU allocation
+  - **Capacity Planning**: Detect applications needing more CPU resources
+  - **Monitoring Integration**: Export throttling risks via JSON for dashboards
+  - **Multi-tenant Environments**: Identify noisy neighbors affecting other pods
