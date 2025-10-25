@@ -41,6 +41,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_pv_health_check.py`: Check persistent volume health and storage status
 - `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
 - `k8s_event_monitor.py`: Monitor Kubernetes events to track cluster issues and anomalies
+- `k8s_node_capacity_planner.py`: Analyze cluster capacity and forecast resource allocation
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -468,3 +469,70 @@ k8s_event_monitor.py -w -f json -m 60
 # Show event category summary
 k8s_event_monitor.py --categories
 ```
+
+### k8s_node_capacity_planner.py
+```
+python k8s_node_capacity_planner.py [--format format] [--warn-only]
+  --format, -f: Output format, either 'table', 'plain', 'json', or 'summary' (default: table)
+  --warn-only, -w: Only show nodes with WARNING or CRITICAL capacity status
+```
+
+Requirements:
+  - Python kubernetes library: `pip install kubernetes`
+  - kubectl configured to access the Kubernetes cluster
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: Successfully analyzed cluster capacity
+  - 1: Error accessing cluster or missing dependencies
+  - 2: Usage error (invalid arguments)
+
+Features:
+  - Analyzes node allocatable resources (CPU, memory, pod count)
+  - Calculates current pod requests and utilization percentages
+  - Identifies nodes approaching capacity thresholds
+  - Automatic capacity status determination (OK, MODERATE, WARNING, CRITICAL)
+  - Multiple output formats for different use cases
+  - Cluster-wide capacity summary and forecasting
+  - Graceful handling of nodes with missing resource information
+
+Output Formats:
+  - **table**: Human-readable columnar format showing all nodes (default)
+  - **plain**: Space-separated values for easy scripting
+  - **json**: Machine-parseable JSON format with detailed metrics
+  - **summary**: High-level cluster capacity overview with recommendations
+
+Capacity Status Thresholds:
+  - **OK**: < 50% utilization (lowest of CPU, memory, or pod count)
+  - **MODERATE**: 50-75% utilization
+  - **WARNING**: 75-90% utilization
+  - **CRITICAL**: > 90% utilization
+
+Examples:
+```bash
+# View all nodes with current capacity (default table format)
+k8s_node_capacity_planner.py
+
+# Show only nodes approaching capacity limits
+k8s_node_capacity_planner.py --warn-only
+
+# Get cluster-wide capacity summary
+k8s_node_capacity_planner.py --format summary
+
+# JSON output for monitoring integration
+k8s_node_capacity_planner.py --format json
+
+# Plain format for scripting/shell tools
+k8s_node_capacity_planner.py --format plain
+
+# Combine options: only critical nodes in JSON format
+k8s_node_capacity_planner.py -w -f json
+```
+
+Use Cases:
+  - **Capacity Planning**: Identify when cluster needs additional nodes
+  - **Resource Management**: Detect underutilized or overprovisioned nodes
+  - **Admission Control**: Understand which node can safely accept new workloads
+  - **Cost Optimization**: Identify opportunities to consolidate workloads
+  - **Monitoring Integration**: Export metrics via JSON for dashboards and alerting
+  - **Baremetal Deployments**: Critical for on-premises K8s where adding hardware is expensive
