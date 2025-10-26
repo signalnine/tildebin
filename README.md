@@ -34,6 +34,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `system_inventory.py`: Generate hardware inventory for baremetal systems
 - `filesystem_usage_tracker.py`: Track filesystem usage and identify large directories
+- `sysctl_audit.py`: Audit kernel parameters (sysctl) against a baseline configuration
 
 ### Kubernetes Management
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
@@ -257,6 +258,56 @@ filesystem_usage_tracker.py /var -q
 # Scan with plain format (space-separated values)
 filesystem_usage_tracker.py /usr --format plain
 ```
+
+### sysctl_audit.py
+```
+python sysctl_audit.py [-b baseline] [--save file] [-p parameter] [-v] [--warn-only] [--format format]
+  -b, --baseline: Baseline configuration file to compare against
+  --save: Save current sysctl values as a baseline file
+  -p, --parameter: Check a specific parameter value
+  -v, --verbose: Show all parameters including matches
+  --warn-only, -w: Only show parameters with warnings or mismatches
+  --format: Output format, either 'plain' or 'json' (default: plain)
+```
+
+Requirements:
+  - sysctl command-line tool (procps-ng package on Linux)
+  - Read access to /proc/sys or appropriate permissions for sysctl
+
+Exit codes:
+  - 0: All parameters match baseline (or parameter found)
+  - 1: One or more parameters differ from baseline
+  - 2: Usage error, missing dependencies, or file not found
+
+Features:
+  - Create baseline snapshots of current kernel parameters
+  - Compare system settings against baseline configuration
+  - JSON output for integration with monitoring systems
+  - Verbose mode to verify all settings match baseline
+  - Warn-only mode to see only deviations
+
+Examples:
+```bash
+# Create a baseline of current kernel settings
+sysctl_audit.py --save baseline.conf
+
+# Check if system matches baseline
+sysctl_audit.py -b baseline.conf
+
+# Show only mismatched parameters
+sysctl_audit.py -b baseline.conf --warn-only
+
+# Check a specific parameter
+sysctl_audit.py -p net.ipv4.ip_forward
+
+# Get JSON output for monitoring integration
+sysctl_audit.py -b baseline.conf --format json
+
+# Show all parameters with their match status
+sysctl_audit.py -b baseline.conf --verbose
+```
+
+Use Case: In large baremetal deployments, ensuring consistent kernel settings across all hosts is critical. Create a baseline on a reference system, then use this script in your provisioning or monitoring pipeline to verify all nodes have the correct sysctl configuration.
 
 ### kubernetes_node_health.py
 ```
