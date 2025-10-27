@@ -44,6 +44,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_event_monitor.py`: Monitor Kubernetes events to track cluster issues and anomalies
 - `k8s_node_capacity_planner.py`: Analyze cluster capacity and forecast resource allocation
 - `k8s_cpu_throttling_detector.py`: Detect pods experiencing or at risk of CPU throttling
+- `k8s_ingress_cert_checker.py`: Check Ingress certificates for expiration and health status
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -638,3 +639,56 @@ Use Cases:
   - **Capacity Planning**: Detect applications needing more CPU resources
   - **Monitoring Integration**: Export throttling risks via JSON for dashboards
   - **Multi-tenant Environments**: Identify noisy neighbors affecting other pods
+
+### k8s_ingress_cert_checker.py
+```
+python k8s_ingress_cert_checker.py [--namespace NAMESPACE] [--format FORMAT] [--warn-only]
+  --namespace, -n: Kubernetes namespace to check (default: all namespaces)
+  --format, -f: Output format - 'plain' or 'json' (default: plain)
+  --warn-only, -w: Show only ingresses with warnings or issues
+  --help, -h: Show this help message
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+  - Optional: openssl for certificate parsing
+
+Exit codes:
+  - 0: All ingresses healthy, certificates valid
+  - 1: Certificate warnings/expiration or ingress issues detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Checks TLS certificate expiration dates and warnings
+  - Monitors ingress backend service status and health
+  - Verifies load balancer IP/hostname assignment
+  - Detects missing or invalid TLS secrets
+  - Identifies service endpoints for backend availability
+  - Supports per-namespace or cluster-wide checking
+
+Examples:
+```bash
+# Check all ingresses across cluster
+k8s_ingress_cert_checker.py
+
+# Check ingresses in production namespace
+k8s_ingress_cert_checker.py -n production
+
+# Show only ingresses with issues
+k8s_ingress_cert_checker.py --warn-only
+
+# Get JSON output for monitoring systems
+k8s_ingress_cert_checker.py --format json
+
+# Check production namespace, only problematic, JSON format
+k8s_ingress_cert_checker.py -n production -w -f json
+```
+
+Use Cases:
+  - **Certificate Expiration Prevention**: Proactive monitoring to prevent certificate-based outages
+  - **Ingress Health Monitoring**: Verify load balancer assignment and backend connectivity
+  - **TLS Configuration Auditing**: Detect missing or misconfigured TLS secrets
+  - **Operational Dashboards**: Export ingress status via JSON for monitoring integration
+  - **Multi-namespace Environments**: Monitor ingress health across multiple namespaces
+  - **Incident Prevention**: Catch certificate expiration before impacting services
