@@ -45,6 +45,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_node_capacity_planner.py`: Analyze cluster capacity and forecast resource allocation
 - `k8s_cpu_throttling_detector.py`: Detect pods experiencing or at risk of CPU throttling
 - `k8s_ingress_cert_checker.py`: Check Ingress certificates for expiration and health status
+- `k8s_node_drain_readiness.py`: Analyze node drainability and orchestrate graceful node maintenance
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -692,3 +693,71 @@ Use Cases:
   - **Operational Dashboards**: Export ingress status via JSON for monitoring integration
   - **Multi-namespace Environments**: Monitor ingress health across multiple namespaces
   - **Incident Prevention**: Catch certificate expiration before impacting services
+
+### k8s_node_drain_readiness.py
+```
+python k8s_node_drain_readiness.py [node] [--action ACTION] [--format FORMAT] [--warn-only] [--dry-run] [--force] [--grace-period SECONDS]
+  node: Node name to check/drain (not required for --action check-all)
+  --action: Action to perform - 'check', 'drain', 'uncordon', or 'check-all' (default: check)
+  --format, -f: Output format - 'plain', 'table', or 'json' (default: table)
+  --warn-only, -w: Only show pods with eviction issues
+  --dry-run: Simulate action without making changes
+  --force: Force drain including pods with emptyDir data (for drain action)
+  --grace-period: Grace period for pod termination in seconds (default: 30)
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+  - Sufficient permissions to cordon/drain nodes
+
+Exit codes:
+  - 0: Node is safe to drain / action succeeded
+  - 1: Node has issues preventing safe drain / action failed
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Analyzes pod constraints (local storage, critical annotations, PDB conflicts)
+  - Identifies stateful workloads requiring manual intervention
+  - Respects PodDisruptionBudgets for high-availability applications
+  - Gracefully cordons nodes to prevent new pod scheduling
+  - Drains pods with configurable grace period
+  - Uncordons nodes after maintenance is complete
+  - Supports cluster-wide readiness assessment
+  - Dry-run mode for validation before actual operations
+
+Examples:
+```bash
+# Check if a node is safe to drain
+k8s_node_drain_readiness.py node-1
+
+# Show only problematic pods
+k8s_node_drain_readiness.py node-1 --warn-only
+
+# Simulate drain without making changes
+k8s_node_drain_readiness.py node-1 --action drain --dry-run
+
+# Actually drain a node with 60 second grace period
+k8s_node_drain_readiness.py node-1 --action drain --grace-period 60
+
+# Drain with force flag for stateful workloads
+k8s_node_drain_readiness.py node-1 --action drain --force
+
+# Uncordon a node after maintenance
+k8s_node_drain_readiness.py node-1 --action uncordon
+
+# Check all nodes for drainability
+k8s_node_drain_readiness.py --action check-all
+
+# Get JSON output for automation
+k8s_node_drain_readiness.py node-1 --format json
+```
+
+Use Cases:
+  - **Node Maintenance**: Safely prepare nodes for patching, reboots, or hardware maintenance
+  - **Rolling Upgrades**: Orchestrate graceful node decommissioning during cluster upgrades
+  - **Resource Optimization**: Identify pods preventing node consolidation or scale-down
+  - **Capacity Planning**: Detect workloads with constraints (local storage, affinity) affecting scheduling
+  - **Automation Integration**: Export drain readiness via JSON for orchestration scripts
+  - **Incident Response**: Quickly isolate problematic nodes while ensuring pod availability
+  - **Baremetal Operations**: Critical for on-premises clusters where downtime is expensive
