@@ -46,6 +46,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_cpu_throttling_detector.py`: Detect pods experiencing or at risk of CPU throttling
 - `k8s_ingress_cert_checker.py`: Check Ingress certificates for expiration and health status
 - `k8s_node_drain_readiness.py`: Analyze node drainability and orchestrate graceful node maintenance
+- `k8s_memory_pressure_analyzer.py`: Detect memory pressure on nodes and analyze pod memory usage patterns
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -761,3 +762,39 @@ Use Cases:
   - **Automation Integration**: Export drain readiness via JSON for orchestration scripts
   - **Incident Response**: Quickly isolate problematic nodes while ensuring pod availability
   - **Baremetal Operations**: Critical for on-premises clusters where downtime is expensive
+
+### k8s_memory_pressure_analyzer.py
+```
+python3 k8s_memory_pressure_analyzer.py [options]
+  -n, --namespace: Analyze specific namespace (default: all namespaces)
+  --nodes-only: Only show node memory pressure information
+  --pods-only: Only show pod memory usage information
+  -h, --help: Show help message
+```
+
+Examples:
+```bash
+# Check memory pressure in all namespaces
+python3 k8s_memory_pressure_analyzer.py
+
+# Check memory pressure in production namespace
+python3 k8s_memory_pressure_analyzer.py -n production
+
+# Show only node memory status
+python3 k8s_memory_pressure_analyzer.py --nodes-only
+
+# Show only pod memory usage
+python3 k8s_memory_pressure_analyzer.py --pods-only
+
+# Check specific namespace pod memory
+python3 k8s_memory_pressure_analyzer.py -n kube-system --pods-only
+```
+
+Use Cases:
+  - **Memory Pressure Detection**: Identify nodes experiencing memory pressure before OOMKill events
+  - **Pod Memory Audit**: Find pods without memory limits that could destabilize the cluster
+  - **Capacity Planning**: Analyze memory allocation across namespaces for resource forecasting
+  - **Performance Troubleshooting**: Detect memory contention causing pod evictions
+  - **Baremetal Optimization**: Critical for on-premises clusters where memory is limited and evictions are expensive
+  - **Proactive Scaling**: Identify when clusters need memory upgrades or node additions
+  - **Compliance**: Ensure all pods have proper memory limits for SLA adherence
