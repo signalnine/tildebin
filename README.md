@@ -47,6 +47,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_ingress_cert_checker.py`: Check Ingress certificates for expiration and health status
 - `k8s_node_drain_readiness.py`: Analyze node drainability and orchestrate graceful node maintenance
 - `k8s_memory_pressure_analyzer.py`: Detect memory pressure on nodes and analyze pod memory usage patterns
+- `k8s_pod_eviction_risk_analyzer.py`: Identify pods at risk of eviction due to resource pressure or QoS class
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -798,3 +799,68 @@ Use Cases:
   - **Baremetal Optimization**: Critical for on-premises clusters where memory is limited and evictions are expensive
   - **Proactive Scaling**: Identify when clusters need memory upgrades or node additions
   - **Compliance**: Ensure all pods have proper memory limits for SLA adherence
+
+### k8s_pod_eviction_risk_analyzer.py
+```
+python3 k8s_pod_eviction_risk_analyzer.py [options]
+  -n, --namespace: Analyze specific namespace (default: all namespaces)
+  -f, --format: Output format - 'plain', 'table', or 'json' (default: table)
+  -w, --warn-only: Only show pods at medium/high/critical risk
+  -h, --help: Show help message
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No pods at risk of eviction
+  - 1: One or more pods at risk of eviction detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Detects pods on nodes with memory/disk/PID pressure
+  - Analyzes QoS class (BestEffort evicted first, then Burstable, then Guaranteed)
+  - Identifies pods without memory limits on pressure nodes
+  - Tracks pod restart counts and OOMKill history
+  - Flags containers without resource requests or limits
+  - Monitors node condition changes that trigger eviction
+  - Categorizes risk levels: NONE, LOW, MEDIUM, HIGH, CRITICAL
+
+Risk Assessment Criteria:
+  - **CRITICAL**: Pod on node with MemoryPressure, or container was OOMKilled
+  - **HIGH**: BestEffort QoS pod, or Burstable pod without memory limits
+  - **MEDIUM**: Pod on pressure node, or containers without memory limits
+  - **LOW**: Stable pod with resource constraints in place
+  - **NONE**: Healthy pod with no risk factors
+
+Examples:
+```bash
+# Check all pods for eviction risk
+k8s_pod_eviction_risk_analyzer.py
+
+# Check pods in production namespace only
+k8s_pod_eviction_risk_analyzer.py -n production
+
+# Show only high-risk pods (MEDIUM, HIGH, CRITICAL)
+k8s_pod_eviction_risk_analyzer.py --warn-only
+
+# Get table output for human review
+k8s_pod_eviction_risk_analyzer.py --format table
+
+# Get JSON output for monitoring integration
+k8s_pod_eviction_risk_analyzer.py --format json
+
+# Combine options: production namespace, warn-only, JSON format
+k8s_pod_eviction_risk_analyzer.py -n production -w -f json
+```
+
+Use Cases:
+  - **Proactive Eviction Prevention**: Identify pods likely to be evicted before disruptions occur
+  - **QoS Optimization**: Audit pod QoS classes and find BestEffort workloads in production
+  - **Resource Planning**: Understand which pods are vulnerable to resource pressure
+  - **Cluster Health**: Monitor pod stability during high-load periods
+  - **Baremetal Deployments**: Critical for on-premises clusters where evictions cause expensive downtime
+  - **SLA Compliance**: Ensure production workloads have Guaranteed QoS and proper resource limits
+  - **Capacity Planning**: Identify when nodes are approaching resource exhaustion
+  - **Monitoring Integration**: Export eviction risk via JSON for alerting systems
