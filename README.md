@@ -48,6 +48,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_node_drain_readiness.py`: Analyze node drainability and orchestrate graceful node maintenance
 - `k8s_memory_pressure_analyzer.py`: Detect memory pressure on nodes and analyze pod memory usage patterns
 - `k8s_pod_eviction_risk_analyzer.py`: Identify pods at risk of eviction due to resource pressure or QoS class
+- `k8s_node_restart_monitor.py`: Monitor node restart activity and detect nodes with excessive restarts
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -864,3 +865,62 @@ Use Cases:
   - **SLA Compliance**: Ensure production workloads have Guaranteed QoS and proper resource limits
   - **Capacity Planning**: Identify when nodes are approaching resource exhaustion
   - **Monitoring Integration**: Export eviction risk via JSON for alerting systems
+
+### k8s_node_restart_monitor.py
+```
+python3 k8s_node_restart_monitor.py [options]
+  --format, -f: Output format - 'plain', 'table', or 'json' (default: table)
+  --warn-only, -w: Only show nodes with excessive restarts or issues
+  -h, --help: Show help message
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No restart issues detected
+  - 1: Nodes with excessive restarts or recent crashes detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Monitors node uptime and identifies recently booted nodes
+  - Tracks pod restart counts per node
+  - Detects nodes with excessive pod restarts (potential hardware/software issues)
+  - Monitors node conditions (MemoryPressure, DiskPressure, PIDPressure)
+  - Identifies nodes not in Ready state
+  - Generates alerts for stability issues
+  - Multiple output formats for integration with monitoring systems
+
+Output Formats:
+  - **table**: Human-readable columnar format with node status, uptime, and restart counts (default)
+  - **plain**: Space-separated values for scripting/shell integration
+  - **json**: Machine-parseable JSON with detailed restart information per pod
+
+Examples:
+```bash
+# Check all nodes with default table output
+k8s_node_restart_monitor.py
+
+# Show only nodes with issues
+k8s_node_restart_monitor.py --warn-only
+
+# Monitor for recent reboots with JSON output
+k8s_node_restart_monitor.py -f json
+
+# Integrate with monitoring: show problems in plain format
+k8s_node_restart_monitor.py -w -f plain
+
+# Get detailed restart information in JSON
+k8s_node_restart_monitor.py --format json
+```
+
+Use Cases:
+  - **Hardware Failure Detection**: Identify nodes with excessive restarts indicating hardware problems
+  - **Kernel Panic Monitoring**: Detect cluster-wide instability from kernel issues
+  - **Infrastructure Health**: Monitor baremetal hardware for reliability issues
+  - **Incident Response**: Quickly identify problematic nodes during cluster issues
+  - **Maintenance Tracking**: Monitor impact of updates and patches on node stability
+  - **Capacity Planning**: Identify aging hardware with increasing restart rates
+  - **Baremetal Operations**: Critical for on-premises clusters where hardware monitoring is essential
+  - **Monitoring Integration**: Export node stability metrics for dashboards and alerting
