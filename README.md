@@ -31,6 +31,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 ### Baremetal System Monitoring
 - `disk_health_check.py`: Monitor disk health using SMART attributes
 - `check_raid.py`: Check status of hardware and software RAID arrays
+- `network_interface_health.py`: Monitor network interface health and error statistics
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `system_inventory.py`: Generate hardware inventory for baremetal systems
 - `filesystem_usage_tracker.py`: Track filesystem usage and identify large directories
@@ -198,6 +199,52 @@ Requirements:
   - LSI/Broadcom hardware RAID: MegaCli
   - HP hardware RAID: hpacucli/ssacli
   - Requires root privileges for hardware RAID detection
+
+### network_interface_health.py
+```
+python network_interface_health.py [-i interface] [-v] [--format format] [--warn-only]
+  -i, --interface: Specific interface to check (e.g., eth0)
+  -v, --verbose: Show detailed error statistics
+  --format: Output format, either 'plain' or 'json' (default: plain)
+  --warn-only: Only show interfaces with warnings or errors
+```
+
+Requirements:
+  - ip command-line tool (iproute2 package, usually pre-installed)
+  - ethtool command-line tool (optional, for speed/duplex info)
+
+Exit codes:
+  - 0: All interfaces healthy
+  - 1: One or more interfaces degraded or down
+  - 2: Usage error or missing dependencies
+
+Features:
+  - Monitor RX/TX packet errors, drops, and overruns
+  - Detect interface link state (UP/DOWN)
+  - Display speed and duplex mode (with ethtool)
+  - Show interface IP addresses and MTU
+  - JSON output for monitoring integration
+  - Warn-only mode to focus on problem interfaces
+
+Examples:
+```bash
+# Check all network interfaces
+network_interface_health.py
+
+# Check specific interface with detailed stats
+network_interface_health.py -i eth0 -v
+
+# Show only interfaces with errors
+network_interface_health.py --warn-only
+
+# Get JSON output for monitoring or scripting
+network_interface_health.py --format json
+
+# Combine options
+network_interface_health.py -i eth0 --format json -v
+```
+
+Use Case: In large baremetal environments, network interface errors can indicate hardware problems, driver issues, or network congestion. This script provides quick visibility into interface health across all network adapters, making it ideal for periodic health checks or monitoring integration.
 
 ### network_bond_status.sh
 ```
