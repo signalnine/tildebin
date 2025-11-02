@@ -50,6 +50,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_memory_pressure_analyzer.py`: Detect memory pressure on nodes and analyze pod memory usage patterns
 - `k8s_pod_eviction_risk_analyzer.py`: Identify pods at risk of eviction due to resource pressure or QoS class
 - `k8s_node_restart_monitor.py`: Monitor node restart activity and detect nodes with excessive restarts
+- `k8s_pod_count_analyzer.py`: Audit pod counts, scaling configuration, and resource quota usage
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -971,3 +972,63 @@ Use Cases:
   - **Capacity Planning**: Identify aging hardware with increasing restart rates
   - **Baremetal Operations**: Critical for on-premises clusters where hardware monitoring is essential
   - **Monitoring Integration**: Export node stability metrics for dashboards and alerting
+
+### k8s_pod_count_analyzer.py
+```
+python3 k8s_pod_count_analyzer.py [options]
+  -n, --namespace: Analyze specific namespace only (default: all namespaces)
+  --format, -f: Output format - 'table', 'plain', or 'json' (default: table)
+  --warn-only, -w: Only show resources with issues
+  --deployments-only: Only analyze Deployments
+  --statefulsets-only: Only analyze StatefulSets
+  -h, --help: Show help message
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No scaling issues detected
+  - 1: Scaling issues found (warnings)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Analyzes Deployment and StatefulSet scaling configuration
+  - Identifies deployments/statefulsets scaled to 0 replicas
+  - Detects replica mismatches (desired vs. ready/available)
+  - Warns about excessive replica counts (>50 replicas)
+  - Tracks HPA configuration and correlation with replicas
+  - Monitors resource quota usage and pod limits
+  - Multiple output formats for integration with monitoring systems
+
+Examples:
+```bash
+# Analyze all pod scaling across cluster
+k8s_pod_count_analyzer.py
+
+# Show only resources with issues (table format)
+k8s_pod_count_analyzer.py --warn-only
+
+# Analyze specific namespace
+k8s_pod_count_analyzer.py -n production
+
+# Get JSON output for monitoring integration
+k8s_pod_count_analyzer.py --format json
+
+# Only check Deployments (exclude StatefulSets)
+k8s_pod_count_analyzer.py --deployments-only
+
+# Combine options: production namespace, only problematic, plain format
+k8s_pod_count_analyzer.py -n production -w -f plain
+```
+
+Use Cases:
+  - **Scaling Configuration Audit**: Verify all deployments have correct replica configurations
+  - **Capacity Planning**: Identify under-scaled or over-scaled workloads in baremetal clusters
+  - **Resource Quota Monitoring**: Track namespace-level pod quotas to prevent quota exhaustion
+  - **Deployment Health**: Detect deployments with replicas not becoming ready (potential issues)
+  - **HPA Correlation**: Identify HPAs without proper minimum replica configuration
+  - **Cluster Consolidation**: Find deployments with excessive replicas for consolidation opportunities
+  - **Baremetal Operations**: Critical for on-premises clusters where pod density directly impacts resource utilization
+  - **Incident Prevention**: Catch scaling misconfigurations before they impact availability
