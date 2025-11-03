@@ -51,6 +51,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_pod_eviction_risk_analyzer.py`: Identify pods at risk of eviction due to resource pressure or QoS class
 - `k8s_node_restart_monitor.py`: Monitor node restart activity and detect nodes with excessive restarts
 - `k8s_pod_count_analyzer.py`: Audit pod counts, scaling configuration, and resource quota usage
+- `k8s_orphaned_resources_finder.py`: Find orphaned and unused resources (ConfigMaps, Secrets, PVCs, Services, ServiceAccounts)
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -1032,3 +1033,67 @@ Use Cases:
   - **Cluster Consolidation**: Find deployments with excessive replicas for consolidation opportunities
   - **Baremetal Operations**: Critical for on-premises clusters where pod density directly impacts resource utilization
   - **Incident Prevention**: Catch scaling misconfigurations before they impact availability
+
+### k8s_orphaned_resources_finder.py
+```
+python3 k8s_orphaned_resources_finder.py [--namespace NAMESPACE] [--format FORMAT] [options]
+  --namespace, -n: Check specific namespace only (default: all namespaces)
+  --format, -f: Output format - 'plain' or 'json' (default: plain)
+  --skip-empty-namespaces: Skip checking for empty namespaces
+  --skip-configmaps: Skip checking for orphaned ConfigMaps
+  --skip-secrets: Skip checking for orphaned Secrets
+  --skip-pvcs: Skip checking for orphaned PersistentVolumeClaims
+  --skip-services: Skip checking for unused Services with no endpoints
+  --skip-service-accounts: Skip checking for unused ServiceAccounts
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No orphaned resources found
+  - 1: Orphaned or unused resources detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Identifies empty namespaces (no pods or workloads)
+  - Finds orphaned ConfigMaps not referenced by any pod
+  - Detects orphaned Secrets not used by pod volumes or env variables
+  - Identifies unused PersistentVolumeClaims not mounted by pods
+  - Discovers Services with no endpoints (no backing pod replicas)
+  - Finds unused ServiceAccounts not referenced by pods
+  - Skips system namespaces (kube-*, olm*) automatically unless explicitly requested
+  - Skips default-token Secrets (automatically managed by Kubernetes)
+  - Multiple output formats for scripting and monitoring integration
+
+Examples:
+```bash
+# Find all orphaned resources cluster-wide
+k8s_orphaned_resources_finder.py
+
+# Check specific namespace
+k8s_orphaned_resources_finder.py -n production
+
+# Show only ConfigMaps and Secrets
+k8s_orphaned_resources_finder.py --skip-pvcs --skip-services --skip-service-accounts
+
+# Get JSON output for processing
+k8s_orphaned_resources_finder.py --format json
+
+# Find only empty namespaces
+k8s_orphaned_resources_finder.py --skip-configmaps --skip-secrets --skip-pvcs --skip-services --skip-service-accounts
+
+# Combine namespace and format options
+k8s_orphaned_resources_finder.py -n production -f json --skip-empty-namespaces
+```
+
+Use Cases:
+  - **Resource Cleanup**: Identify and remove unused resources to reduce cluster overhead
+  - **Cost Optimization**: Find and delete orphaned resources consuming storage/memory in baremetal clusters
+  - **Cluster Health Auditing**: Regularly audit for orphaned configurations indicating stale deployments
+  - **Storage Management**: Identify unused PVCs consuming storage space
+  - **Configuration Cleanup**: Find orphaned ConfigMaps and Secrets from deleted workloads
+  - **Security Hardening**: Identify and remove unused ServiceAccounts
+  - **Operational Efficiency**: Catch configuration mistakes before they accumulate
+  - **Baremetal Operations**: Critical for on-premises clusters where resources are limited and expensive
