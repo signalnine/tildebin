@@ -52,6 +52,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_node_restart_monitor.py`: Monitor node restart activity and detect nodes with excessive restarts
 - `k8s_pod_count_analyzer.py`: Audit pod counts, scaling configuration, and resource quota usage
 - `k8s_orphaned_resources_finder.py`: Find orphaned and unused resources (ConfigMaps, Secrets, PVCs, Services, ServiceAccounts)
+- `k8s_container_restart_analyzer.py`: Analyze container restart patterns and identify root causes with remediation suggestions
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -1097,3 +1098,72 @@ Use Cases:
   - **Security Hardening**: Identify and remove unused ServiceAccounts
   - **Operational Efficiency**: Catch configuration mistakes before they accumulate
   - **Baremetal Operations**: Critical for on-premises clusters where resources are limited and expensive
+
+### k8s_container_restart_analyzer.py
+```
+python3 k8s_container_restart_analyzer.py [--namespace NAMESPACE] [--timeframe MINUTES] [options]
+  --namespace, -n: Analyze restarts in specific namespace (default: all namespaces)
+  --timeframe MINUTES: Only analyze restarts within last N minutes
+  --verbose, -v: Show detailed analysis with remediation suggestions
+  --warn-only: Only show warnings (flapping containers with 5+ restarts)
+  --output: Output format - 'plain' or 'json' (default: plain)
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No restarts or only informational findings
+  - 1: Restarts detected with warnings
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Analyzes container restart patterns across all pods in the cluster
+  - Categorizes restart causes (OOMKilled, CrashLoopBackOff, ApplicationError, ProbeFailure, Evicted, SIGTERM, SIGKILL)
+  - Identifies "flapping" containers with excessive restarts (5+ restarts)
+  - Provides actionable remediation suggestions based on restart category
+  - Checks resource limits for containers experiencing OOMKills
+  - Shows restart distribution by namespace and category
+  - Detects containers without memory limits that may be causing issues
+  - Time-based filtering to focus on recent restart activity
+  - Multiple output formats for scripting and monitoring integration
+
+Examples:
+```bash
+# Analyze all container restarts
+k8s_container_restart_analyzer.py
+
+# Analyze restarts in specific namespace
+k8s_container_restart_analyzer.py -n kube-system
+
+# Show verbose output with remediation suggestions
+k8s_container_restart_analyzer.py --verbose
+
+# Only show flapping containers (5+ restarts)
+k8s_container_restart_analyzer.py --warn-only
+
+# Analyze restarts in last 24 hours
+k8s_container_restart_analyzer.py --timeframe 1440
+
+# Output as JSON for monitoring integration
+k8s_container_restart_analyzer.py --output json
+
+# Combine filters: production namespace, verbose, only flapping
+k8s_container_restart_analyzer.py -n production --verbose --warn-only
+
+# Recent restarts in JSON for alerting
+k8s_container_restart_analyzer.py --timeframe 60 --output json
+```
+
+Use Cases:
+  - **Incident Response**: Quickly identify root causes of container restarts during incidents
+  - **Proactive Monitoring**: Detect chronic restart issues before they impact availability
+  - **Resource Right-Sizing**: Identify OOMKills and adjust memory limits accordingly
+  - **Application Debugging**: Categorize restart reasons to prioritize troubleshooting efforts
+  - **Pattern Detection**: Find flapping containers that may indicate configuration issues
+  - **Capacity Planning**: Identify resource pressure patterns causing evictions
+  - **MTTR Reduction**: Get immediate remediation suggestions to reduce mean time to resolution
+  - **Health Probe Tuning**: Detect probe failures and tune liveness/readiness probe configurations
+  - **Baremetal Operations**: Critical for large-scale environments where restart patterns indicate hardware or network issues
+  - **Production Stability**: Regular analysis prevents cascading failures from unstable containers
