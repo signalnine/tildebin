@@ -172,25 +172,36 @@ def main():
     print("Running k8s_orphaned_resources_finder tests...")
     print()
 
-    try:
-        test_help()
-        test_help_short()
-        test_format_argument()
-        test_namespace_argument()
-        test_skip_arguments()
-        test_combined_arguments()
-        test_json_output_format()
-        test_plain_output_format()
-        test_exit_codes()
-        print()
-        print("All tests passed! ✓")
-        return 0
-    except AssertionError as e:
-        print(f"Test failed: {e}", file=sys.stderr)
-        return 1
-    except Exception as e:
-        print(f"Unexpected error: {e}", file=sys.stderr)
-        return 1
+    tests = [
+        test_help,
+        test_help_short,
+        test_format_argument,
+        test_namespace_argument,
+        test_skip_arguments,
+        test_combined_arguments,
+        test_json_output_format,
+        test_plain_output_format,
+        test_exit_codes,
+    ]
+
+    passed = 0
+    failed = 0
+
+    for test in tests:
+        try:
+            test()
+            passed += 1
+        except AssertionError as e:
+            print(f"Test failed: {e}", file=sys.stderr)
+            failed += 1
+        except Exception as e:
+            print(f"Unexpected error: {e}", file=sys.stderr)
+            failed += 1
+
+    total = passed + failed
+    print()
+    print(f"Test Results: {passed}/{total} tests passed")
+    return 0 if failed == 0 else 1
 
 
 if __name__ == "__main__":

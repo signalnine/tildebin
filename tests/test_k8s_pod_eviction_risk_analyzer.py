@@ -298,5 +298,6 @@ if __name__ == "__main__":
             print(f"✗ {test_func.__name__}: Unexpected error: {e}")
             failed += 1
 
-    print(f"\n{len(test_functions) - failed}/{len(test_functions)} tests passed")
+    passed = len(test_functions) - failed
+    print(f"\nTest Results: {passed}/{len(test_functions)} tests passed")
     sys.exit(1 if failed > 0 else 0)

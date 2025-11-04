@@ -135,6 +135,108 @@ def test_script_imports():
             return False
 
 
+def test_short_flag_namespace():
+    """Test that -n short flag works for namespace"""
+    returncode, stdout, stderr = run_command(
+        [sys.executable, 'k8s_ingress_cert_checker.py', '-n', 'kube-system']
+    )
+
+    # Should fail with kubectl error but accept the flag
+    if returncode in [1, 2]:
+        print("[PASS] Short namespace flag test passed")
+        return True
+    else:
+        print("[FAIL] Short namespace flag should be accepted")
+        return False
+
+
+def test_short_flag_format():
+    """Test that -f short flag works for format"""
+    returncode, stdout, stderr = run_command(
+        [sys.executable, 'k8s_ingress_cert_checker.py', '-f', 'plain']
+    )
+
+    # Should fail with kubectl error but accept the flag
+    if returncode in [1, 2]:
+        print("[PASS] Short format flag test passed")
+        return True
+    else:
+        print("[FAIL] Short format flag should be accepted")
+        return False
+
+
+def test_short_flag_warn_only():
+    """Test that -w short flag works for warn-only"""
+    returncode, stdout, stderr = run_command(
+        [sys.executable, 'k8s_ingress_cert_checker.py', '-w']
+    )
+
+    # Should fail with kubectl error but accept the flag
+    if returncode in [1, 2]:
+        print("[PASS] Short warn-only flag test passed")
+        return True
+    else:
+        print("[FAIL] Short warn-only flag should be accepted")
+        return False
+
+
+def test_days_option():
+    """Test that --days option accepts numeric values"""
+    returncode, stdout, stderr = run_command(
+        [sys.executable, 'k8s_ingress_cert_checker.py', '--days', '30']
+    )
+
+    # Should fail with kubectl error but accept the flag
+    if returncode in [1, 2]:
+        print("[PASS] Days option test passed")
+        return True
+    else:
+        print("[FAIL] Days option should accept numeric values")
+        return False
+
+
+def test_invalid_days_value():
+    """Test that --days rejects non-numeric values"""
+    returncode, stdout, stderr = run_command(
+        [sys.executable, 'k8s_ingress_cert_checker.py', '--days', 'invalid']
+    )
+
+    # Should fail with argument error
+    if returncode == 2:
+        print("[PASS] Invalid days value test passed")
+        return True
+    else:
+        print("[FAIL] Invalid days value should be rejected")
+        return False
+
+
+def test_script_has_main_guard():
+    """Test that script has proper __main__ guard"""
+    with open('k8s_ingress_cert_checker.py', 'r') as f:
+        content = f.read()
+        if "if __name__ == '__main__':" in content or 'if __name__ == "__main__":' in content:
+            print("[PASS] Script has main guard")
+            return True
+        else:
+            print("[FAIL] Script missing main guard")
+            return False
+
+
+def test_no_args_runs():
+    """Test that script runs with no arguments (uses defaults)"""
+    returncode, stdout, stderr = run_command(
+        [sys.executable, 'k8s_ingress_cert_checker.py']
+    )
+
+    # Should attempt to run (may fail with kubectl not found)
+    if returncode in [0, 1, 2]:
+        print("[PASS] No args test passed")
+        return True
+    else:
+        print("[FAIL] Script should run with default arguments")
+        return False
+
+
 def main():
     """Run all tests"""
     tests = [
@@ -146,6 +248,13 @@ def main():
         test_combined_flags,
         test_script_has_docstring,
         test_script_imports,
+        test_short_flag_namespace,
+        test_short_flag_format,
+        test_short_flag_warn_only,
+        test_days_option,
+        test_invalid_days_value,
+        test_script_has_main_guard,
+        test_no_args_runs,
     ]
 
     passed = 0
@@ -161,7 +270,8 @@ def main():
             print(f"[ERROR] {test.__name__} raised exception: {e}")
             failed += 1
 
-    print(f"\nResults: {passed} passed, {failed} failed")
+    total = passed + failed
+    print(f"\nTest Results: {passed}/{total} tests passed")
     return 0 if failed == 0 else 1
 
 

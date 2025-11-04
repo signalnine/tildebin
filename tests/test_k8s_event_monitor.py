@@ -176,4 +176,14 @@ class TestScriptMetadata(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    # Run tests with custom runner to report results in expected format
+    loader = unittest.TestLoader()
+    suite = loader.loadTestsFromModule(sys.modules[__name__])
+    runner = unittest.TextTestRunner(verbosity=1)
+    result = runner.run(suite)
+
+    # Print results in expected format
+    passed = result.testsRun - len(result.failures) - len(result.errors)
+    print(f"\nTest Results: {passed}/{result.testsRun} tests passed")
+
+    sys.exit(0 if result.wasSuccessful() else 1)

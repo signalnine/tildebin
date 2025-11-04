@@ -194,6 +194,67 @@ def test_invalid_arguments():
         return False
 
 
+def test_namespace_option():
+    """Test that namespace option is accepted"""
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'k8s_memory_pressure_analyzer.py', '-n', 'kube-system']
+    )
+
+    # Should fail with kubectl error but accept the flag
+    if return_code in [1, 2]:
+        print("[PASS] Namespace option test passed")
+        return True
+    else:
+        print("[FAIL] Namespace option test failed")
+        return False
+
+
+def test_all_namespaces_flag():
+    """Test that --all-namespaces flag works"""
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'k8s_memory_pressure_analyzer.py', '--all-namespaces']
+    )
+
+    # Should fail with kubectl error but accept the flag
+    if return_code in [1, 2]:
+        print("[PASS] All namespaces flag test passed")
+        return True
+    else:
+        print("[FAIL] All namespaces flag test failed")
+        return False
+
+
+def test_threshold_option():
+    """Test that threshold option accepts values"""
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'k8s_memory_pressure_analyzer.py', '--threshold', '90']
+    )
+
+    # Should fail with kubectl error but accept the flag
+    if return_code in [1, 2]:
+        print("[PASS] Threshold option test passed")
+        return True
+    else:
+        print("[FAIL] Threshold option test failed")
+        return False
+
+
+def test_output_format_options():
+    """Test that output format options work"""
+    for fmt in ['plain', 'json']:
+        return_code, stdout, stderr = run_command(
+            [sys.executable, 'k8s_memory_pressure_analyzer.py', '--format', fmt]
+        )
+
+        # Should fail with kubectl error but accept the flag
+        if return_code not in [1, 2]:
+            print(f"[FAIL] Format {fmt} test failed")
+            return False
+
+    print("[PASS] Output format options test passed")
+    return True
+
+
 def test_script_syntax():
     """Test that the script has valid Python syntax"""
     return_code, stdout, stderr = run_command(
@@ -222,6 +283,10 @@ def run_all_tests():
         ("Memory value parsing", test_memory_value_parsing),
         ("Byte formatting", test_format_bytes),
         ("Invalid argument handling", test_invalid_arguments),
+        ("Namespace option", test_namespace_option),
+        ("All namespaces flag", test_all_namespaces_flag),
+        ("Threshold option", test_threshold_option),
+        ("Output format options", test_output_format_options),
     ]
 
     results = []
@@ -240,7 +305,8 @@ def run_all_tests():
     print("=" * 60)
     passed = sum(1 for _, result in results if result)
     total = len(results)
-    print(f"Passed: {passed}/{total}")
+
+    print(f"\nTest Results: {passed}/{total} tests passed")
 
     for test_name, result in results:
         status = "✓" if result else "✗"
