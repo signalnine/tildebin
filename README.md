@@ -31,6 +31,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 ### Baremetal System Monitoring
 - `disk_health_check.py`: Monitor disk health using SMART attributes
 - `check_raid.py`: Check status of hardware and software RAID arrays
+- `hardware_temperature_monitor.py`: Monitor hardware temperature sensors and fan speeds
 - `network_interface_health.py`: Monitor network interface health and error statistics
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `system_inventory.py`: Generate hardware inventory for baremetal systems
@@ -202,6 +203,53 @@ Requirements:
   - LSI/Broadcom hardware RAID: MegaCli
   - HP hardware RAID: hpacucli/ssacli
   - Requires root privileges for hardware RAID detection
+
+### hardware_temperature_monitor.py
+```
+python hardware_temperature_monitor.py [-f format] [-w] [-v]
+  -f, --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -w, --warn-only: Only show sensors with warnings or critical status
+  -v, --verbose: Show detailed threshold information
+```
+
+Requirements:
+  - lm-sensors package (sensors command)
+  - Ubuntu/Debian: `sudo apt-get install lm-sensors`
+  - RHEL/CentOS: `sudo yum install lm_sensors`
+  - Run `sensors-detect` after installation to configure sensors
+
+Exit codes:
+  - 0: All temperatures normal
+  - 1: Warning or critical temperatures detected
+  - 2: Usage error or missing dependencies
+
+Features:
+  - Monitor CPU, GPU, and motherboard temperatures
+  - Track fan speeds and detect fan failures
+  - Compare readings against hardware thresholds
+  - Multiple output formats (plain, JSON, table)
+  - Warn-only mode to focus on thermal issues
+  - JSON output for monitoring system integration
+
+Examples:
+```bash
+# Check all temperature sensors
+hardware_temperature_monitor.py
+
+# Show only warnings and critical temperatures
+hardware_temperature_monitor.py --warn-only
+
+# Detailed output with all thresholds
+hardware_temperature_monitor.py --verbose
+
+# JSON output for monitoring integration
+hardware_temperature_monitor.py --format json
+
+# Table format with warnings only
+hardware_temperature_monitor.py --format table --warn-only
+```
+
+Use Case: In large-scale baremetal datacenters, thermal issues can lead to hardware throttling, system instability, or permanent damage. This script provides visibility into temperature sensors and fan speeds across servers, making it ideal for proactive thermal monitoring and capacity planning. Critical for high-density deployments where cooling is a concern.
 
 ### network_interface_health.py
 ```
