@@ -16,6 +16,12 @@ import os
 import subprocess
 import sys
 import json
+from unittest.mock import patch, MagicMock
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import k8s_pod_eviction_risk_analyzer as eviction_analyzer
 
 
 def run_command(cmd_args):
@@ -263,6 +269,417 @@ def test_exit_code_with_at_risk_pods():
             assert returncode == 1, "Should exit 1 when pods at risk found"
 
 
+def test_parse_memory_value_bytes():
+    """Test parse_memory_value with plain bytes."""
+    assert eviction_analyzer.parse_memory_value('1024') == 1024
+    assert eviction_analyzer.parse_memory_value('0') == 0
+
+
+def test_parse_memory_value_kilobytes():
+    """Test parse_memory_value with kilobytes."""
+    assert eviction_analyzer.parse_memory_value('1K') == 1000
+    assert eviction_analyzer.parse_memory_value('1Ki') == 1024
+    assert eviction_analyzer.parse_memory_value('100K') == 100000
+
+
+def test_parse_memory_value_megabytes():
+    """Test parse_memory_value with megabytes."""
+    assert eviction_analyzer.parse_memory_value('1M') == 1000000
+    assert eviction_analyzer.parse_memory_value('1Mi') == 1048576
+    assert eviction_analyzer.parse_memory_value('512Mi') == 536870912
+
+
+def test_parse_memory_value_gigabytes():
+    """Test parse_memory_value with gigabytes."""
+    assert eviction_analyzer.parse_memory_value('1G') == 1000000000
+    assert eviction_analyzer.parse_memory_value('1Gi') == 1073741824
+    assert eviction_analyzer.parse_memory_value('2Gi') == 2147483648
+
+
+def test_parse_memory_value_terabytes():
+    """Test parse_memory_value with terabytes."""
+    assert eviction_analyzer.parse_memory_value('1T') == 1000000000000
+    assert eviction_analyzer.parse_memory_value('1Ti') == 1099511627776
+
+
+def test_parse_memory_value_empty():
+    """Test parse_memory_value with empty or None values."""
+    assert eviction_analyzer.parse_memory_value('') == 0
+    assert eviction_analyzer.parse_memory_value(None) == 0
+
+
+def test_parse_memory_value_decimal():
+    """Test parse_memory_value with decimal values."""
+    assert eviction_analyzer.parse_memory_value('1.5Gi') == int(1.5 * 1073741824)
+    assert eviction_analyzer.parse_memory_value('0.5Mi') == int(0.5 * 1048576)
+
+
+def test_parse_memory_value_lowercase():
+    """Test parse_memory_value with lowercase units."""
+    assert eviction_analyzer.parse_memory_value('1mi') == 1048576
+    assert eviction_analyzer.parse_memory_value('1gi') == 1073741824
+
+
+def test_determine_qos_class_guaranteed():
+    """Test QoS class determination for Guaranteed."""
+    pod = {
+        'spec': {
+            'containers': [{
+                'resources': {
+                    'limits': {'memory': '1Gi', 'cpu': '1'},
+                    'requests': {'memory': '1Gi', 'cpu': '1'}
+                }
+            }]
+        }
+    }
+    qos = eviction_analyzer.determine_qos_class(pod)
+    assert qos == 'Guaranteed', f"Expected Guaranteed, got {qos}"
+
+
+def test_determine_qos_class_besteffort():
+    """Test QoS class determination for BestEffort."""
+    pod = {
+        'spec': {
+            'containers': [{
+                'resources': {}
+            }]
+        }
+    }
+    qos = eviction_analyzer.determine_qos_class(pod)
+    assert qos == 'BestEffort', f"Expected BestEffort, got {qos}"
+
+
+def test_determine_qos_class_burstable():
+    """Test QoS class determination for Burstable."""
+    pod = {
+        'spec': {
+            'containers': [{
+                'resources': {
+                    'requests': {'memory': '512Mi'},
+                    'limits': {'memory': '1Gi'}
+                }
+            }]
+        }
+    }
+    qos = eviction_analyzer.determine_qos_class(pod)
+    assert qos == 'Burstable', f"Expected Burstable, got {qos}"
+
+
+def test_determine_qos_class_burstable_no_limits():
+    """Test QoS class determination for Burstable with only requests."""
+    pod = {
+        'spec': {
+            'containers': [{
+                'resources': {
+                    'requests': {'cpu': '100m'}
+                }
+            }]
+        }
+    }
+    qos = eviction_analyzer.determine_qos_class(pod)
+    assert qos == 'Burstable', f"Expected Burstable, got {qos}"
+
+
+def test_determine_qos_class_empty_pod():
+    """Test QoS class determination with empty pod structure."""
+    pod = {'spec': {'containers': []}}
+    qos = eviction_analyzer.determine_qos_class(pod)
+    assert qos == 'BestEffort', f"Expected BestEffort for empty pod, got {qos}"
+
+
+def test_analyze_pod_eviction_risk_no_pressure():
+    """Test pod eviction risk analysis with no node pressure."""
+    pod = {
+        'metadata': {'namespace': 'default', 'name': 'test-pod'},
+        'spec': {'nodeName': 'node1', 'containers': [{'resources': {}}]},
+        'status': {'phase': 'Running'}
+    }
+    pressure_nodes = {}
+    allocatable = {}
+
+    risk_level, risk_reasons = eviction_analyzer.analyze_pod_eviction_risk(
+        pod, pressure_nodes, allocatable
+    )
+
+    # BestEffort pod should have some risk
+    assert risk_level in ['NONE', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+
+
+def test_analyze_pod_eviction_risk_memory_pressure():
+    """Test pod eviction risk with node memory pressure."""
+    pod = {
+        'metadata': {'namespace': 'default', 'name': 'test-pod'},
+        'spec': {'nodeName': 'node1', 'containers': [{'resources': {}}]},
+        'status': {'phase': 'Running'}
+    }
+    pressure_nodes = {
+        'node1': {
+            'memory_pressure': True,
+            'disk_pressure': False,
+            'pid_pressure': False,
+            'not_ready': False
+        }
+    }
+    allocatable = {}
+
+    risk_level, risk_reasons = eviction_analyzer.analyze_pod_eviction_risk(
+        pod, pressure_nodes, allocatable
+    )
+
+    # Should have CRITICAL risk due to memory pressure
+    assert risk_level == 'CRITICAL', f"Expected CRITICAL, got {risk_level}"
+    assert any('MemoryPressure' in r for r in risk_reasons)
+
+
+def test_analyze_pod_eviction_risk_disk_pressure():
+    """Test pod eviction risk with node disk pressure."""
+    pod = {
+        'metadata': {'namespace': 'default', 'name': 'test-pod'},
+        'spec': {'nodeName': 'node1', 'containers': [{'resources': {}}]},
+        'status': {'phase': 'Running'}
+    }
+    pressure_nodes = {
+        'node1': {
+            'memory_pressure': False,
+            'disk_pressure': True,
+            'pid_pressure': False,
+            'not_ready': False
+        }
+    }
+    allocatable = {}
+
+    risk_level, risk_reasons = eviction_analyzer.analyze_pod_eviction_risk(
+        pod, pressure_nodes, allocatable
+    )
+
+    assert any('DiskPressure' in r for r in risk_reasons)
+
+
+def test_analyze_pod_eviction_risk_besteffort():
+    """Test pod eviction risk for BestEffort QoS."""
+    pod = {
+        'metadata': {'namespace': 'default', 'name': 'test-pod'},
+        'spec': {'nodeName': 'node1', 'containers': [{'resources': {}}]},
+        'status': {'phase': 'Running'}
+    }
+    pressure_nodes = {}
+    allocatable = {}
+
+    risk_level, risk_reasons = eviction_analyzer.analyze_pod_eviction_risk(
+        pod, pressure_nodes, allocatable
+    )
+
+    # BestEffort should have HIGH risk
+    assert risk_level == 'HIGH', f"Expected HIGH for BestEffort, got {risk_level}"
+    assert any('BestEffort' in r for r in risk_reasons)
+
+
+def test_analyze_pod_eviction_risk_oomkilled():
+    """Test pod eviction risk with OOMKilled container."""
+    pod = {
+        'metadata': {'namespace': 'default', 'name': 'test-pod'},
+        'spec': {
+            'nodeName': 'node1',
+            'containers': [{
+                'resources': {
+                    'limits': {'memory': '1Gi'},
+                    'requests': {'memory': '1Gi'}
+                }
+            }]
+        },
+        'status': {
+            'phase': 'Running',
+            'containerStatuses': [{
+                'name': 'container1',
+                'restartCount': 10,
+                'lastState': {
+                    'terminated': {'reason': 'OOMKilled'}
+                }
+            }]
+        }
+    }
+    pressure_nodes = {}
+    allocatable = {}
+
+    risk_level, risk_reasons = eviction_analyzer.analyze_pod_eviction_risk(
+        pod, pressure_nodes, allocatable
+    )
+
+    # OOMKilled should result in CRITICAL risk
+    assert risk_level == 'CRITICAL', f"Expected CRITICAL for OOMKilled, got {risk_level}"
+    assert any('OOMKilled' in r for r in risk_reasons)
+
+
+def test_analyze_pod_eviction_risk_high_restarts():
+    """Test pod eviction risk with high restart count."""
+    pod = {
+        'metadata': {'namespace': 'default', 'name': 'test-pod'},
+        'spec': {
+            'nodeName': 'node1',
+            'containers': [{
+                'resources': {
+                    'limits': {'memory': '1Gi'},
+                    'requests': {'memory': '1Gi'}
+                }
+            }]
+        },
+        'status': {
+            'phase': 'Running',
+            'containerStatuses': [{
+                'name': 'container1',
+                'restartCount': 10,
+                'lastState': {}
+            }]
+        }
+    }
+    pressure_nodes = {}
+    allocatable = {}
+
+    risk_level, risk_reasons = eviction_analyzer.analyze_pod_eviction_risk(
+        pod, pressure_nodes, allocatable
+    )
+
+    # High restart count should be noted
+    assert any('restart count' in r.lower() for r in risk_reasons)
+
+
+def test_analyze_pod_eviction_risk_no_memory_limits():
+    """Test pod eviction risk with containers without memory limits."""
+    pod = {
+        'metadata': {'namespace': 'default', 'name': 'test-pod'},
+        'spec': {
+            'nodeName': 'node1',
+            'containers': [
+                {'name': 'container1', 'resources': {}},
+                {'name': 'container2', 'resources': {}}
+            ]
+        },
+        'status': {'phase': 'Running'}
+    }
+    pressure_nodes = {}
+    allocatable = {}
+
+    risk_level, risk_reasons = eviction_analyzer.analyze_pod_eviction_risk(
+        pod, pressure_nodes, allocatable
+    )
+
+    # Containers without memory limits should be flagged
+    assert any('without memory limits' in r for r in risk_reasons)
+
+
+def test_get_nodes_with_pressure_mocked():
+    """Test getting nodes with pressure conditions using mocking."""
+    mock_output = json.dumps({
+        'items': [{
+            'metadata': {'name': 'node1'},
+            'status': {
+                'conditions': [
+                    {'type': 'MemoryPressure', 'status': 'True'},
+                    {'type': 'Ready', 'status': 'True'}
+                ]
+            }
+        }]
+    })
+
+    with patch('k8s_pod_eviction_risk_analyzer.run_kubectl', return_value=mock_output):
+        pressure_nodes = eviction_analyzer.get_nodes_with_pressure()
+        assert 'node1' in pressure_nodes
+        assert pressure_nodes['node1']['memory_pressure'] is True
+
+
+def test_get_node_allocatable_mocked():
+    """Test getting node allocatable resources using mocking."""
+    mock_output = json.dumps({
+        'items': [{
+            'metadata': {'name': 'node1'},
+            'status': {
+                'allocatable': {
+                    'memory': '16Gi',
+                    'cpu': '4',
+                    'ephemeral-storage': '100Gi'
+                }
+            }
+        }]
+    })
+
+    with patch('k8s_pod_eviction_risk_analyzer.run_kubectl', return_value=mock_output):
+        allocatable = eviction_analyzer.get_node_allocatable()
+        assert 'node1' in allocatable
+        assert allocatable['node1']['memory'] > 0
+        assert allocatable['node1']['cpu'] == '4'
+
+
+def test_format_output_plain_basic():
+    """Test plain output formatting."""
+    pods_data = [{
+        'namespace': 'default',
+        'name': 'test-pod',
+        'qos_class': 'Burstable',
+        'risk_level': 'MEDIUM',
+        'reasons': ['No memory limits']
+    }]
+
+    # Capture output by redirecting stdout
+    import io
+    from contextlib import redirect_stdout
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        eviction_analyzer.format_output_plain(pods_data, None)
+    output = f.getvalue()
+
+    assert 'default' in output
+    assert 'test-pod' in output
+
+
+def test_format_output_table_basic():
+    """Test table output formatting."""
+    pods_data = [{
+        'namespace': 'default',
+        'name': 'test-pod',
+        'qos_class': 'Burstable',
+        'risk_level': 'MEDIUM',
+        'reasons': ['No memory limits']
+    }]
+
+    import io
+    from contextlib import redirect_stdout
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        eviction_analyzer.format_output_table(pods_data, None)
+    output = f.getvalue()
+
+    assert 'NAMESPACE' in output
+    assert 'POD NAME' in output
+    assert '-' in output  # Header separator
+
+
+def test_format_output_json_basic():
+    """Test JSON output formatting."""
+    pods_data = [{
+        'namespace': 'default',
+        'name': 'test-pod',
+        'qos_class': 'Burstable',
+        'risk_level': 'MEDIUM',
+        'reasons': ['No memory limits']
+    }]
+
+    import io
+    from contextlib import redirect_stdout
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        eviction_analyzer.format_output_json(pods_data, None)
+    output = f.getvalue()
+
+    # Should be valid JSON
+    data = json.loads(output)
+    assert 'pods_at_risk' in data
+    assert 'pods' in data
+    assert len(data['pods']) == 1
+
+
 if __name__ == "__main__":
     # Run all tests
     test_functions = [
@@ -284,6 +701,31 @@ if __name__ == "__main__":
         test_qos_classes,
         test_exit_code_no_at_risk_pods,
         test_exit_code_with_at_risk_pods,
+        test_parse_memory_value_bytes,
+        test_parse_memory_value_kilobytes,
+        test_parse_memory_value_megabytes,
+        test_parse_memory_value_gigabytes,
+        test_parse_memory_value_terabytes,
+        test_parse_memory_value_empty,
+        test_parse_memory_value_decimal,
+        test_parse_memory_value_lowercase,
+        test_determine_qos_class_guaranteed,
+        test_determine_qos_class_besteffort,
+        test_determine_qos_class_burstable,
+        test_determine_qos_class_burstable_no_limits,
+        test_determine_qos_class_empty_pod,
+        test_analyze_pod_eviction_risk_no_pressure,
+        test_analyze_pod_eviction_risk_memory_pressure,
+        test_analyze_pod_eviction_risk_disk_pressure,
+        test_analyze_pod_eviction_risk_besteffort,
+        test_analyze_pod_eviction_risk_oomkilled,
+        test_analyze_pod_eviction_risk_high_restarts,
+        test_analyze_pod_eviction_risk_no_memory_limits,
+        test_get_nodes_with_pressure_mocked,
+        test_get_node_allocatable_mocked,
+        test_format_output_plain_basic,
+        test_format_output_table_basic,
+        test_format_output_json_basic,
     ]
 
     failed = 0

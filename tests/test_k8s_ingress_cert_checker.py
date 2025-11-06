@@ -6,9 +6,16 @@ Tests for k8s_ingress_cert_checker.py
 import subprocess
 import sys
 import os
+from unittest.mock import patch, MagicMock
+import json
+from io import StringIO
+from contextlib import redirect_stdout
+from datetime import datetime, timedelta
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import k8s_ingress_cert_checker as cert_checker
 
 
 def run_command(cmd_args):
@@ -237,6 +244,358 @@ def test_no_args_runs():
         return False
 
 
+def test_check_ingress_tls_no_tls():
+    """Test check_ingress_tls with no TLS configuration."""
+    ingress = {
+        'metadata': {'namespace': 'default'},
+        'spec': {
+            'rules': [{'host': 'example.com'}]
+        }
+    }
+
+    issues, cert_info = cert_checker.check_ingress_tls(ingress)
+
+    assert len(issues) > 0
+    assert any('No TLS configuration' in issue for issue in issues)
+    print("[PASS] No TLS configuration test")
+    return True
+
+
+def test_check_ingress_tls_missing_secret():
+    """Test check_ingress_tls with missing secret name."""
+    ingress = {
+        'metadata': {'namespace': 'default'},
+        'spec': {
+            'tls': [
+                {'hosts': ['example.com']}
+            ]
+        }
+    }
+
+    issues, cert_info = cert_checker.check_ingress_tls(ingress)
+
+    assert any('missing secretName' in issue for issue in issues)
+    print("[PASS] Missing secret name test")
+    return True
+
+
+@patch('k8s_ingress_cert_checker.get_secret')
+def test_check_ingress_tls_secret_not_found(mock_get_secret):
+    """Test check_ingress_tls when secret doesn't exist."""
+    mock_get_secret.return_value = None
+
+    ingress = {
+        'metadata': {'namespace': 'default'},
+        'spec': {
+            'tls': [
+                {'hosts': ['example.com'], 'secretName': 'tls-secret'}
+            ]
+        }
+    }
+
+    issues, cert_info = cert_checker.check_ingress_tls(ingress)
+
+    assert any('not found' in issue for issue in issues)
+    print("[PASS] Secret not found test")
+    return True
+
+
+def test_check_ingress_status_no_lb():
+    """Test check_ingress_status with no load balancer."""
+    ingress = {
+        'status': {}
+    }
+
+    issues = cert_checker.check_ingress_status(ingress)
+
+    assert len(issues) > 0
+    assert any('no assigned IP/hostname' in issue for issue in issues)
+    print("[PASS] No load balancer test")
+    return True
+
+
+def test_check_ingress_status_empty_lb():
+    """Test check_ingress_status with empty load balancer ingress."""
+    ingress = {
+        'status': {
+            'loadBalancer': {
+                'ingress': [{}]
+            }
+        }
+    }
+
+    issues = cert_checker.check_ingress_status(ingress)
+
+    assert any('no IP or hostname' in issue for issue in issues)
+    print("[PASS] Empty load balancer test")
+    return True
+
+
+def test_check_ingress_status_with_ip():
+    """Test check_ingress_status with valid IP."""
+    ingress = {
+        'status': {
+            'loadBalancer': {
+                'ingress': [{'ip': '192.168.1.1'}]
+            }
+        }
+    }
+
+    issues = cert_checker.check_ingress_status(ingress)
+
+    assert len(issues) == 0
+    print("[PASS] Valid IP test")
+    return True
+
+
+@patch('k8s_ingress_cert_checker.get_service_endpoints')
+def test_check_ingress_backends_no_endpoints(mock_get_endpoints):
+    """Test check_ingress_backends when service has no endpoints."""
+    mock_get_endpoints.return_value = False
+
+    ingress = {
+        'metadata': {'namespace': 'default'},
+        'spec': {
+            'rules': [{
+                'http': {
+                    'paths': [{
+                        'backend': {
+                            'serviceName': 'my-service'
+                        }
+                    }]
+                }
+            }]
+        }
+    }
+
+    issues = cert_checker.check_ingress_backends(ingress)
+
+    assert any('no endpoints' in issue for issue in issues)
+    print("[PASS] No endpoints test")
+    return True
+
+
+@patch('k8s_ingress_cert_checker.get_service_endpoints')
+def test_check_ingress_backends_with_endpoints(mock_get_endpoints):
+    """Test check_ingress_backends when service has endpoints."""
+    mock_get_endpoints.return_value = True
+
+    ingress = {
+        'metadata': {'namespace': 'default'},
+        'spec': {
+            'rules': [{
+                'http': {
+                    'paths': [{
+                        'backend': {
+                            'serviceName': 'my-service'
+                        }
+                    }]
+                }
+            }]
+        }
+    }
+
+    issues = cert_checker.check_ingress_backends(ingress)
+
+    assert len(issues) == 0
+    print("[PASS] With endpoints test")
+    return True
+
+
+@patch('k8s_ingress_cert_checker.get_service_endpoints')
+def test_check_ingress_backends_new_api_format(mock_get_endpoints):
+    """Test check_ingress_backends with new API format."""
+    mock_get_endpoints.return_value = True
+
+    ingress = {
+        'metadata': {'namespace': 'default'},
+        'spec': {
+            'rules': [{
+                'http': {
+                    'paths': [{
+                        'backend': {
+                            'service': {'name': 'my-service'}
+                        }
+                    }]
+                }
+            }]
+        }
+    }
+
+    issues = cert_checker.check_ingress_backends(ingress)
+
+    assert len(issues) == 0
+    print("[PASS] New API format test")
+    return True
+
+
+def test_analyze_ingresses_empty():
+    """Test analyze_ingresses with no ingresses."""
+    ingresses_data = {'items': []}
+
+    results = cert_checker.analyze_ingresses(ingresses_data, False)
+
+    assert len(results) == 0
+    print("[PASS] Empty ingresses test")
+    return True
+
+
+@patch('k8s_ingress_cert_checker.check_ingress_tls')
+@patch('k8s_ingress_cert_checker.check_ingress_status')
+@patch('k8s_ingress_cert_checker.check_ingress_backends')
+def test_analyze_ingresses_with_issues(mock_backends, mock_status, mock_tls):
+    """Test analyze_ingresses with issues."""
+    mock_tls.return_value = (['TLS issue'], [])
+    mock_status.return_value = ['Status issue']
+    mock_backends.return_value = ['Backend issue']
+
+    ingresses_data = {
+        'items': [{
+            'metadata': {'name': 'test-ingress', 'namespace': 'default'},
+            'spec': {}
+        }]
+    }
+
+    results = cert_checker.analyze_ingresses(ingresses_data, False)
+
+    assert len(results) == 1
+    assert len(results[0]['issues']) == 3
+    print("[PASS] Ingresses with issues test")
+    return True
+
+
+@patch('k8s_ingress_cert_checker.check_ingress_tls')
+@patch('k8s_ingress_cert_checker.check_ingress_status')
+@patch('k8s_ingress_cert_checker.check_ingress_backends')
+def test_analyze_ingresses_warn_only(mock_backends, mock_status, mock_tls):
+    """Test analyze_ingresses with warn_only flag."""
+    mock_tls.return_value = ([], [])
+    mock_status.return_value = []
+    mock_backends.return_value = []
+
+    ingresses_data = {
+        'items': [{
+            'metadata': {'name': 'healthy-ingress', 'namespace': 'default'},
+            'spec': {}
+        }]
+    }
+
+    results = cert_checker.analyze_ingresses(ingresses_data, warn_only=True)
+
+    # Should not include healthy ingress when warn_only=True
+    assert len(results) == 0
+    print("[PASS] Warn only test")
+    return True
+
+
+def test_print_results_json():
+    """Test print_results with JSON format."""
+    results = [{
+        'namespace': 'default',
+        'name': 'test-ingress',
+        'issues': ['Issue 1'],
+        'certificates': []
+    }]
+
+    f = StringIO()
+    with redirect_stdout(f):
+        has_issues = cert_checker.print_results(results, 'json')
+    output = f.getvalue()
+
+    # Should be valid JSON
+    data = json.loads(output)
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert data[0]['name'] == 'test-ingress'
+    assert has_issues
+    print("[PASS] JSON print results test")
+    return True
+
+
+def test_print_results_plain():
+    """Test print_results with plain format."""
+    results = [{
+        'namespace': 'default',
+        'name': 'test-ingress',
+        'issues': ['Issue 1', 'Issue 2'],
+        'certificates': [{
+            'secret': 'tls-secret',
+            'hosts': ['example.com'],
+            'days_remaining': 30
+        }]
+    }]
+
+    f = StringIO()
+    with redirect_stdout(f):
+        has_issues = cert_checker.print_results(results, 'plain')
+    output = f.getvalue()
+
+    assert 'test-ingress' in output
+    assert 'default' in output
+    assert 'Issue 1' in output
+    assert 'tls-secret' in output
+    assert has_issues
+    print("[PASS] Plain print results test")
+    return True
+
+
+def test_print_results_no_issues():
+    """Test print_results with no issues."""
+    results = [{
+        'namespace': 'default',
+        'name': 'healthy-ingress',
+        'issues': [],
+        'certificates': []
+    }]
+
+    f = StringIO()
+    with redirect_stdout(f):
+        has_issues = cert_checker.print_results(results, 'plain')
+    output = f.getvalue()
+
+    assert not has_issues
+    print("[PASS] No issues print results test")
+    return True
+
+
+@patch('k8s_ingress_cert_checker.run_kubectl')
+def test_get_all_ingresses_all_namespaces(mock_run):
+    """Test get_all_ingresses for all namespaces."""
+    mock_run.return_value = json.dumps({
+        'items': [
+            {'metadata': {'name': 'ingress1', 'namespace': 'default'}},
+            {'metadata': {'name': 'ingress2', 'namespace': 'production'}}
+        ]
+    })
+
+    ingresses = cert_checker.get_all_ingresses()
+
+    assert len(ingresses['items']) == 2
+    call_args = mock_run.call_args[0][0]
+    assert '--all-namespaces' in call_args
+    print("[PASS] Get all ingresses test")
+    return True
+
+
+@patch('k8s_ingress_cert_checker.run_kubectl')
+def test_get_all_ingresses_specific_namespace(mock_run):
+    """Test get_all_ingresses for specific namespace."""
+    mock_run.return_value = json.dumps({
+        'items': [
+            {'metadata': {'name': 'ingress1', 'namespace': 'production'}}
+        ]
+    })
+
+    ingresses = cert_checker.get_all_ingresses('production')
+
+    assert len(ingresses['items']) == 1
+    call_args = mock_run.call_args[0][0]
+    assert '-n' in call_args
+    assert 'production' in call_args
+    print("[PASS] Get ingresses for namespace test")
+    return True
+
+
 def main():
     """Run all tests"""
     tests = [
@@ -255,6 +614,23 @@ def main():
         test_invalid_days_value,
         test_script_has_main_guard,
         test_no_args_runs,
+        test_check_ingress_tls_no_tls,
+        test_check_ingress_tls_missing_secret,
+        test_check_ingress_tls_secret_not_found,
+        test_check_ingress_status_no_lb,
+        test_check_ingress_status_empty_lb,
+        test_check_ingress_status_with_ip,
+        test_check_ingress_backends_no_endpoints,
+        test_check_ingress_backends_with_endpoints,
+        test_check_ingress_backends_new_api_format,
+        test_analyze_ingresses_empty,
+        test_analyze_ingresses_with_issues,
+        test_analyze_ingresses_warn_only,
+        test_print_results_json,
+        test_print_results_plain,
+        test_print_results_no_issues,
+        test_get_all_ingresses_all_namespaces,
+        test_get_all_ingresses_specific_namespace,
     ]
 
     passed = 0
