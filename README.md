@@ -34,6 +34,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `hardware_temperature_monitor.py`: Monitor hardware temperature sensors and fan speeds
 - `network_interface_health.py`: Monitor network interface health and error statistics
 - `network_bond_status.sh`: Check status of network bonded interfaces
+- `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
 - `system_inventory.py`: Generate hardware inventory for baremetal systems
 - `filesystem_usage_tracker.py`: Track filesystem usage and identify large directories
 - `sysctl_audit.py`: Audit kernel parameters (sysctl) against a baseline configuration
@@ -288,12 +289,57 @@ network_interface_health.py -i eth0 -v
 # Show only interfaces with errors
 network_interface_health.py --warn-only
 
-# Get JSON output for monitoring or scripting
+# Output as JSON for monitoring
 network_interface_health.py --format json
-
-# Combine options
-network_interface_health.py -i eth0 --format json -v
 ```
+
+### ntp_drift_monitor.py
+```
+python ntp_drift_monitor.py [-f format] [-v] [-w threshold] [-c threshold]
+  -f, --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed synchronization information
+  -w, --warn-threshold: Warning threshold for time offset in seconds (default: 0.100)
+  -c, --crit-threshold: Critical threshold for time offset in seconds (default: 1.000)
+```
+
+Requirements:
+  - chrony (recommended) or ntp daemon
+  - Ubuntu/Debian: `sudo apt-get install chrony`
+  - RHEL/CentOS: `sudo yum install chrony`
+
+Exit codes:
+  - 0: Time synchronized within acceptable limits
+  - 1: Warning or critical drift detected
+  - 2: Usage error or missing dependencies
+
+Features:
+  - Monitor NTP/Chrony time synchronization status
+  - Detect clock drift and offset from reference time
+  - Check stratum level and reference source
+  - Track RMS offset and frequency drift (chrony)
+  - Multiple output formats (plain, JSON, table)
+  - Configurable warning and critical thresholds
+  - Critical for distributed systems, databases, and K8s clusters
+
+Examples:
+```bash
+# Check time synchronization status
+ntp_drift_monitor.py
+
+# Show detailed sync information
+ntp_drift_monitor.py --verbose
+
+# Output as JSON for monitoring systems
+ntp_drift_monitor.py --format json
+
+# Custom thresholds (warn at 50ms, critical at 500ms)
+ntp_drift_monitor.py --warn-threshold 0.050 --crit-threshold 0.500
+
+# Table format for overview
+ntp_drift_monitor.py --format table
+```
+
+Use Case: Time synchronization is critical for distributed systems, Kubernetes clusters, databases (especially distributed ones), and certificate validation. Clock drift can cause authentication failures, data inconsistencies, and cluster coordination issues. This script monitors NTP/Chrony status to detect and alert on time synchronization problems before they impact services.
 
 Use Case: In large baremetal environments, network interface errors can indicate hardware problems, driver issues, or network congestion. This script provides quick visibility into interface health across all network adapters, making it ideal for periodic health checks or monitoring integration.
 
