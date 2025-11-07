@@ -31,6 +31,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 ### Baremetal System Monitoring
 - `disk_health_check.py`: Monitor disk health using SMART attributes
 - `check_raid.py`: Check status of hardware and software RAID arrays
+- `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
 - `hardware_temperature_monitor.py`: Monitor hardware temperature sensors and fan speeds
 - `network_interface_health.py`: Monitor network interface health and error statistics
 - `network_bond_status.sh`: Check status of network bonded interfaces
@@ -251,6 +252,60 @@ hardware_temperature_monitor.py --format table --warn-only
 ```
 
 Use Case: In large-scale baremetal datacenters, thermal issues can lead to hardware throttling, system instability, or permanent damage. This script provides visibility into temperature sensors and fan speeds across servers, making it ideal for proactive thermal monitoring and capacity planning. Critical for high-density deployments where cooling is a concern.
+
+### cpu_frequency_monitor.py
+```
+python cpu_frequency_monitor.py [--format format] [--expected-governor governor] [--warn-only] [--verbose] [--no-throttle-check]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --expected-governor: Expected governor (e.g., performance, powersave)
+  --warn-only: Only show CPUs with warnings or issues
+  --verbose: Show detailed information for all CPUs
+  --no-throttle-check: Disable throttling detection
+```
+
+Requirements:
+  - Linux kernel with cpufreq support (sysfs interface at /sys/devices/system/cpu)
+  - Most modern Linux systems have this enabled by default
+
+Exit codes:
+  - 0: All CPUs configured correctly
+  - 1: Issues detected (wrong governor, throttling, scaling limits)
+  - 2: Usage error or missing cpufreq interface
+
+Features:
+  - Monitor current CPU frequencies across all cores
+  - Verify CPU governor settings (performance, powersave, ondemand, etc.)
+  - Detect CPU throttling or frequency capping
+  - Identify scaling limit constraints
+  - Multiple output formats (plain, JSON, table)
+  - Warn-only mode to focus on problem CPUs
+  - JSON output for monitoring system integration
+
+Examples:
+```bash
+# Check CPU frequency status
+cpu_frequency_monitor.py
+
+# Verify all CPUs are using 'performance' governor
+cpu_frequency_monitor.py --expected-governor performance
+
+# Show only CPUs with issues
+cpu_frequency_monitor.py --warn-only
+
+# Detailed output for all CPUs
+cpu_frequency_monitor.py --verbose
+
+# JSON output for monitoring integration
+cpu_frequency_monitor.py --format json
+
+# Table format showing all CPUs
+cpu_frequency_monitor.py --format table
+
+# Check without false positives from normal frequency scaling
+cpu_frequency_monitor.py --no-throttle-check
+```
+
+Use Case: In large-scale baremetal environments, incorrect CPU governor settings or unexpected frequency throttling can severely impact workload performance. This script helps identify nodes running at reduced clock speeds due to thermal throttling, power management misconfiguration, or BIOS settings. Essential for Kubernetes worker nodes and compute-intensive workloads where consistent CPU performance is critical. Use in your monitoring stack to detect performance degradation before it impacts production services.
 
 ### network_interface_health.py
 ```
