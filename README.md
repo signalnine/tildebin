@@ -33,6 +33,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
 - `hardware_temperature_monitor.py`: Monitor hardware temperature sensors and fan speeds
+- `memory_health_monitor.py`: Monitor memory health, ECC errors, and memory pressure
 - `network_interface_health.py`: Monitor network interface health and error statistics
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
@@ -252,6 +253,54 @@ hardware_temperature_monitor.py --format table --warn-only
 ```
 
 Use Case: In large-scale baremetal datacenters, thermal issues can lead to hardware throttling, system instability, or permanent damage. This script provides visibility into temperature sensors and fan speeds across servers, making it ideal for proactive thermal monitoring and capacity planning. Critical for high-density deployments where cooling is a concern.
+
+### memory_health_monitor.py
+```
+python memory_health_monitor.py [--format format] [--warn-only] [--verbose]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only: Only show memory issues (warnings/critical)
+  --verbose: Show detailed DIMM information
+```
+
+Requirements:
+  - Linux kernel with EDAC support for ECC error monitoring (/sys/devices/system/edac/mc)
+  - /proc/meminfo for memory usage statistics (available on all Linux systems)
+  - ECC-capable hardware and enabled EDAC kernel modules for full functionality
+
+Exit codes:
+  - 0: No memory errors detected
+  - 1: Memory warnings or errors detected
+  - 2: Usage error or missing dependencies
+
+Features:
+  - Monitor ECC (Error-Correcting Code) memory errors
+  - Detect correctable (CE) and uncorrectable (UE) memory errors
+  - Per-DIMM error tracking with location information
+  - Memory pressure analysis (RAM and swap usage)
+  - Multiple memory controller support
+  - Multiple output formats (plain, JSON, table)
+  - Warn-only mode to focus on failing DIMMs
+  - JSON output for monitoring system integration
+
+Examples:
+```bash
+# Check memory health and ECC errors
+memory_health_monitor.py
+
+# Show only issues (warnings/critical)
+memory_health_monitor.py --warn-only
+
+# Detailed DIMM information
+memory_health_monitor.py --verbose
+
+# JSON output for monitoring integration
+memory_health_monitor.py --format json
+
+# Table format with warnings only
+memory_health_monitor.py --format table --warn-only
+```
+
+Use Case: In large-scale baremetal environments, memory failures are a leading cause of system crashes and data corruption. ECC memory can detect and correct single-bit errors, but tracking these errors is critical for predictive maintenance. This script monitors ECC error counts at both the memory controller and individual DIMM level, enabling proactive replacement of failing DIMMs before uncorrectable errors occur. It also monitors memory pressure to detect capacity issues. Essential for maintaining reliability in production baremetal infrastructure.
 
 ### cpu_frequency_monitor.py
 ```
