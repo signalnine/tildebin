@@ -37,6 +37,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `network_interface_health.py`: Monitor network interface health and error statistics
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
+- `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
 - `system_inventory.py`: Generate hardware inventory for baremetal systems
 - `filesystem_usage_tracker.py`: Track filesystem usage and identify large directories
 - `sysctl_audit.py`: Audit kernel parameters (sysctl) against a baseline configuration
@@ -561,6 +562,48 @@ sysctl_audit.py -b baseline.conf --verbose
 ```
 
 Use Case: In large baremetal deployments, ensuring consistent kernel settings across all hosts is critical. Create a baseline on a reference system, then use this script in your provisioning or monitoring pipeline to verify all nodes have the correct sysctl configuration.
+
+### pcie_health_monitor.py
+```
+python pcie_health_monitor.py [--format format] [--warn-only] [--verbose]
+  --format, -f: Output format, either 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show devices with warnings or critical status
+  --verbose, -v: Show detailed device information including N/A devices
+```
+
+Requirements:
+  - lspci command-line tool (pciutils package on Linux)
+  - Read access to PCIe configuration space
+
+Exit codes:
+  - 0: All PCIe devices healthy
+  - 1: Warning or critical conditions detected
+  - 2: Usage error or missing dependencies
+
+Features:
+  - Monitor PCIe link speed and width (detect degradation)
+  - Check for PCIe errors (correctable, uncorrectable, fatal)
+  - Compare current link status vs. device capabilities
+  - Multiple output formats (plain, JSON, table)
+  - Warn-only mode for monitoring integration
+  - Detect devices running below capability (x16 at x8, Gen3 at Gen2)
+
+Examples:
+```bash
+# Check all PCIe devices
+pcie_health_monitor.py
+
+# Show only devices with issues
+pcie_health_monitor.py --warn-only
+
+# Output as JSON for monitoring systems
+pcie_health_monitor.py --format json
+
+# Show table format with all details
+pcie_health_monitor.py --format table --verbose
+```
+
+Use Case: In baremetal environments with GPUs, NVMe storage, or high-speed networking, PCIe link degradation can cause significant performance issues that are difficult to diagnose. This script detects PCIe devices running below their capabilities (such as a GPU running at x8 instead of x16, or a Gen3 device downgraded to Gen2), as well as devices with error counters indicating hardware problems. Regular monitoring can catch failing risers, thermal issues, or marginal PCIe slots before they cause complete failures.
 
 ### kubernetes_node_health.py
 ```
