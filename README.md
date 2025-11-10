@@ -33,6 +33,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
 - `hardware_temperature_monitor.py`: Monitor hardware temperature sensors and fan speeds
+- `ipmi_sel_monitor.py`: Monitor IPMI System Event Log (SEL) for hardware errors and critical events
 - `memory_health_monitor.py`: Monitor memory health, ECC errors, and memory pressure
 - `network_interface_health.py`: Monitor network interface health and error statistics
 - `network_bond_status.sh`: Check status of network bonded interfaces
@@ -254,6 +255,60 @@ hardware_temperature_monitor.py --format table --warn-only
 ```
 
 Use Case: In large-scale baremetal datacenters, thermal issues can lead to hardware throttling, system instability, or permanent damage. This script provides visibility into temperature sensors and fan speeds across servers, making it ideal for proactive thermal monitoring and capacity planning. Critical for high-density deployments where cooling is a concern.
+
+### ipmi_sel_monitor.py
+```
+python ipmi_sel_monitor.py [-f format] [-w] [-v] [--hours N] [--clear]
+  -f, --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -w, --warn-only: Only show warning and critical events
+  -v, --verbose: Show detailed SEL information
+  --hours: Only show events from the last N hours
+  --clear: Clear SEL after displaying (requires root privileges)
+```
+
+Requirements:
+  - ipmitool package
+  - Ubuntu/Debian: `sudo apt-get install ipmitool`
+  - RHEL/CentOS: `sudo yum install ipmitool`
+  - Requires root privileges or proper IPMI user permissions
+
+Exit codes:
+  - 0: No critical events or only informational events
+  - 1: Warning or critical events detected
+  - 2: Usage error or missing dependencies
+
+Features:
+  - Monitor IPMI System Event Log (SEL) for hardware failures
+  - Detect power supply failures, memory ECC errors, fan failures
+  - Track temperature threshold violations and voltage anomalies
+  - Categorize events by severity (CRITICAL, WARNING, INFO)
+  - Filter events by time range (e.g., last 24 hours)
+  - Multiple output formats (plain, JSON, table)
+  - SEL clearing capability for maintenance
+  - JSON output for monitoring system integration
+
+Examples:
+```bash
+# Check all SEL entries
+ipmi_sel_monitor.py
+
+# Show only warnings and critical events
+ipmi_sel_monitor.py --warn-only
+
+# Show events from last 24 hours
+ipmi_sel_monitor.py --hours 24
+
+# JSON output for monitoring integration
+ipmi_sel_monitor.py --format json
+
+# Table format with recent warnings
+ipmi_sel_monitor.py --format table --warn-only --hours 48
+
+# Clear SEL after viewing (requires root)
+sudo ipmi_sel_monitor.py --clear
+```
+
+Use Case: The IPMI System Event Log is a critical component of hardware monitoring in baremetal datacenters. It captures hardware-level events that may not be visible to the operating system, including power supply failures, memory errors, thermal events, and fan failures. This script provides proactive detection of hardware issues before they cause system downtime, making it essential for large-scale baremetal fleet management. The SEL often contains early warning signs of impending hardware failures, allowing for preventive maintenance.
 
 ### memory_health_monitor.py
 ```
