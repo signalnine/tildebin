@@ -48,6 +48,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_pod_resource_audit.py`: Audit pod resource usage and identify resource issues
 - `k8s_pv_health_check.py`: Check persistent volume health and storage status
 - `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
+- `k8s_dns_health_monitor.py`: Monitor DNS health including CoreDNS/kube-dns pod status and resolution testing
 - `k8s_event_monitor.py`: Monitor Kubernetes events to track cluster issues and anomalies
 - `k8s_node_capacity_planner.py`: Analyze cluster capacity and forecast resource allocation
 - `k8s_cpu_throttling_detector.py`: Detect pods experiencing or at risk of CPU throttling
@@ -820,6 +821,58 @@ k8s_deployment_status.py --format json
 
 # Combine options: production namespace, only problematic, JSON format
 k8s_deployment_status.py -n production -w -f json
+```
+
+### k8s_dns_health_monitor.py
+```
+python k8s_dns_health_monitor.py [--namespace NAMESPACE] [--format format] [--warn-only] [--no-dns-test] [--test-domain DOMAIN]
+  --namespace, -n: Namespace where DNS pods are running (default: kube-system)
+  --format, -f: Output format, either 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show output if issues or warnings are detected
+  --no-dns-test: Skip DNS resolution test (faster but less thorough)
+  --test-domain: Domain to test DNS resolution (default: kubernetes.default.svc.cluster.local)
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: All DNS components healthy
+  - 1: DNS issues detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Monitors CoreDNS/kube-dns pod health and readiness
+  - Tests actual DNS resolution from within the cluster
+  - Checks DNS service ClusterIP and endpoint availability
+  - Tracks pod restart counts that may indicate instability
+  - Validates DNS ConfigMap presence
+  - Detects common DNS failure modes (no ready endpoints, service misconfiguration)
+  - Supports plain text, JSON, and table output formats
+
+Examples:
+```bash
+# Check DNS health with plain output
+k8s_dns_health_monitor.py
+
+# JSON output for monitoring systems
+k8s_dns_health_monitor.py --format json
+
+# Check DNS in a specific namespace
+k8s_dns_health_monitor.py --namespace custom-dns
+
+# Only show problems
+k8s_dns_health_monitor.py --warn-only
+
+# Skip DNS resolution test (faster)
+k8s_dns_health_monitor.py --no-dns-test
+
+# Test resolution of a custom domain
+k8s_dns_health_monitor.py --test-domain my-service.production.svc.cluster.local
+
+# Table format for easy reading
+k8s_dns_health_monitor.py --format table
 ```
 
 ### k8s_event_monitor.py
