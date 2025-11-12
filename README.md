@@ -60,6 +60,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_pod_count_analyzer.py`: Audit pod counts, scaling configuration, and resource quota usage
 - `k8s_orphaned_resources_finder.py`: Find orphaned and unused resources (ConfigMaps, Secrets, PVCs, Services, ServiceAccounts)
 - `k8s_container_restart_analyzer.py`: Analyze container restart patterns and identify root causes with remediation suggestions
+- `k8s_network_policy_audit.py`: Audit network policies and identify security gaps, unprotected pods, and configuration issues
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -1516,3 +1517,61 @@ Use Cases:
   - **Health Probe Tuning**: Detect probe failures and tune liveness/readiness probe configurations
   - **Baremetal Operations**: Critical for large-scale environments where restart patterns indicate hardware or network issues
   - **Production Stability**: Regular analysis prevents cascading failures from unstable containers
+
+### k8s_network_policy_audit.py
+```
+python3 k8s_network_policy_audit.py [--namespace NAMESPACE] [--format FORMAT] [--warn-only]
+  --namespace, -n: Audit specific namespace (default: all namespaces)
+  --format, -f: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show issues and warnings
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: Network policies properly configured
+  - 1: Security issues or missing policies detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Identifies namespaces without network policies (default allow-all behavior)
+  - Detects pods not covered by any network policy
+  - Flags overly permissive policies (allowing all ingress/egress)
+  - Finds deny-all policies that may block legitimate traffic
+  - Validates network policy configuration and syntax
+  - Analyzes pod label matching against policy selectors
+  - Multiple output formats for monitoring integration
+
+Examples:
+```bash
+# Audit all namespaces
+k8s_network_policy_audit.py
+
+# Audit specific namespace
+k8s_network_policy_audit.py -n production
+
+# Show only issues
+k8s_network_policy_audit.py --warn-only
+
+# JSON output for monitoring systems
+k8s_network_policy_audit.py --format json
+
+# Table format for overview
+k8s_network_policy_audit.py --format table
+
+# Combine options: production namespace, only issues, JSON format
+k8s_network_policy_audit.py -n production -w -f json
+```
+
+Use Cases:
+  - **Security Auditing**: Identify namespaces and pods without network policy protection
+  - **Zero Trust Networking**: Validate that all workloads have appropriate network restrictions
+  - **Compliance**: Ensure network policies meet security requirements and best practices
+  - **Troubleshooting**: Identify overly restrictive policies blocking legitimate traffic
+  - **Migration Planning**: Audit existing policies before implementing zero-trust architecture
+  - **Multi-tenant Security**: Verify namespace isolation in shared clusters
+  - **Policy Validation**: Detect misconfigured policies that don't match any pods
+  - **Baremetal Deployments**: Critical for on-premises clusters where network segmentation is required
+  - **Incident Prevention**: Catch security gaps before they're exploited
