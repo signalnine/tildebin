@@ -48,6 +48,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_pod_resource_audit.py`: Audit pod resource usage and identify resource issues
 - `k8s_pv_health_check.py`: Check persistent volume health and storage status
 - `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
+- `k8s_statefulset_health.py`: Monitor StatefulSet health with detailed pod and PVC status checking
 - `k8s_dns_health_monitor.py`: Monitor DNS health including CoreDNS/kube-dns pod status and resolution testing
 - `k8s_event_monitor.py`: Monitor Kubernetes events to track cluster issues and anomalies
 - `k8s_node_capacity_planner.py`: Analyze cluster capacity and forecast resource allocation
@@ -822,6 +823,52 @@ k8s_deployment_status.py --format json
 
 # Combine options: production namespace, only problematic, JSON format
 k8s_deployment_status.py -n production -w -f json
+```
+
+### k8s_statefulset_health.py
+```
+python k8s_statefulset_health.py [--namespace NAMESPACE] [--format format] [--warn-only]
+  --namespace, -n: Namespace to check (default: all namespaces)
+  --format, -f: Output format, either 'plain' or 'json' (default: plain)
+  --warn-only, -w: Only show StatefulSets with issues or warnings
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: All StatefulSets healthy with all pods ready
+  - 1: One or more StatefulSets unhealthy or have warnings
+  - 2: Usage error or kubectl not available
+
+Features:
+  - StatefulSet-specific health monitoring beyond basic replica counts
+  - Checks pod readiness and ordering (StatefulSets maintain stable pod identities)
+  - Validates PersistentVolumeClaim binding status for each pod
+  - Detects partition rollout status (for staged rollouts)
+  - Monitors pod restart counts and container readiness
+  - Identifies volume attachment issues
+  - Validates StatefulSet update strategy configuration
+  - Per-pod issue reporting for granular troubleshooting
+  - Supports plain text and JSON output formats
+
+Examples:
+```bash
+# Check all StatefulSets with plain output
+k8s_statefulset_health.py
+
+# Show only StatefulSets with issues
+k8s_statefulset_health.py --warn-only
+
+# Check specific namespace
+k8s_statefulset_health.py -n production
+
+# Get JSON output for monitoring integration
+k8s_statefulset_health.py --format json
+
+# Combine options: production namespace, only problematic, JSON format
+k8s_statefulset_health.py -n production -w -f json
 ```
 
 ### k8s_dns_health_monitor.py
