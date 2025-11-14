@@ -110,6 +110,7 @@ Options:
   -u, --user USER       SSH username (default: current user)
   -s, --strict          Enable strict host key checking (default: disabled)
   -o, --ssh-opts OPTS   Additional SSH options (quoted string)
+  -T, --teleport        Use Teleport (tsh ssh) instead of regular SSH
   -v, --verbose         Verbose output (show SSH commands)
   -q, --quiet           Quiet mode (only show errors)
   -n, --dry-run         Show what would be executed without running
@@ -118,6 +119,7 @@ Options:
 
 Features:
   - Parallel execution with configurable job count
+  - Support for both standard SSH and Teleport (tsh ssh)
   - Configurable SSH timeout (prevents hanging on unreachable hosts)
   - Comprehensive error handling and reporting
   - Dry-run mode for safety before destructive operations
@@ -146,6 +148,12 @@ acrosshosts.sh -n hosts.txt "rm -rf /tmp/old_files"
 
 # Custom timeout and SSH options
 acrosshosts.sh -t 10 -o "-p 2222" hosts.txt "hostname"
+
+# Use Teleport for secure access
+acrosshosts.sh -T hosts.txt "uptime"
+
+# Use Teleport with parallel execution and specific user
+acrosshosts.sh -T -j 5 -u admin hosts.txt "systemctl status app"
 ```
 
 ### useradd.sh
