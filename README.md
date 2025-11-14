@@ -100,7 +100,52 @@ Supported environment variables:
 
 ### acrosshosts.sh
 ```
-acrosshosts.sh [hostlist.txt] [command]
+acrosshosts.sh [OPTIONS] <hostlist> <command>
+  <hostlist>    File containing list of hosts (one per line)
+  <command>     Command to execute on each host
+
+Options:
+  -j, --jobs N          Run N jobs in parallel (default: 1)
+  -t, --timeout N       SSH connection timeout in seconds (default: 30)
+  -u, --user USER       SSH username (default: current user)
+  -s, --strict          Enable strict host key checking (default: disabled)
+  -o, --ssh-opts OPTS   Additional SSH options (quoted string)
+  -v, --verbose         Verbose output (show SSH commands)
+  -q, --quiet           Quiet mode (only show errors)
+  -n, --dry-run         Show what would be executed without running
+  -h, --help            Display help message
+```
+
+Features:
+  - Parallel execution with configurable job count
+  - Configurable SSH timeout (prevents hanging on unreachable hosts)
+  - Comprehensive error handling and reporting
+  - Dry-run mode for safety before destructive operations
+  - Support for comments and empty lines in hostlist
+  - Color-coded output (success/failure indicators)
+  - Summary report showing succeeded and failed hosts
+
+Exit codes:
+  - 0: All hosts succeeded
+  - 1: One or more hosts failed
+  - 2: Usage error or invalid arguments
+
+Examples:
+```bash
+# Run uptime on all hosts
+acrosshosts.sh hosts.txt "uptime"
+
+# Run with 5 parallel connections
+acrosshosts.sh -j 5 hosts.txt "df -h"
+
+# Use specific user with verbose output
+acrosshosts.sh -u admin -v hosts.txt "systemctl status nginx"
+
+# Dry run to see what would execute
+acrosshosts.sh -n hosts.txt "rm -rf /tmp/old_files"
+
+# Custom timeout and SSH options
+acrosshosts.sh -t 10 -o "-p 2222" hosts.txt "hostname"
 ```
 
 ### useradd.sh
