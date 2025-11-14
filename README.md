@@ -40,6 +40,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
 - `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
 - `system_inventory.py`: Generate hardware inventory for baremetal systems
+- `systemd_service_monitor.py`: Monitor systemd service health and identify failed or degraded units
 - `filesystem_usage_tracker.py`: Track filesystem usage and identify large directories
 - `sysctl_audit.py`: Audit kernel parameters (sysctl) against a baseline configuration
 
@@ -580,6 +581,59 @@ python system_inventory.py [--format format] [-o output] [--include-pci]
 ```
 
 Note: Run as root for additional hardware details from dmidecode
+
+### systemd_service_monitor.py
+```
+python systemd_service_monitor.py [--format format] [--warn-only] [--verbose] [--type type] [--filter pattern]
+  -f, --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -w, --warn-only: Only show problematic units
+  -v, --verbose: Show detailed information about problematic units
+  -t, --type: Filter by unit type (service, timer, socket, etc.)
+  --filter: Filter units by pattern (e.g., "nginx*")
+```
+
+Requirements:
+  - systemd/systemctl (standard on systemd-based Linux distributions)
+
+Exit codes:
+  - 0: All services healthy
+  - 1: One or more services have issues
+  - 2: systemctl not available or usage error
+
+Features:
+  - Monitor all systemd units (services, timers, sockets, etc.)
+  - Identify failed, degraded, or problematic units
+  - Multiple output formats (plain, JSON, table)
+  - Filter by unit type or pattern
+  - Warn-only mode for monitoring integration
+  - Detailed verbose output with error messages
+  - Detect load errors and masked units
+
+Examples:
+```bash
+# Check all systemd units
+systemd_service_monitor.py
+
+# Show only problematic units
+systemd_service_monitor.py --warn-only
+
+# Check only services (not timers, sockets, etc.)
+systemd_service_monitor.py --type service
+
+# Get JSON output for monitoring systems
+systemd_service_monitor.py --format json
+
+# Verbose output with error details
+systemd_service_monitor.py --verbose --warn-only
+
+# Check specific units matching a pattern
+systemd_service_monitor.py --filter "nginx*"
+
+# Table format overview
+systemd_service_monitor.py --format table --warn-only
+```
+
+Use Case: In large baremetal fleets, tracking systemd service health across all hosts is essential for identifying failed services, degraded states, or configuration errors. This script provides a quick overview of all systemd units, making it ideal for automated health checks, pre-deployment validation, or troubleshooting. Integration with monitoring systems (via JSON output) enables alerting on service failures.
 
 ### filesystem_usage_tracker.py
 ```
