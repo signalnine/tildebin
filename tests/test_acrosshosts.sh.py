@@ -433,6 +433,91 @@ def test_long_options():
     finally:
         os.unlink(temp_file)
 
+def test_teleport_flag():
+    """Test that Teleport flag is accepted"""
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        f.write("localhost\n")
+        temp_file = f.name
+
+    try:
+        return_code, stdout, stderr = run_command(
+            ['bash', 'acrosshosts.sh', '-T', '-n', temp_file, 'uptime']
+        )
+
+        if return_code == 0 and 'Using Teleport (tsh ssh)' in stdout:
+            print("[PASS] Teleport flag test passed")
+            return True
+        else:
+            print(f"[FAIL] Teleport flag test failed")
+            print(f"  Expected exit code 0, got: {return_code}")
+            print(f"  Output: {stdout[:300]}")
+            return False
+    finally:
+        os.unlink(temp_file)
+
+def test_teleport_long_option():
+    """Test that --teleport long option works"""
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        f.write("localhost\n")
+        temp_file = f.name
+
+    try:
+        return_code, stdout, stderr = run_command(
+            ['bash', 'acrosshosts.sh', '--teleport', '--dry-run', temp_file, 'uptime']
+        )
+
+        if return_code == 0 and 'Using Teleport (tsh ssh)' in stdout:
+            print("[PASS] Teleport long option test passed")
+            return True
+        else:
+            print(f"[FAIL] Teleport long option test failed")
+            print(f"  Output: {stdout[:300]}")
+            return False
+    finally:
+        os.unlink(temp_file)
+
+def test_teleport_with_user():
+    """Test that Teleport flag works with user option"""
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        f.write("testhost\n")
+        temp_file = f.name
+
+    try:
+        return_code, stdout, stderr = run_command(
+            ['bash', 'acrosshosts.sh', '-T', '-u', 'admin', '-n', temp_file, 'uptime']
+        )
+
+        if return_code == 0 and 'Using Teleport (tsh ssh)' in stdout:
+            print("[PASS] Teleport with user test passed")
+            return True
+        else:
+            print(f"[FAIL] Teleport with user test failed")
+            print(f"  Expected exit code 0, got: {return_code}")
+            return False
+    finally:
+        os.unlink(temp_file)
+
+def test_without_teleport_shows_ssh():
+    """Test that without Teleport flag, it shows standard SSH"""
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        f.write("localhost\n")
+        temp_file = f.name
+
+    try:
+        return_code, stdout, stderr = run_command(
+            ['bash', 'acrosshosts.sh', '-n', temp_file, 'uptime']
+        )
+
+        if return_code == 0 and 'Using standard SSH' in stdout:
+            print("[PASS] Without Teleport shows SSH test passed")
+            return True
+        else:
+            print(f"[FAIL] Without Teleport shows SSH test failed")
+            print(f"  Output: {stdout[:300]}")
+            return False
+    finally:
+        os.unlink(temp_file)
+
 if __name__ == "__main__":
     print("Testing acrosshosts.sh...")
     print("")
@@ -459,6 +544,10 @@ if __name__ == "__main__":
         test_multi_word_command,
         test_option_requires_argument,
         test_long_options,
+        test_teleport_flag,
+        test_teleport_long_option,
+        test_teleport_with_user,
+        test_without_teleport_shows_ssh,
     ]
 
     passed = sum(1 for test in tests if test())

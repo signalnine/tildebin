@@ -21,6 +21,7 @@ QUIET=false
 DRY_RUN=false
 SSH_USER=""
 SSH_OPTIONS=""
+USE_TELEPORT=false
 
 # Color codes for output
 RED='\033[0;31m'
@@ -48,6 +49,7 @@ Options:
   -u, --user USER       SSH username (default: current user)
   -s, --strict          Enable strict host key checking (default: disabled)
   -o, --ssh-opts OPTS   Additional SSH options (quoted string)
+  -T, --teleport        Use Teleport (tsh ssh) instead of regular SSH
   -v, --verbose         Verbose output (show SSH commands)
   -q, --quiet           Quiet mode (only show errors)
   -n, --dry-run         Show what would be executed without running
@@ -68,6 +70,12 @@ Examples:
 
   # Custom timeout and SSH options
   acrosshosts.sh -t 10 -o "-p 2222" hosts.txt "hostname"
+
+  # Use Teleport for secure access
+  acrosshosts.sh -T hosts.txt "uptime"
+
+  # Use Teleport with parallel execution
+  acrosshosts.sh -T -j 5 -u admin hosts.txt "systemctl status app"
 
 Exit codes:
   0 - All hosts succeeded
@@ -164,6 +172,10 @@ parse_args() {
                 SSH_OPTIONS="$2"
                 shift 2
                 ;;
+            -T|--teleport)
+                USE_TELEPORT=true
+                shift
+                ;;
             -v|--verbose)
                 VERBOSE=true
                 shift
@@ -221,27 +233,55 @@ validate_hostlist() {
 execute_on_host() {
     local host="$1"
     local command="$2"
-    local ssh_cmd="ssh"
+    local ssh_cmd
     local ssh_args=()
 
-    # Build SSH command
-    ssh_args+=("-o" "ConnectTimeout=${TIMEOUT}")
-    ssh_args+=("-o" "StrictHostKeyChecking=${STRICT_HOST_KEY_CHECKING}")
-    ssh_args+=("-o" "BatchMode=yes")
-
-    # Add custom SSH options if provided
-    if [[ -n "$SSH_OPTIONS" ]]; then
-        # shellcheck disable=SC2206
-        ssh_args+=($SSH_OPTIONS)
+    # Determine SSH command (ssh vs tsh ssh)
+    if [[ "$USE_TELEPORT" == true ]]; then
+        ssh_cmd="tsh"
+        ssh_args+=("ssh")
+    else
+        ssh_cmd="ssh"
     fi
 
-    # Add user if specified
-    if [[ -n "$SSH_USER" ]]; then
-        ssh_args+=("-l" "$SSH_USER")
-    fi
+    # Build SSH command arguments
+    if [[ "$USE_TELEPORT" == true ]]; then
+        # Teleport-specific options
+        # tsh doesn't support all SSH options, so we're more selective
 
-    # Add host
-    ssh_args+=("$host")
+        # Add user if specified (tsh uses user@host format)
+        if [[ -n "$SSH_USER" ]]; then
+            ssh_args+=("${SSH_USER}@${host}")
+        else
+            ssh_args+=("$host")
+        fi
+
+        # Add custom SSH options if provided
+        # These will be passed through to the underlying SSH
+        if [[ -n "$SSH_OPTIONS" ]]; then
+            # shellcheck disable=SC2206
+            ssh_args+=($SSH_OPTIONS)
+        fi
+    else
+        # Standard SSH options
+        ssh_args+=("-o" "ConnectTimeout=${TIMEOUT}")
+        ssh_args+=("-o" "StrictHostKeyChecking=${STRICT_HOST_KEY_CHECKING}")
+        ssh_args+=("-o" "BatchMode=yes")
+
+        # Add custom SSH options if provided
+        if [[ -n "$SSH_OPTIONS" ]]; then
+            # shellcheck disable=SC2206
+            ssh_args+=($SSH_OPTIONS)
+        fi
+
+        # Add user if specified
+        if [[ -n "$SSH_USER" ]]; then
+            ssh_args+=("-l" "$SSH_USER")
+        fi
+
+        # Add host
+        ssh_args+=("$host")
+    fi
 
     # Add command
     ssh_args+=("$command")
@@ -287,7 +327,7 @@ export -f log_info
 export -f log_error
 export -f log_verbose
 export -f log_warn
-export TIMEOUT STRICT_HOST_KEY_CHECKING SSH_OPTIONS SSH_USER VERBOSE QUIET DRY_RUN
+export TIMEOUT STRICT_HOST_KEY_CHECKING SSH_OPTIONS SSH_USER VERBOSE QUIET DRY_RUN USE_TELEPORT
 export RED GREEN YELLOW NC
 
 # Main execution
@@ -320,6 +360,11 @@ main() {
     log_info "Found $total_hosts host(s) in $HOSTLIST"
     if [[ "$DRY_RUN" == true ]]; then
         log_info "DRY RUN MODE - No commands will be executed"
+    fi
+    if [[ "$USE_TELEPORT" == true ]]; then
+        log_info "Using Teleport (tsh ssh)"
+    else
+        log_info "Using standard SSH"
     fi
     log_info "Command: $COMMAND"
     log_info "Parallel jobs: $PARALLEL_JOBS"
