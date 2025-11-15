@@ -43,6 +43,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `systemd_service_monitor.py`: Monitor systemd service health and identify failed or degraded units
 - `filesystem_usage_tracker.py`: Track filesystem usage and identify large directories
 - `sysctl_audit.py`: Audit kernel parameters (sysctl) against a baseline configuration
+- `process_resource_monitor.py`: Monitor process resource consumption and detect zombie/resource-hungry processes
 
 ### Kubernetes Management
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
@@ -727,6 +728,64 @@ sysctl_audit.py -b baseline.conf --verbose
 ```
 
 Use Case: In large baremetal deployments, ensuring consistent kernel settings across all hosts is critical. Create a baseline on a reference system, then use this script in your provisioning or monitoring pipeline to verify all nodes have the correct sysctl configuration.
+
+### process_resource_monitor.py
+```
+python process_resource_monitor.py [--format format] [--top-n N] [--mem-threshold PCT] [--by-user] [--warn-only] [--verbose]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --top-n: Number of top processes to show (default: 10)
+  --mem-threshold: Alert on processes exceeding this memory percentage
+  --by-user: Show process count by user
+  --warn-only: Only show warnings and issues (zombies, threshold violations)
+  --verbose: Show detailed information
+```
+
+Requirements:
+  - Linux /proc filesystem (standard on all Linux systems)
+  - No external dependencies required
+
+Exit codes:
+  - 0: No issues detected
+  - 1: Zombies found or thresholds exceeded
+  - 2: Usage error
+
+Features:
+  - Monitor top CPU/memory consuming processes
+  - Detect zombie processes (state Z)
+  - Track process counts per user
+  - Set memory usage thresholds for alerts
+  - Multiple output formats (plain, JSON, table)
+  - Warn-only mode for monitoring integration
+  - Parse /proc filesystem directly (no external tools required)
+
+Examples:
+```bash
+# Show top 10 CPU and memory consumers
+process_resource_monitor.py
+
+# Show top 20 consumers with detailed info
+process_resource_monitor.py --top-n 20 --verbose
+
+# Alert on processes using more than 10% memory
+process_resource_monitor.py --mem-threshold 10
+
+# Show process counts by user
+process_resource_monitor.py --by-user
+
+# Only show warnings (zombies, threshold violations)
+process_resource_monitor.py --warn-only
+
+# JSON output for monitoring systems
+process_resource_monitor.py --format json
+
+# Table format with memory threshold
+process_resource_monitor.py --format table --mem-threshold 5
+
+# Combine options: top 15, memory alert, show by user
+process_resource_monitor.py --top-n 15 --mem-threshold 8 --by-user
+```
+
+Use Case: In large-scale baremetal environments, identifying resource-hungry processes and zombie processes is critical for troubleshooting performance issues. This script provides quick visibility into process-level resource consumption across servers, making it ideal for debugging CPU or memory bottlenecks. Zombie processes indicate parent process issues that need investigation. The memory threshold feature enables proactive alerting on processes consuming excessive RAM, preventing OOM conditions. Essential for baremetal servers running diverse workloads where process monitoring complements system-level metrics.
 
 ### pcie_health_monitor.py
 ```
