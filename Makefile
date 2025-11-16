@@ -65,6 +65,7 @@ check-deps:
 	@echo ""
 	@echo "Checking optional system tools..."
 	@which smartctl >/dev/null 2>&1 && echo "✓ smartctl installed" || echo "✗ smartctl missing (for disk_health_check.py)"
+	@which iostat >/dev/null 2>&1 && echo "✓ iostat installed" || echo "✗ iostat missing (for disk_io_monitor.py)"
 	@which mdadm >/dev/null 2>&1 && echo "✓ mdadm installed" || echo "✗ mdadm missing (for software RAID in check_raid.py)"
 	@which kubectl >/dev/null 2>&1 && echo "✓ kubectl installed" || echo "✗ kubectl missing (for kubernetes_node_health.py)"
 	@which lspci >/dev/null 2>&1 && echo "✓ lspci installed" || echo "✓ lspci installed"

@@ -30,6 +30,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 
 ### Baremetal System Monitoring
 - `disk_health_check.py`: Monitor disk health using SMART attributes
+- `disk_io_monitor.py`: Monitor disk I/O performance and identify bottlenecks
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
 - `hardware_temperature_monitor.py`: Monitor hardware temperature sensors and fan speeds
@@ -251,6 +252,56 @@ Requirements:
   - smartmontools package (smartctl command)
   - Ubuntu/Debian: `sudo apt-get install smartmontools`
   - RHEL/CentOS: `sudo yum install smartmontools`
+
+### disk_io_monitor.py
+```
+python disk_io_monitor.py [-f format] [-w] [-v]
+  -f, --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -w, --warn-only: Only show devices with warnings or issues
+  -v, --verbose: Show detailed information and all issues
+```
+
+Requirements:
+  - sysstat package (iostat command)
+  - Ubuntu/Debian: `sudo apt-get install sysstat`
+  - RHEL/CentOS: `sudo yum install sysstat`
+
+Exit codes:
+  - 0: All disks performing normally
+  - 1: Performance warnings or issues detected
+  - 2: Usage error or missing dependencies
+
+Features:
+  - Monitor disk I/O utilization and detect saturated devices
+  - Track I/O latency (await time) and identify slow devices
+  - Detect high I/O queue lengths indicating backlog
+  - Analyze read vs write performance imbalance
+  - Multiple output formats (plain, JSON, table)
+  - Warn-only mode to focus on problem devices
+  - JSON output for monitoring system integration
+
+Examples:
+```bash
+# Check all disk I/O performance
+disk_io_monitor.py
+
+# Show only devices with issues
+disk_io_monitor.py --warn-only
+
+# Detailed output with all issues
+disk_io_monitor.py --verbose
+
+# JSON output for monitoring integration
+disk_io_monitor.py --format json
+
+# Table format for easy reading
+disk_io_monitor.py --format table
+
+# Combine options: table format with warnings only
+disk_io_monitor.py --format table --warn-only
+```
+
+Use Case: In large-scale baremetal environments, disk I/O bottlenecks can severely impact application performance. This script monitors I/O utilization, latency, and queue depth to identify slow or saturated disks before they cause application slowdowns. Critical for database servers, storage nodes, and high-throughput workloads where I/O performance directly impacts service quality. Use in monitoring pipelines to detect degrading disks, saturated RAID controllers, or misconfigured I/O schedulers.
 
 ### check_raid.py
 ```
