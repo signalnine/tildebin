@@ -30,6 +30,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 
 ### Baremetal System Monitoring
 - `disk_health_check.py`: Monitor disk health using SMART attributes
+- `nvme_health_monitor.py`: Monitor NVMe SSD health metrics including wear level, power cycles, unsafe shutdowns, media errors, and thermal throttling
 - `disk_io_monitor.py`: Monitor disk I/O performance and identify bottlenecks
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
@@ -252,6 +253,29 @@ Requirements:
   - smartmontools package (smartctl command)
   - Ubuntu/Debian: `sudo apt-get install smartmontools`
   - RHEL/CentOS: `sudo yum install smartmontools`
+
+### nvme_health_monitor.py
+```
+python nvme_health_monitor.py [--format format] [-w] [-v] [--warn-wear N] [--critical-wear N] [--warn-temp N] [--critical-temp N]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -w, --warn-only: Only show devices with warnings or issues
+  -v, --verbose: Show detailed information
+  --warn-wear: Wear level warning threshold percentage (default: 80)
+  --critical-wear: Wear level critical threshold percentage (default: 90)
+  --warn-temp: Temperature warning threshold in Celsius (default: 70)
+  --critical-temp: Temperature critical threshold in Celsius (default: 80)
+  --max-unsafe-shutdowns: Maximum unsafe shutdowns before warning (default: 10)
+```
+
+Requirements:
+  - nvme-cli package (nvme command)
+  - Ubuntu/Debian: `sudo apt-get install nvme-cli`
+  - RHEL/CentOS: `sudo yum install nvme-cli`
+
+Exit codes:
+  - 0: All NVMe devices healthy
+  - 1: Warnings or errors detected (high wear, media errors, thermal throttling)
+  - 2: Missing dependency (nvme-cli not installed)
 
 ### disk_io_monitor.py
 ```
