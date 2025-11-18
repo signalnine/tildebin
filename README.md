@@ -35,6 +35,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
 - `hardware_temperature_monitor.py`: Monitor hardware temperature sensors and fan speeds
+- `gpu_health_monitor.py`: Monitor NVIDIA GPU health, temperature, memory, ECC errors, and power consumption
 - `ipmi_sel_monitor.py`: Monitor IPMI System Event Log (SEL) for hardware errors and critical events
 - `memory_health_monitor.py`: Monitor memory health, ECC errors, and memory pressure
 - `network_interface_health.py`: Monitor network interface health and error statistics
@@ -388,6 +389,48 @@ hardware_temperature_monitor.py --format table --warn-only
 ```
 
 Use Case: In large-scale baremetal datacenters, thermal issues can lead to hardware throttling, system instability, or permanent damage. This script provides visibility into temperature sensors and fan speeds across servers, making it ideal for proactive thermal monitoring and capacity planning. Critical for high-density deployments where cooling is a concern.
+
+### gpu_health_monitor.py
+```
+python gpu_health_monitor.py [-f format] [-w] [-v]
+  -f, --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -w, --warn-only: Only show GPUs with warnings or critical status
+  -v, --verbose: Show detailed information (power, clocks, ECC errors)
+```
+
+Requirements:
+  - NVIDIA GPU with drivers installed
+  - nvidia-smi command available in PATH
+
+Features:
+  - Temperature monitoring (GPU and memory)
+  - Memory usage and utilization tracking
+  - ECC error detection (corrected and uncorrected)
+  - Power consumption monitoring
+  - Clock speed and throttling detection
+  - Performance state (P-state) reporting
+  - Fan speed monitoring
+  - JSON output for monitoring system integration
+
+Examples:
+```bash
+# Check all GPU health metrics
+gpu_health_monitor.py
+
+# Show only warnings and critical issues
+gpu_health_monitor.py --warn-only
+
+# Detailed output with power, clocks, and ECC details
+gpu_health_monitor.py --verbose
+
+# JSON output for monitoring integration
+gpu_health_monitor.py --format json
+
+# Table format for quick overview
+gpu_health_monitor.py --format table
+```
+
+Use Case: GPU clusters for ML/AI workloads require proactive health monitoring to prevent silent data corruption from ECC errors, detect thermal throttling that degrades performance, and identify failing hardware before total failure. This script provides comprehensive NVIDIA GPU health metrics including temperature, memory, power consumption, and ECC error tracking. Essential for datacenter GPU deployments where reliability and performance are critical.
 
 ### ipmi_sel_monitor.py
 ```
