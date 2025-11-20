@@ -32,6 +32,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `disk_health_check.py`: Monitor disk health using SMART attributes
 - `nvme_health_monitor.py`: Monitor NVMe SSD health metrics including wear level, power cycles, unsafe shutdowns, media errors, and thermal throttling
 - `disk_io_monitor.py`: Monitor disk I/O performance and identify bottlenecks
+- `iosched_audit.py`: Audit I/O scheduler configuration across block devices and detect misconfigurations (NVMe using complex schedulers, HDDs using 'none', etc.)
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
 - `hardware_temperature_monitor.py`: Monitor hardware temperature sensors and fan speeds
@@ -327,6 +328,62 @@ disk_io_monitor.py --format table --warn-only
 ```
 
 Use Case: In large-scale baremetal environments, disk I/O bottlenecks can severely impact application performance. This script monitors I/O utilization, latency, and queue depth to identify slow or saturated disks before they cause application slowdowns. Critical for database servers, storage nodes, and high-throughput workloads where I/O performance directly impacts service quality. Use in monitoring pipelines to detect degrading disks, saturated RAID controllers, or misconfigured I/O schedulers.
+
+### iosched_audit.py
+```
+python iosched_audit.py [--format format] [-w] [-v] [--include-virtual]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -w, --warn-only: Only show devices with suboptimal scheduler settings
+  -v, --verbose: Show detailed device information (model, queue depth, available schedulers)
+  --include-virtual: Include virtual devices (loop, dm, md, ram)
+```
+
+Requirements:
+  - sysfs filesystem mounted at /sys
+  - Read access to /sys/block/* (no special privileges required)
+
+Exit codes:
+  - 0: All devices have optimal scheduler configuration
+  - 1: Suboptimal or inconsistent scheduler configurations detected
+  - 2: Usage error or /sys/block not accessible
+
+Features:
+  - Audit I/O scheduler settings across all block devices
+  - Detect NVMe devices using complex schedulers (performance degradation)
+  - Detect rotational disks using 'none' scheduler (potential performance issues)
+  - Display device type (NVMe, SSD, HDD) and provide recommendations
+  - Show queue depth and available schedulers
+  - Multiple output formats (plain, JSON, table)
+  - Warn-only mode to focus on misconfigured devices
+  - JSON output for automated auditing
+
+Scheduler Recommendations:
+  - **NVMe devices**: 'none' (bypass scheduler overhead for maximum IOPS)
+  - **SSD devices**: 'none' or 'mq-deadline' (minimal overhead)
+  - **Rotational (HDD)**: 'mq-deadline' or 'bfq' (optimize seek patterns)
+
+Examples:
+```bash
+# Check all block devices
+iosched_audit.py
+
+# Show only misconfigurations
+iosched_audit.py --warn-only
+
+# Detailed output with queue information
+iosched_audit.py --verbose
+
+# JSON output for automation
+iosched_audit.py --format json
+
+# Table format for easy reading
+iosched_audit.py --format table
+
+# Combine: show only warnings in table format
+iosched_audit.py --format table --warn-only
+```
+
+Use Case: In large-scale baremetal environments, incorrect I/O scheduler configuration is a common performance issue that often goes undetected. NVMe drives with complex schedulers (mq-deadline, bfq) suffer unnecessary overhead and reduced IOPS, while traditional spinning disks with 'none' scheduler experience poor performance due to unoptimized seeks. This script audits scheduler settings across your entire fleet to identify misconfigurations before they impact production workloads. Essential for database servers, storage nodes, and any high-performance I/O workload. Use in provisioning pipelines to verify correct configuration or in monitoring systems to detect configuration drift.
 
 ### check_raid.py
 ```
