@@ -43,6 +43,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
 - `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
+- `power_consumption_monitor.py`: Monitor server power consumption using IPMI, turbostat, and RAPL sensors
 - `system_inventory.py`: Generate hardware inventory for baremetal systems
 - `systemd_service_monitor.py`: Monitor systemd service health and identify failed or degraded units
 - `filesystem_usage_tracker.py`: Track filesystem usage and identify large directories
@@ -1003,6 +1004,57 @@ pcie_health_monitor.py --format table --verbose
 ```
 
 Use Case: In baremetal environments with GPUs, NVMe storage, or high-speed networking, PCIe link degradation can cause significant performance issues that are difficult to diagnose. This script detects PCIe devices running below their capabilities (such as a GPU running at x8 instead of x16, or a Gen3 device downgraded to Gen2), as well as devices with error counters indicating hardware problems. Regular monitoring can catch failing risers, thermal issues, or marginal PCIe slots before they cause complete failures.
+
+### power_consumption_monitor.py
+```
+python power_consumption_monitor.py [--format format] [--warn-only] [--verbose] [--skip-ipmi] [--skip-turbostat] [--skip-rapl]
+  --format, -f: Output format, either 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show warnings or critical power readings
+  --verbose, -v: Show detailed information including sensor source
+  --skip-ipmi: Skip IPMI sensor checks
+  --skip-turbostat: Skip turbostat checks (requires root)
+  --skip-rapl: Skip RAPL/sysfs checks
+```
+
+Requirements:
+  - At least one of: ipmitool, turbostat, or RAPL sysfs support
+  - ipmitool: Install with `apt-get install ipmitool`
+  - turbostat: Part of linux-tools package (requires root access)
+  - RAPL: Available on Intel CPUs via /sys/class/powercap/intel-rapl
+
+Exit codes:
+  - 0: Success (all power metrics retrieved)
+  - 1: Warning/Critical power levels detected
+  - 2: Usage error or missing dependencies
+
+Features:
+  - Monitor power consumption via IPMI BMC sensors
+  - CPU package power via turbostat (Intel CPUs)
+  - RAPL energy counters via sysfs (/sys/class/powercap)
+  - Multiple output formats (plain, JSON, table)
+  - Warn-only mode for monitoring integration
+  - Detect power sensors exceeding thresholds
+  - Support for skipping specific sensor sources
+
+Examples:
+```bash
+# Check all available power sensors
+power_consumption_monitor.py
+
+# Show only warnings/critical readings
+power_consumption_monitor.py --warn-only
+
+# Output as JSON for monitoring systems
+power_consumption_monitor.py --format json
+
+# Show table format with sensor sources
+power_consumption_monitor.py --format table --verbose
+
+# Skip IPMI, only use RAPL
+power_consumption_monitor.py --skip-ipmi --skip-turbostat
+```
+
+Use Case: In large-scale datacenter environments, power consumption monitoring is critical for capacity planning, cost optimization, and detecting hardware anomalies. This script aggregates power metrics from multiple sources (IPMI BMC sensors, Intel RAPL counters, and turbostat) to provide comprehensive visibility into server power usage. It can detect servers drawing unusually high power (potential hardware issues or runaway processes), servers with failing power supplies, or identify opportunities for power optimization. Regular monitoring helps with datacenter power budgeting and can alert on power supply failures before they cause outages.
 
 ### kubernetes_node_health.py
 ```
