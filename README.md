@@ -35,6 +35,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `iosched_audit.py`: Audit I/O scheduler configuration across block devices and detect misconfigurations (NVMe using complex schedulers, HDDs using 'none', etc.)
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
+- `firmware_version_audit.py`: Audit firmware versions for BIOS, BMC/IPMI, network interfaces, and RAID controllers to detect version drift across server fleets
 - `hardware_temperature_monitor.py`: Monitor hardware temperature sensors and fan speeds
 - `gpu_health_monitor.py`: Monitor NVIDIA GPU health, temperature, memory, ECC errors, and power consumption
 - `ipmi_sel_monitor.py`: Monitor IPMI System Event Log (SEL) for hardware errors and critical events
@@ -591,6 +592,50 @@ memory_health_monitor.py --format table --warn-only
 ```
 
 Use Case: In large-scale baremetal environments, memory failures are a leading cause of system crashes and data corruption. ECC memory can detect and correct single-bit errors, but tracking these errors is critical for predictive maintenance. This script monitors ECC error counts at both the memory controller and individual DIMM level, enabling proactive replacement of failing DIMMs before uncorrectable errors occur. It also monitors memory pressure to detect capacity issues. Essential for maintaining reliability in production baremetal infrastructure.
+
+### firmware_version_audit.py
+```
+python firmware_version_audit.py [--format format] [-v]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information
+```
+
+Requirements:
+  - dmidecode (for BIOS and system information)
+  - ethtool (for network interface firmware)
+  - ipmitool (optional, for BMC firmware)
+  - Root privileges (sudo) for full functionality
+
+Exit codes:
+  - 0: Success (all firmware info collected)
+  - 1: Partial failure (some tools missing or checks failed)
+  - 2: Usage error or critical dependency missing
+
+Features:
+  - BIOS/UEFI version and release date detection
+  - BMC/IPMI firmware version checking
+  - Network interface firmware version reporting
+  - System manufacturer and product information
+  - Multiple output formats (plain, JSON, table)
+  - Graceful handling of missing tools or privileges
+
+Use case:
+  - Identify firmware version drift across server fleets
+  - Detect outdated firmware requiring security patches
+  - Audit firmware consistency in datacenters
+  - Prevent mysterious issues caused by firmware variations
+
+Examples:
+```bash
+# Basic audit (requires sudo for complete results)
+sudo python firmware_version_audit.py
+
+# JSON output for automation
+sudo python firmware_version_audit.py --format json
+
+# Table format for quick overview
+sudo python firmware_version_audit.py --format table
+```
 
 ### cpu_frequency_monitor.py
 ```
