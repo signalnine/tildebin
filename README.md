@@ -29,6 +29,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `useradd.sh`: Create a user account with SSH access on multiple hosts
 
 ### Baremetal System Monitoring
+- `baremetal_dmesg_analyzer.py`: Analyze kernel messages (dmesg) for hardware errors and warnings across all subsystems (disk, memory, PCIe, CPU, network, filesystem, RAID, thermal)
 - `disk_health_check.py`: Monitor disk health using SMART attributes
 - `nvme_health_monitor.py`: Monitor NVMe SSD health metrics including wear level, power cycles, unsafe shutdowns, media errors, and thermal throttling
 - `disk_io_monitor.py`: Monitor disk I/O performance and identify bottlenecks
@@ -243,6 +244,48 @@ Supported environment variables:
   - `AWS_ACCESS_KEY_ID` or `AWS_ACCESS_KEY`: AWS access key
   - `AWS_SECRET_ACCESS_KEY` or `AWS_SECRET_KEY`: AWS secret key
   - `EC2_REGION`: Override the default region
+
+### baremetal_dmesg_analyzer.py
+```
+python baremetal_dmesg_analyzer.py [--since SINCE] [--format FORMAT] [-v] [-w]
+  --since: Only show messages since specified time (e.g., "1 hour ago", "2023-01-01 10:00")
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show full error messages and details
+  -w, --warn-only: Only show issues, suppress "no errors" message
+```
+
+Categories checked:
+  - Disk I/O errors (ATA, SCSI, NVMe)
+  - Memory errors (ECC, EDAC)
+  - PCIe errors (AER, link issues)
+  - CPU errors (MCE, thermal)
+  - Network errors (link down, timeouts)
+  - Filesystem errors (ext4, xfs, btrfs)
+  - RAID errors (md)
+  - Thermal warnings
+
+Exit codes:
+  - 0: No critical errors or warnings found
+  - 1: Errors or warnings found in kernel messages
+  - 2: Usage error or dmesg not available
+
+Examples:
+```bash
+# Analyze all kernel messages
+baremetal_dmesg_analyzer.py
+
+# Only recent messages
+baremetal_dmesg_analyzer.py --since "1 hour ago"
+
+# JSON output
+baremetal_dmesg_analyzer.py --format json
+
+# Only show issues with full details
+baremetal_dmesg_analyzer.py --warn-only -v
+
+# Table format for recent critical issues
+baremetal_dmesg_analyzer.py --since "24 hours ago" --format table
+```
 
 ### disk_health_check.py
 ```
