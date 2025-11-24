@@ -71,6 +71,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_orphaned_resources_finder.py`: Find orphaned and unused resources (ConfigMaps, Secrets, PVCs, Services, ServiceAccounts)
 - `k8s_container_restart_analyzer.py`: Analyze container restart patterns and identify root causes with remediation suggestions
 - `k8s_network_policy_audit.py`: Audit network policies and identify security gaps, unprotected pods, and configuration issues
+- `k8s_resource_quota_auditor.py`: Audit ResourceQuota and LimitRange policies across namespaces to ensure proper resource governance
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -2103,3 +2104,70 @@ Use Cases:
   - **Policy Validation**: Detect misconfigured policies that don't match any pods
   - **Baremetal Deployments**: Critical for on-premises clusters where network segmentation is required
   - **Incident Prevention**: Catch security gaps before they're exploited
+
+### k8s_resource_quota_auditor.py
+```
+python3 k8s_resource_quota_auditor.py [--namespace NAMESPACE] [--format FORMAT] [--warn-only] [--verbose] [--warn-threshold PERCENT]
+  --namespace, -n: Audit specific namespace (default: all namespaces except kube-system)
+  --format, -f: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show namespaces with issues
+  --verbose, -v: Show detailed quota utilization information
+  --warn-threshold: Quota utilization warning threshold in percent (default: 80)
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: All namespaces have proper quotas and no issues detected
+  - 1: Issues found (missing quotas, high utilization, missing limit ranges)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Identifies namespaces without ResourceQuota (unlimited resource risk)
+  - Detects namespaces without LimitRange (pods may lack default limits)
+  - Monitors quota utilization and warns when approaching limits
+  - Checks for meaningful default resource limits in LimitRanges
+  - Parses Kubernetes quantity formats (CPU millicores, memory Ki/Mi/Gi/Ti)
+  - Multiple output formats for monitoring integration
+  - Automatically skips system namespaces (kube-system, kube-public, kube-node-lease)
+
+Examples:
+```bash
+# Audit all namespaces
+k8s_resource_quota_auditor.py
+
+# Audit specific namespace
+k8s_resource_quota_auditor.py -n production
+
+# Show only namespaces with issues
+k8s_resource_quota_auditor.py --warn-only
+
+# Verbose output with quota utilization details
+k8s_resource_quota_auditor.py --verbose
+
+# JSON output for monitoring systems
+k8s_resource_quota_auditor.py --format json
+
+# Table format for quick overview
+k8s_resource_quota_auditor.py --format table
+
+# Custom warning threshold (warn at 90% instead of 80%)
+k8s_resource_quota_auditor.py --warn-threshold 90
+
+# Combine options: production namespace, only issues, verbose JSON
+k8s_resource_quota_auditor.py -n production -w -v -f json
+```
+
+Use Cases:
+  - **Multi-tenant Clusters**: Ensure fair resource distribution across teams/projects
+  - **Resource Governance**: Prevent resource exhaustion from runaway pods
+  - **Capacity Planning**: Identify namespaces approaching quota limits before issues occur
+  - **Compliance**: Validate that all namespaces have appropriate resource constraints
+  - **Cost Control**: Ensure teams stay within allocated resource budgets
+  - **Security**: Prevent resource-based DoS attacks from compromised workloads
+  - **Best Practices**: Enforce default resource limits for all pods
+  - **Baremetal Clusters**: Critical for shared infrastructure without cloud auto-scaling
+  - **Development Environments**: Ensure dev/test namespaces don't consume prod resources
+  - **Incident Prevention**: Detect quota issues before they cause application failures
