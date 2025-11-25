@@ -43,6 +43,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `memory_health_monitor.py`: Monitor memory health, ECC errors, and memory pressure
 - `network_interface_health.py`: Monitor network interface health and error statistics
 - `network_bond_status.sh`: Check status of network bonded interfaces
+- `baremetal_network_config_audit.py`: Audit network interface configuration for common misconfigurations (MTU mismatches, bonding inconsistencies, IPv6 configuration drift)
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
 - `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
 - `power_consumption_monitor.py`: Monitor server power consumption using IPMI, turbostat, and RAPL sensors
@@ -825,6 +826,56 @@ ntp_drift_monitor.py --format table
 Use Case: Time synchronization is critical for distributed systems, Kubernetes clusters, databases (especially distributed ones), and certificate validation. Clock drift can cause authentication failures, data inconsistencies, and cluster coordination issues. This script monitors NTP/Chrony status to detect and alert on time synchronization problems before they impact services.
 
 Use Case: In large baremetal environments, network interface errors can indicate hardware problems, driver issues, or network congestion. This script provides quick visibility into interface health across all network adapters, making it ideal for periodic health checks or monitoring integration.
+
+### baremetal_network_config_audit.py
+```
+python baremetal_network_config_audit.py [--format format] [-v] [-w]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information
+  -w, --warn-only: Only show warnings and errors
+```
+
+Requirements:
+  - Access to /sys/class/net filesystem (available on all Linux systems)
+  - No special privileges required for basic checks
+
+Exit codes:
+  - 0: No configuration issues detected
+  - 1: Configuration issues or warnings found
+  - 2: Usage error or /sys/class/net not accessible
+
+Features:
+  - Detect MTU mismatches across active interfaces
+  - Verify bond slave MTU consistency
+  - Identify inconsistent bonding modes across bond interfaces
+  - Check IPv6 enabled/disabled inconsistencies
+  - Detect promiscuous mode on production interfaces
+  - Identify down bond slaves
+  - Multiple output formats (plain, JSON, table)
+  - Warn-only mode for monitoring integration
+
+Examples:
+```bash
+# Audit network configuration
+baremetal_network_config_audit.py
+
+# Show only issues
+baremetal_network_config_audit.py --warn-only
+
+# Detailed output with all interface info
+baremetal_network_config_audit.py --verbose
+
+# JSON output for monitoring systems
+baremetal_network_config_audit.py --format json
+
+# Table format for easy reading
+baremetal_network_config_audit.py --format table
+
+# Combine options: table format with warnings only
+baremetal_network_config_audit.py --format table --warn-only
+```
+
+Use Case: In large-scale baremetal deployments, network configuration mismatches are a leading cause of intermittent connectivity issues. Different MTU settings cause packet fragmentation, bonding mode inconsistencies reduce performance, and IPv6 configuration drift creates routing problems. This script audits network interface configuration for common misconfigurations that may not be immediately obvious but can cause significant issues in production. Complement network_interface_health.py by focusing on configuration correctness rather than operational health. Essential for ensuring consistent network configuration across baremetal fleets where manual configuration can lead to drift.
 
 ### network_bond_status.sh
 ```
