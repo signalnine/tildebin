@@ -37,6 +37,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
 - `firmware_version_audit.py`: Audit firmware versions for BIOS, BMC/IPMI, network interfaces, and RAID controllers to detect version drift across server fleets
+- `load_average_monitor.py`: Monitor system load averages and process queue depth to identify overloaded systems
 - `hardware_temperature_monitor.py`: Monitor hardware temperature sensors and fan speeds
 - `gpu_health_monitor.py`: Monitor NVIDIA GPU health, temperature, memory, ECC errors, and power consumption
 - `ipmi_sel_monitor.py`: Monitor IPMI System Event Log (SEL) for hardware errors and critical events
@@ -735,6 +736,57 @@ cpu_frequency_monitor.py --no-throttle-check
 ```
 
 Use Case: In large-scale baremetal environments, incorrect CPU governor settings or unexpected frequency throttling can severely impact workload performance. This script helps identify nodes running at reduced clock speeds due to thermal throttling, power management misconfiguration, or BIOS settings. Essential for Kubernetes worker nodes and compute-intensive workloads where consistent CPU performance is critical. Use in your monitoring stack to detect performance degradation before it impacts production services.
+
+### load_average_monitor.py
+```
+python load_average_monitor.py [--format format] [--warn-only] [--warn-multiplier N] [--crit-multiplier N] [--verbose]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only: Only show output if there are warnings or issues
+  --warn-multiplier: Warning threshold as multiple of CPU count (default: 1.0)
+  --crit-multiplier: Critical threshold as multiple of CPU count (default: 2.0)
+  --verbose: Show detailed information including per-core load
+```
+
+Requirements:
+  - Linux /proc/loadavg and /proc/cpuinfo
+  - Available on all modern Linux systems
+
+Exit codes:
+  - 0: Load averages are within acceptable range
+  - 1: Load average exceeds thresholds
+  - 2: Usage error or invalid thresholds
+
+Features:
+  - Monitor 1, 5, and 15-minute load averages
+  - Compare load against CPU core count
+  - Track running and total process counts
+  - Customizable warning and critical thresholds
+  - Multiple output formats (plain, JSON, table)
+  - Warn-only mode to suppress output when healthy
+  - Calculate load per CPU core
+
+Examples:
+```bash
+# Check current load status
+load_average_monitor.py
+
+# Show only if there are issues
+load_average_monitor.py --warn-only
+
+# JSON output for monitoring integration
+load_average_monitor.py --format json
+
+# Table format with detailed view
+load_average_monitor.py --format table --verbose
+
+# Custom thresholds (warn at 150%, critical at 250% of CPU count)
+load_average_monitor.py --warn-multiplier 1.5 --crit-multiplier 2.5
+
+# Use in cron for alerts (only outputs if issues found)
+load_average_monitor.py --warn-only --format plain
+```
+
+Use Case: Load average is a fundamental metric for understanding system health in baremetal datacenters. A load average consistently higher than the CPU core count indicates the system is oversubscribed and processes are waiting for CPU time. This script helps identify overloaded servers before they impact application performance. Essential for capacity planning, detecting resource exhaustion, and early warning of system degradation. Unlike CPU usage percentage, load average shows queuing depth, making it better for detecting saturation. Use in monitoring dashboards to track fleet-wide load patterns and identify servers needing intervention.
 
 ### network_interface_health.py
 ```
