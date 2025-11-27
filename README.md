@@ -44,6 +44,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `memory_health_monitor.py`: Monitor memory health, ECC errors, and memory pressure
 - `network_interface_health.py`: Monitor network interface health and error statistics
 - `network_bond_status.sh`: Check status of network bonded interfaces
+- `baremetal_bond_health_monitor.py`: Monitor network bond health with detailed diagnostics including slave status, failover readiness, link failures, and speed/duplex mismatch detection
 - `baremetal_network_config_audit.py`: Audit network interface configuration for common misconfigurations (MTU mismatches, bonding inconsistencies, IPv6 configuration drift)
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
 - `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
@@ -940,6 +941,48 @@ network_bond_status.sh [-b bond] [-v] [-j]
 Requirements:
   - Linux bonding module loaded
   - /proc/net/bonding directory
+
+### baremetal_bond_health_monitor.py
+```
+python baremetal_bond_health_monitor.py [-b bond] [-v] [--format format] [--warn-only]
+  -b, --bond: Specific bond interface to check (e.g., bond0)
+  -v, --verbose: Show detailed slave information
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -w, --warn-only: Only show bonds with warnings or errors
+```
+
+Features:
+  - Comprehensive bond health analysis with slave status tracking
+  - Link failure count monitoring per slave interface
+  - Speed and duplex mismatch detection across slaves
+  - Mode-specific validation (active-backup, LACP/802.3ad)
+  - MII polling interval verification
+  - Detailed error and warning categorization
+  - Multiple output formats for integration with monitoring systems
+
+Requirements:
+  - Linux bonding module loaded
+  - /proc/net/bonding directory
+
+Exit codes:
+  - 0: All bonds healthy
+  - 1: Bond degradation or errors detected
+  - 2: Missing dependencies or usage error
+
+Examples:
+```bash
+# Check all bonds
+baremetal_bond_health_monitor.py
+
+# Check specific bond with verbose output
+baremetal_bond_health_monitor.py -b bond0 -v
+
+# Only show problematic bonds in JSON format
+baremetal_bond_health_monitor.py --warn-only --format json
+
+# Table format for quick overview
+baremetal_bond_health_monitor.py --format table
+```
 
 ### system_inventory.py
 ```
