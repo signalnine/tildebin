@@ -74,6 +74,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_orphaned_resources_finder.py`: Find orphaned and unused resources (ConfigMaps, Secrets, PVCs, Services, ServiceAccounts)
 - `k8s_container_restart_analyzer.py`: Analyze container restart patterns and identify root causes with remediation suggestions
 - `k8s_network_policy_audit.py`: Audit network policies and identify security gaps, unprotected pods, and configuration issues
+- `k8s_node_taint_analyzer.py`: Analyze node taints and their impact on pod scheduling, identifying blocking taints, orphaned taints, and workload distribution
 - `k8s_resource_quota_auditor.py`: Audit ResourceQuota and LimitRange policies across namespaces to ensure proper resource governance
 
 ### System Utilities
@@ -2250,6 +2251,60 @@ Use Cases:
   - **Policy Validation**: Detect misconfigured policies that don't match any pods
   - **Baremetal Deployments**: Critical for on-premises clusters where network segmentation is required
   - **Incident Prevention**: Catch security gaps before they're exploited
+
+### k8s_node_taint_analyzer.py
+```
+python3 k8s_node_taint_analyzer.py [--format FORMAT] [--verbose] [--warn-only]
+  --format, -f: Output format - 'plain', 'json', or 'table' (default: plain)
+  --verbose, -v: Show detailed information about all taints
+  --warn-only, -w: Only show nodes with blocking taints or orphaned taints
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No taint-related issues detected
+  - 1: Issues found (nodes with blocking taints, imbalanced scheduling)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Identifies nodes with NoSchedule and NoExecute taints that block pod scheduling
+  - Detects nodes with PreferNoSchedule taints (soft constraints)
+  - Analyzes pod tolerations to determine which pods can run on tainted nodes
+  - Tracks workload distribution between tainted and untainted nodes
+  - Identifies orphaned taints (taints with no matching tolerations)
+  - Useful for managing baremetal clusters with specialized hardware or maintenance windows
+  - Multiple output formats for monitoring integration
+
+Examples:
+```bash
+# Show all tainted nodes
+k8s_node_taint_analyzer.py
+
+# Show only nodes with blocking taints
+k8s_node_taint_analyzer.py --warn-only
+
+# Show detailed information about all taints
+k8s_node_taint_analyzer.py --verbose
+
+# Output in JSON format for monitoring systems
+k8s_node_taint_analyzer.py --format json
+
+# Table format with warnings only
+k8s_node_taint_analyzer.py --format table --warn-only
+
+# Combined options
+k8s_node_taint_analyzer.py -v -w -f json
+```
+
+Use cases:
+  - Baremetal cluster maintenance: Track nodes tainted for hardware maintenance
+  - Specialized workloads: Monitor GPU or high-memory node taints
+  - Capacity planning: Understand how many nodes are unavailable due to taints
+  - Troubleshooting: Identify why pods aren't scheduling (blocking taints)
+  - Cleanup: Find orphaned taints that are no longer needed
 
 ### k8s_resource_quota_auditor.py
 ```
