@@ -76,6 +76,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_network_policy_audit.py`: Audit network policies and identify security gaps, unprotected pods, and configuration issues
 - `k8s_node_taint_analyzer.py`: Analyze node taints and their impact on pod scheduling, identifying blocking taints, orphaned taints, and workload distribution
 - `k8s_resource_quota_auditor.py`: Audit ResourceQuota and LimitRange policies across namespaces to ensure proper resource governance
+- `k8s_image_pull_analyzer.py`: Analyze image pull issues including ImagePullBackOff errors, slow pulls, registry connectivity, and authentication failures
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -2372,3 +2373,68 @@ Use Cases:
   - **Baremetal Clusters**: Critical for shared infrastructure without cloud auto-scaling
   - **Development Environments**: Ensure dev/test namespaces don't consume prod resources
   - **Incident Prevention**: Detect quota issues before they cause application failures
+
+### k8s_image_pull_analyzer.py
+```
+python3 k8s_image_pull_analyzer.py [--namespace NAMESPACE] [--format FORMAT] [--verbose] [--warn-only] [--max-age MINUTES]
+  --namespace, -n: Analyze specific namespace (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --verbose, -v: Show detailed information about each issue
+  --warn-only, -w: Only show warnings and errors
+  --max-age: Maximum age of events to analyze in minutes (default: 60)
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No image pull issues detected
+  - 1: Image pull issues found (ImagePullBackOff, slow pulls, auth failures)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Detects ImagePullBackOff and ErrImagePull errors
+  - Identifies registry authentication failures
+  - Tracks image pull events and patterns
+  - Aggregates issues by type, image, and namespace
+  - Analyzes recent events for pull-related problems
+  - Multiple output formats for monitoring integration
+  - Filters by namespace for focused troubleshooting
+  - Configurable event age window
+
+Examples:
+```bash
+# Check all namespaces for image pull issues
+k8s_image_pull_analyzer.py
+
+# Check specific namespace with detailed output
+k8s_image_pull_analyzer.py -n production -v
+
+# Only show errors and warnings
+k8s_image_pull_analyzer.py --warn-only
+
+# Output in JSON format for automation
+k8s_image_pull_analyzer.py --format json
+
+# Analyze recent events (last 30 minutes)
+k8s_image_pull_analyzer.py --max-age 30
+
+# Table format for quick overview
+k8s_image_pull_analyzer.py --format table
+
+# Combine options: production namespace, verbose, table format
+k8s_image_pull_analyzer.py -n production -v --format table
+```
+
+Use Cases:
+  - **Troubleshooting Pod Failures**: Quickly diagnose why pods are stuck in ImagePullBackOff
+  - **Registry Issues**: Identify connectivity problems to image registries
+  - **Authentication Problems**: Detect ImagePullSecrets or registry credential issues
+  - **Performance Analysis**: Find nodes or registries with slow image pull times
+  - **Baremetal Clusters**: Critical for detecting registry cache misses in air-gapped environments
+  - **Multi-Registry Environments**: Track which registries are experiencing issues
+  - **CI/CD Pipeline Issues**: Identify image tagging or push problems affecting deployments
+  - **Network Troubleshooting**: Detect network policies blocking registry access
+  - **Capacity Planning**: Understand image pull patterns and registry load
+  - **Incident Response**: First-line diagnostic tool for pod startup failures
