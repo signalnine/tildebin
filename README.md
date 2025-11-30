@@ -77,6 +77,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_node_taint_analyzer.py`: Analyze node taints and their impact on pod scheduling, identifying blocking taints, orphaned taints, and workload distribution
 - `k8s_resource_quota_auditor.py`: Audit ResourceQuota and LimitRange policies across namespaces to ensure proper resource governance
 - `k8s_image_pull_analyzer.py`: Analyze image pull issues including ImagePullBackOff errors, slow pulls, registry connectivity, and authentication failures
+- `k8s_job_health_monitor.py`: Monitor Job and CronJob health including completion status, scheduling patterns, stuck jobs, and resource consumption
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -2438,3 +2439,73 @@ Use Cases:
   - **Network Troubleshooting**: Detect network policies blocking registry access
   - **Capacity Planning**: Understand image pull patterns and registry load
   - **Incident Response**: First-line diagnostic tool for pod startup failures
+
+### k8s_job_health_monitor.py
+```
+python3 k8s_job_health_monitor.py [--namespace NAMESPACE] [--format FORMAT] [--warn-only] [--skip-jobs] [--skip-cronjobs]
+  --namespace, -n: Check specific namespace (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show jobs and cronjobs with issues
+  --skip-jobs: Skip job analysis, only check cronjobs
+  --skip-cronjobs: Skip cronjob analysis, only check jobs
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: All jobs and cronjobs healthy
+  - 1: Failed or stuck jobs detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Monitors Job completion status (successful, failed, active)
+  - Tracks CronJob scheduling health and patterns
+  - Detects long-running or stuck jobs (>24 hours)
+  - Identifies jobs pending for too long (>1 hour)
+  - Reports on jobs without TTL cleanup configuration
+  - Finds CronJobs with consecutive failures
+  - Detects suspended CronJobs
+  - Identifies CronJobs with multiple concurrent jobs
+  - Multiple output formats for monitoring integration
+  - Filters by namespace for focused analysis
+
+Examples:
+```bash
+# Check all jobs and cronjobs across all namespaces
+k8s_job_health_monitor.py
+
+# Check jobs in specific namespace
+k8s_job_health_monitor.py -n production
+
+# Show only problematic jobs
+k8s_job_health_monitor.py --warn-only
+
+# Output as JSON for monitoring systems
+k8s_job_health_monitor.py --format json
+
+# Show table format with issues only
+k8s_job_health_monitor.py --format table --warn-only
+
+# Check only jobs, skip cronjobs
+k8s_job_health_monitor.py --skip-cronjobs
+
+# Check only cronjobs, skip jobs
+k8s_job_health_monitor.py --skip-jobs
+
+# Combine options: production namespace, table format, issues only
+k8s_job_health_monitor.py -n production --format table --warn-only
+```
+
+Use Cases:
+  - **Batch Workload Monitoring**: Track health of batch jobs and scheduled tasks
+  - **Failed Job Detection**: Quickly identify and troubleshoot failing jobs
+  - **Resource Cleanup**: Find jobs without TTL configuration accumulating in cluster
+  - **CronJob Reliability**: Monitor scheduled job execution patterns and failures
+  - **Baremetal Clusters**: Critical for managing batch workloads on capacity-constrained infrastructure
+  - **Stuck Job Detection**: Identify jobs running longer than expected
+  - **Cluster Hygiene**: Detect abandoned or orphaned jobs consuming resources
+  - **Scheduling Issues**: Find CronJobs that haven't run recently or are suspended
+  - **Concurrent Job Analysis**: Detect CronJobs spawning too many simultaneous jobs
+  - **Capacity Planning**: Understand batch workload resource consumption patterns
