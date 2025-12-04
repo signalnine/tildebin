@@ -2,7 +2,7 @@
 #
 # Common tasks for testing and development
 
-.PHONY: test test-verbose test-ec2 test-baremetal clean help
+.PHONY: test test-verbose test-ec2 test-baremetal test-k8s clean help
 
 # Default target
 help:
@@ -13,6 +13,7 @@ help:
 	@echo "  make test-verbose      - Run all tests with verbose output"
 	@echo "  make test-ec2          - Run only EC2-related tests"
 	@echo "  make test-baremetal    - Run only baremetal-related tests"
+	@echo "  make test-k8s          - Run only Kubernetes-related tests"
 	@echo "  make test-filter PATTERN=<pattern>"
 	@echo "                         - Run tests matching pattern"
 	@echo ""
@@ -39,7 +40,11 @@ test-ec2:
 
 # Run only baremetal-related tests
 test-baremetal:
-	@python3 tests/run_tests.py -f disk raid network system_inventory kubernetes
+	@python3 tests/run_tests.py -f disk raid network system_inventory
+
+# Run only Kubernetes-related tests
+test-k8s:
+	@python3 tests/run_tests.py -f k8s kubernetes
 
 # Run tests matching a pattern
 test-filter:

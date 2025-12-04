@@ -61,6 +61,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_pv_health_check.py`: Check persistent volume health and storage status
 - `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
 - `k8s_statefulset_health.py`: Monitor StatefulSet health with detailed pod and PVC status checking
+- `k8s_daemonset_health_monitor.py`: Monitor DaemonSet health with node coverage verification, pod status on each node, and detection of scheduling issues
 - `k8s_dns_health_monitor.py`: Monitor DNS health including CoreDNS/kube-dns pod status and resolution testing
 - `k8s_event_monitor.py`: Monitor Kubernetes events to track cluster issues and anomalies
 - `k8s_node_capacity_planner.py`: Analyze cluster capacity and forecast resource allocation
@@ -1503,6 +1504,54 @@ k8s_statefulset_health.py --format json
 
 # Combine options: production namespace, only problematic, JSON format
 k8s_statefulset_health.py -n production -w -f json
+```
+
+### k8s_daemonset_health_monitor.py
+```
+python k8s_daemonset_health_monitor.py [--namespace NAMESPACE] [--format format] [--warn-only]
+  --namespace, -n: Namespace to check (default: all namespaces)
+  --format, -f: Output format, either 'plain' or 'json' (default: plain)
+  --warn-only, -w: Only show DaemonSets with issues or warnings
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: All DaemonSets healthy with pods on all expected nodes
+  - 1: One or more DaemonSets unhealthy or have warnings
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Verifies pods are running on all expected nodes (node coverage check)
+  - Detects missing pods on schedulable nodes
+  - Identifies ImagePullBackOff and CrashLoopBackOff issues
+  - Tracks pod restart counts and readiness
+  - Detects node selector and toleration issues preventing scheduling
+  - Monitors update strategy status and rollout progress
+  - Identifies misscheduled pods (running on wrong nodes)
+  - Reports resource constraints blocking pod placement
+  - Supports filtering by namespace
+  - Provides plain text and JSON output formats
+  - Essential for monitoring critical infrastructure DaemonSets (CNI, CSI, kube-proxy)
+
+Examples:
+```bash
+# Check all DaemonSets cluster-wide
+k8s_daemonset_health_monitor.py
+
+# Check DaemonSets in kube-system namespace (common for infrastructure)
+k8s_daemonset_health_monitor.py -n kube-system
+
+# Only show DaemonSets with issues
+k8s_daemonset_health_monitor.py --warn-only
+
+# JSON output for monitoring integration
+k8s_daemonset_health_monitor.py --format json
+
+# Combine options: kube-system namespace, only problematic, JSON format
+k8s_daemonset_health_monitor.py -n kube-system -w -f json
 ```
 
 ### k8s_dns_health_monitor.py
