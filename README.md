@@ -83,6 +83,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_storageclass_health_monitor.py`: Monitor StorageClass provisioners and CSI driver health including provisioner status, PVC failures, and stuck volume attachments
 - `k8s_hpa_health_monitor.py`: Monitor HorizontalPodAutoscaler health and effectiveness including metrics server availability, scaling issues, and HPA misconfigurations
 - `k8s_service_endpoint_monitor.py`: Monitor Service endpoint health to detect services without healthy endpoints, selector mismatches, LoadBalancer IP issues, and endpoint readiness problems
+- `k8s_service_health_monitor.py`: Monitor Kubernetes Service health by checking endpoint availability, identifying services with zero endpoints or partially ready endpoints, and correlating service configuration with endpoint status
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -2562,3 +2563,52 @@ Use Cases:
   - **Scheduling Issues**: Find CronJobs that haven't run recently or are suspended
   - **Concurrent Job Analysis**: Detect CronJobs spawning too many simultaneous jobs
   - **Capacity Planning**: Understand batch workload resource consumption patterns
+
+### k8s_service_health_monitor.py
+```
+k8s_service_health_monitor.py [-n namespace] [--format {plain,json,table}] [-v] [-w]
+  -n, --namespace: Namespace to check (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show healthy services in addition to issues
+  -w, --warn-only: Only show warnings (exclude errors)
+```
+
+Monitor Kubernetes Service health by correlating Services with their Endpoints to identify:
+- Services with zero endpoints (no backing pods)
+- Services with all endpoints not ready
+- Services with partially ready endpoints
+- Service type and configuration issues
+
+Examples:
+```bash
+# Check all services in all namespaces
+k8s_service_health_monitor.py
+
+# Check services in specific namespace
+k8s_service_health_monitor.py -n production
+
+# Show detailed output including healthy services
+k8s_service_health_monitor.py -v
+
+# JSON output for automation
+k8s_service_health_monitor.py --format json
+
+# Table format for better readability
+k8s_service_health_monitor.py --format table
+
+# Only show warnings (services with some ready endpoints)
+k8s_service_health_monitor.py --warn-only
+
+# Combine options: production namespace, table format, verbose
+k8s_service_health_monitor.py -n production --format table -v
+```
+
+Use Cases:
+  - **Service Connectivity Troubleshooting**: Quickly identify why services aren't routing traffic
+  - **Deployment Validation**: Verify services have healthy backends after deployments
+  - **Pod Selector Issues**: Detect mismatched selectors causing services to have zero endpoints
+  - **Rolling Update Monitoring**: Track endpoint readiness during deployments
+  - **Network Issue Diagnosis**: Identify services affected by pod networking problems
+  - **Cluster Health Checks**: Ensure all critical services have available endpoints
+  - **Automated Monitoring**: JSON output for integration with monitoring systems
+  - **Large-Scale Clusters**: Filter by namespace for focused troubleshooting
