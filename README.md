@@ -30,6 +30,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 
 ### Baremetal System Monitoring
 - `baremetal_dmesg_analyzer.py`: Analyze kernel messages (dmesg) for hardware errors and warnings across all subsystems (disk, memory, PCIe, CPU, network, filesystem, RAID, thermal)
+- `baremetal_interrupt_balance_monitor.py`: Monitor hardware interrupt (IRQ) distribution across CPU cores to detect performance issues from poor interrupt balancing
 - `disk_health_check.py`: Monitor disk health using SMART attributes
 - `nvme_health_monitor.py`: Monitor NVMe SSD health metrics including wear level, power cycles, unsafe shutdowns, media errors, and thermal throttling
 - `disk_io_monitor.py`: Monitor disk I/O performance and identify bottlenecks
