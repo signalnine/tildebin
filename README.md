@@ -53,6 +53,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `system_inventory.py`: Generate hardware inventory for baremetal systems
 - `systemd_service_monitor.py`: Monitor systemd service health and identify failed or degraded units
 - `filesystem_usage_tracker.py`: Track filesystem usage and identify large directories
+- `baremetal_filesystem_readonly_monitor.py`: Monitor filesystems for read-only status and detect storage issues that cause filesystems to remount readonly
 - `sysctl_audit.py`: Audit kernel parameters (sysctl) against a baseline configuration
 - `process_resource_monitor.py`: Monitor process resource consumption and detect zombie/resource-hungry processes
 
