@@ -30,6 +30,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 
 ### Baremetal System Monitoring
 - `baremetal_dmesg_analyzer.py`: Analyze kernel messages (dmesg) for hardware errors and warnings across all subsystems (disk, memory, PCIe, CPU, network, filesystem, RAID, thermal)
+- `baremetal_fd_limit_monitor.py`: Monitor file descriptor usage across system and per-process to prevent resource exhaustion and identify processes approaching their limits
 - `baremetal_interrupt_balance_monitor.py`: Monitor hardware interrupt (IRQ) distribution across CPU cores to detect performance issues from poor interrupt balancing
 - `disk_health_check.py`: Monitor disk health using SMART attributes
 - `nvme_health_monitor.py`: Monitor NVMe SSD health metrics including wear level, power cycles, unsafe shutdowns, media errors, and thermal throttling
@@ -300,6 +301,54 @@ baremetal_dmesg_analyzer.py --warn-only -v
 
 # Table format for recent critical issues
 baremetal_dmesg_analyzer.py --since "24 hours ago" --format table
+```
+
+### baremetal_fd_limit_monitor.py
+```
+python baremetal_fd_limit_monitor.py [--format FORMAT] [-a] [-t THRESHOLD] [-n NAME] [-u USER] [-v] [--warn-only]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -a, --all: Show all processes, not just those above threshold
+  -t, --threshold: Warning threshold percentage (default: 80.0)
+  -n, --name: Filter by process name (case-insensitive substring match)
+  -u, --user: Filter by process owner username
+  -v, --verbose: Show detailed information
+  --warn-only: Only show processes above threshold (default behavior)
+```
+
+Monitors file descriptor usage to prevent "too many open files" errors:
+  - System-wide FD usage vs. limits
+  - Per-process FD consumption
+  - Detection of processes approaching ulimits (>80% usage)
+  - Top FD consumers identification
+  - Helps identify FD leaks in long-running services
+
+Exit codes:
+  - 0: No issues (all processes below threshold)
+  - 1: Warnings (processes above threshold)
+  - 2: Usage error or missing dependencies
+
+Examples:
+```bash
+# Show all processes using >80% of FD limit
+baremetal_fd_limit_monitor.py
+
+# Show all processes with their FD usage
+baremetal_fd_limit_monitor.py --all
+
+# Filter by process name
+baremetal_fd_limit_monitor.py --name nginx
+
+# Filter by user
+baremetal_fd_limit_monitor.py --user www-data
+
+# Set custom threshold (70%)
+baremetal_fd_limit_monitor.py --threshold 70
+
+# JSON output for monitoring systems
+baremetal_fd_limit_monitor.py --format json
+
+# Table format with verbose output
+baremetal_fd_limit_monitor.py --format table --verbose
 ```
 
 ### disk_health_check.py
