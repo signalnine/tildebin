@@ -57,6 +57,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_filesystem_readonly_monitor.py`: Monitor filesystems for read-only status and detect storage issues that cause filesystems to remount readonly
 - `sysctl_audit.py`: Audit kernel parameters (sysctl) against a baseline configuration
 - `process_resource_monitor.py`: Monitor process resource consumption and detect zombie/resource-hungry processes
+- `baremetal_socket_state_monitor.py`: Monitor TCP/UDP socket state distribution to detect connection anomalies like excessive TIME_WAIT sockets (port exhaustion), CLOSE_WAIT accumulation (file descriptor leaks), and SYN flood attacks
 
 ### Kubernetes Management
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
@@ -1042,6 +1043,57 @@ baremetal_bond_health_monitor.py --warn-only --format json
 
 # Table format for quick overview
 baremetal_bond_health_monitor.py --format table
+```
+
+### baremetal_socket_state_monitor.py
+```
+python baremetal_socket_state_monitor.py [--format format] [-v] [-w] [--time-wait N] [--close-wait N] [--syn-recv N] [--established N]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including thresholds
+  -w, --warn-only: Only output if issues are detected
+  --time-wait N: TIME_WAIT threshold (default: 1000)
+  --close-wait N: CLOSE_WAIT threshold (default: 100)
+  --syn-recv N: SYN_RECV threshold (default: 100)
+  --established N: ESTABLISHED threshold (default: 5000)
+```
+
+Features:
+  - Monitor TCP/UDP socket state distribution across the system
+  - Detect excessive TIME_WAIT sockets indicating port exhaustion risk
+  - Identify CLOSE_WAIT accumulation indicating file descriptor leaks
+  - Detect SYN_RECV buildup indicating potential SYN flood attacks
+  - Track established connection patterns for capacity planning
+  - Customizable thresholds for different environments
+  - Multiple output formats for monitoring system integration
+
+Requirements:
+  - Linux /proc/net/tcp, /proc/net/tcp6 files
+  - No external dependencies required
+
+Exit codes:
+  - 0: No anomalies detected (healthy state)
+  - 1: Socket state anomalies or warnings detected
+  - 2: Missing /proc files or usage error
+
+Examples:
+```bash
+# Check socket states with default thresholds
+baremetal_socket_state_monitor.py
+
+# Output in JSON format for monitoring integration
+baremetal_socket_state_monitor.py --format json
+
+# Custom thresholds for high-traffic servers
+baremetal_socket_state_monitor.py --time-wait 2000 --established 10000
+
+# Only alert if issues detected (monitoring mode)
+baremetal_socket_state_monitor.py --warn-only --format json
+
+# Verbose output showing thresholds
+baremetal_socket_state_monitor.py -v
+
+# Table format for quick overview
+baremetal_socket_state_monitor.py --format table
 ```
 
 ### system_inventory.py
