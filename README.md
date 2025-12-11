@@ -88,6 +88,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_hpa_health_monitor.py`: Monitor HorizontalPodAutoscaler health and effectiveness including metrics server availability, scaling issues, and HPA misconfigurations
 - `k8s_service_endpoint_monitor.py`: Monitor Service endpoint health to detect services without healthy endpoints, selector mismatches, LoadBalancer IP issues, and endpoint readiness problems
 - `k8s_service_health_monitor.py`: Monitor Kubernetes Service health by checking endpoint availability, identifying services with zero endpoints or partially ready endpoints, and correlating service configuration with endpoint status
+- `k8s_rbac_auditor.py`: Audit Kubernetes RBAC roles and bindings for security issues including cluster-admin access, wildcard permissions, dangerous verbs, anonymous user access, and overly permissive service account bindings
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -2707,6 +2708,50 @@ k8s_service_health_monitor.py -n production --format table -v
 ```
 
 Use Cases:
+
+### k8s_rbac_auditor.py
+```
+k8s_rbac_auditor.py [-n namespace] [--format {plain,json,table}] [-v] [-w]
+  -n, --namespace: Namespace to audit (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information for each issue
+  -w, --warn-only: Only show warnings and issues
+```
+
+Audit Kubernetes RBAC roles and bindings for security issues. Identifies:
+- Cluster-admin access bindings (highest severity)
+- Wildcard permissions (*, all resources/verbs/apiGroups)
+- Dangerous verbs (create, delete, exec, proxy, impersonate, bind, escalate)
+- Access to sensitive resources (secrets, configmaps)
+- Anonymous user access (system:anonymous, system:unauthenticated)
+- Service account bindings to admin roles
+- Overly permissive role configurations
+
+Examples:
+```bash
+# Audit all RBAC roles and bindings in the cluster
+k8s_rbac_auditor.py
+
+# Audit specific namespace
+k8s_rbac_auditor.py -n production
+
+# Detailed output with full issue descriptions
+k8s_rbac_auditor.py -v
+
+# JSON output for automation/alerting
+k8s_rbac_auditor.py --format json
+
+# Table format for better readability
+k8s_rbac_auditor.py --format table
+
+# Only show issues (hide success message)
+k8s_rbac_auditor.py --warn-only
+
+# Combine options: specific namespace, table format, verbose
+k8s_rbac_auditor.py -n kube-system --format table -v
+```
+
+Security Use Cases:
   - **Service Connectivity Troubleshooting**: Quickly identify why services aren't routing traffic
   - **Deployment Validation**: Verify services have healthy backends after deployments
   - **Pod Selector Issues**: Detect mismatched selectors causing services to have zero endpoints
