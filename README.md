@@ -47,6 +47,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `network_interface_health.py`: Monitor network interface health and error statistics
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `baremetal_bond_health_monitor.py`: Monitor network bond health with detailed diagnostics including slave status, failover readiness, link failures, and speed/duplex mismatch detection
+- `baremetal_boot_performance_monitor.py`: Monitor system boot performance and systemd initialization times to identify slow-booting systems and problematic services that delay startup
 - `baremetal_network_config_audit.py`: Audit network interface configuration for common misconfigurations (MTU mismatches, bonding inconsistencies, IPv6 configuration drift)
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
 - `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
@@ -1044,6 +1045,52 @@ baremetal_bond_health_monitor.py --warn-only --format json
 
 # Table format for quick overview
 baremetal_bond_health_monitor.py --format table
+```
+
+### baremetal_boot_performance_monitor.py
+```
+python baremetal_boot_performance_monitor.py [--format format] [-v] [-w] [--boot-threshold N] [--userspace-threshold N] [--service-threshold N]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including top slow services
+  -w, --warn-only: Only show warnings and issues
+  --boot-threshold N: Warning threshold for total boot time in seconds (default: 120)
+  --userspace-threshold N: Warning threshold for userspace init time in seconds (default: 60)
+  --service-threshold N: Warning threshold for individual service start time in seconds (default: 10)
+```
+
+Features:
+  - Monitor total system boot time (firmware, bootloader, kernel, userspace)
+  - Identify slow-starting systemd services impacting boot time
+  - Track kernel vs. userspace initialization performance
+  - Configurable thresholds for boot time warnings
+  - Useful for identifying systems with degraded boot performance in large fleets
+  - Multiple output formats for integration with monitoring systems
+
+Requirements:
+  - systemd-based Linux system
+  - systemd-analyze command available
+
+Exit codes:
+  - 0: Boot performance is normal
+  - 1: Boot time exceeds warning thresholds
+  - 2: systemd-analyze not available or usage error
+
+Examples:
+```bash
+# Check boot performance with default thresholds
+baremetal_boot_performance_monitor.py
+
+# Show detailed information including slow services
+baremetal_boot_performance_monitor.py -v
+
+# Custom thresholds (60s boot, 30s userspace, 5s per service)
+baremetal_boot_performance_monitor.py --boot-threshold 60 --userspace-threshold 30 --service-threshold 5
+
+# Only show issues in JSON format
+baremetal_boot_performance_monitor.py --warn-only --format json
+
+# Table format for quick overview
+baremetal_boot_performance_monitor.py --format table -v
 ```
 
 ### baremetal_socket_state_monitor.py
