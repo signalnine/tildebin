@@ -59,6 +59,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `sysctl_audit.py`: Audit kernel parameters (sysctl) against a baseline configuration
 - `process_resource_monitor.py`: Monitor process resource consumption and detect zombie/resource-hungry processes
 - `baremetal_socket_state_monitor.py`: Monitor TCP/UDP socket state distribution to detect connection anomalies like excessive TIME_WAIT sockets (port exhaustion), CLOSE_WAIT accumulation (file descriptor leaks), and SYN flood attacks
+- `baremetal_swap_monitor.py`: Monitor swap usage and memory pressure indicators to detect insufficient RAM, excessive swap activity, and systems at risk of OOM killer activation
 
 ### Kubernetes Management
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability

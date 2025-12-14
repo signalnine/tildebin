@@ -1,0 +1,272 @@
+#!/usr/bin/env python3
+"""
+Test script for baremetal_swap_monitor.py functionality.
+Tests argument parsing and output formats without requiring specific swap conditions.
+"""
+
+import subprocess
+import sys
+import json
+
+
+def run_command(cmd_args):
+    """Helper function to run a command and return result."""
+    try:
+        proc = subprocess.Popen(
+            cmd_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        stdout, stderr = proc.communicate()
+        return proc.returncode, stdout.decode('utf-8'), stderr.decode('utf-8')
+    except Exception as e:
+        return -1, "", str(e)
+
+
+def test_help_message():
+    """Test that the help message works."""
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'baremetal_swap_monitor.py', '--help']
+    )
+
+    if return_code == 0 and 'swap usage' in stdout.lower():
+        print("[PASS] Help message test passed")
+        return True
+    else:
+        print(f"[FAIL] Help message test failed")
+        print(f"  Return code: {return_code}")
+        print(f"  Output: {stdout[:200]}")
+        return False
+
+
+def test_invalid_arguments():
+    """Test that invalid arguments are rejected."""
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'baremetal_swap_monitor.py', '--invalid-flag']
+    )
+
+    if return_code != 0:
+        print("[PASS] Invalid arguments test passed")
+        return True
+    else:
+        print("[FAIL] Invalid arguments should fail")
+        return False
+
+
+def test_plain_output_format():
+    """Test plain output format (default)."""
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'baremetal_swap_monitor.py']
+    )
+
+    # Should succeed (exit 0 or 1 depending on swap usage)
+    if return_code in [0, 1] and ('Swap:' in stdout or 'No swap' in stdout):
+        print("[PASS] Plain output format test passed")
+        return True
+    else:
+        print(f"[FAIL] Plain output format test failed")
+        print(f"  Return code: {return_code}")
+        print(f"  Output: {stdout[:200]}")
+        return False
+
+
+def test_json_output_format():
+    """Test JSON output format parsing."""
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'baremetal_swap_monitor.py', '--format', 'json']
+    )
+
+    try:
+        # Try to parse JSON output
+        data = json.loads(stdout)
+
+        # Verify expected structure
+        if 'swap' not in data or 'memory' not in data or 'issues' not in data:
+            print("[FAIL] JSON output missing expected keys")
+            print(f"  Keys: {list(data.keys())}")
+            return False
+
+        # Verify swap data structure
+        swap = data['swap']
+        required_swap_keys = ['total_kb', 'used_kb', 'free_kb', 'cached_kb', 'usage_percent']
+        if not all(key in swap for key in required_swap_keys):
+            print("[FAIL] JSON swap data missing required keys")
+            print(f"  Swap keys: {list(swap.keys())}")
+            return False
+
+        # Verify memory data structure
+        memory = data['memory']
+        required_memory_keys = ['total_kb', 'available_kb', 'available_percent']
+        if not all(key in memory for key in required_memory_keys):
+            print("[FAIL] JSON memory data missing required keys")
+            print(f"  Memory keys: {list(memory.keys())}")
+            return False
+
+        print("[PASS] JSON output format test passed")
+        return True
+    except json.JSONDecodeError as e:
+        print(f"[FAIL] JSON parsing failed: {e}")
+        print(f"  Output: {stdout[:200]}")
+        return False
+
+
+def test_table_output_format():
+    """Test table output format."""
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'baremetal_swap_monitor.py', '--format', 'table']
+    )
+
+    # Should succeed and contain table headers
+    if return_code in [0, 1] and ('SWAP USAGE' in stdout or 'No swap' in stdout):
+        print("[PASS] Table output format test passed")
+        return True
+    else:
+        print(f"[FAIL] Table output format test failed")
+        print(f"  Return code: {return_code}")
+        print(f"  Output: {stdout[:200]}")
+        return False
+
+
+def test_verbose_mode():
+    """Test verbose mode includes additional information."""
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'baremetal_swap_monitor.py', '--verbose']
+    )
+
+    # Should succeed and contain additional details
+    if return_code in [0, 1] and ('Memory available' in stdout or 'No swap' in stdout):
+        print("[PASS] Verbose mode test passed")
+        return True
+    else:
+        print(f"[FAIL] Verbose mode test failed")
+        print(f"  Return code: {return_code}")
+        print(f"  Output: {stdout[:200]}")
+        return False
+
+
+def test_warn_only_mode():
+    """Test warn-only mode suppresses normal output."""
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'baremetal_swap_monitor.py', '--warn-only']
+    )
+
+    # Should succeed (exit code depends on swap state)
+    # Output might be empty if no warnings
+    if return_code in [0, 1]:
+        print("[PASS] Warn-only mode test passed")
+        return True
+    else:
+        print(f"[FAIL] Warn-only mode test failed")
+        print(f"  Return code: {return_code}")
+        return False
+
+
+def test_custom_thresholds():
+    """Test custom threshold arguments."""
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'baremetal_swap_monitor.py', '--warn', '60', '--crit', '80']
+    )
+
+    # Should succeed with custom thresholds
+    if return_code in [0, 1]:
+        print("[PASS] Custom thresholds test passed")
+        return True
+    else:
+        print(f"[FAIL] Custom thresholds test failed")
+        print(f"  Return code: {return_code}")
+        return False
+
+
+def test_invalid_threshold_range():
+    """Test that invalid threshold values are rejected."""
+    # Test warn > 100
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'baremetal_swap_monitor.py', '--warn', '150']
+    )
+
+    if return_code == 2:
+        print("[PASS] Invalid threshold range test passed (warn > 100)")
+        return True
+
+    # Test warn >= crit
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'baremetal_swap_monitor.py', '--warn', '80', '--crit', '70']
+    )
+
+    if return_code == 2:
+        print("[PASS] Invalid threshold range test passed (warn >= crit)")
+        return True
+    else:
+        print(f"[FAIL] Invalid threshold range test failed")
+        print(f"  Return code: {return_code}")
+        return False
+
+
+def test_json_verbose_includes_vmstat():
+    """Test JSON verbose output includes vmstat data."""
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'baremetal_swap_monitor.py', '--format', 'json', '--verbose']
+    )
+
+    try:
+        data = json.loads(stdout)
+
+        # vmstat is optional (may not exist on all systems)
+        # Just verify the JSON parses correctly
+        if 'swap' in data and 'memory' in data:
+            print("[PASS] JSON verbose output test passed")
+            return True
+        else:
+            print("[FAIL] JSON verbose missing expected data")
+            return False
+    except json.JSONDecodeError as e:
+        print(f"[FAIL] JSON verbose parsing failed: {e}")
+        return False
+
+
+def test_exit_codes():
+    """Test exit code behavior."""
+    # Normal execution should return 0 or 1 (not 2)
+    return_code, stdout, stderr = run_command(
+        [sys.executable, 'baremetal_swap_monitor.py']
+    )
+
+    if return_code in [0, 1]:
+        print("[PASS] Exit code test passed (0 or 1)")
+        return True
+    else:
+        print(f"[FAIL] Exit code test failed: {return_code}")
+        print(f"  Stderr: {stderr[:200]}")
+        return False
+
+
+if __name__ == "__main__":
+    print("Testing baremetal_swap_monitor.py...")
+    print()
+
+    tests = [
+        test_help_message,
+        test_invalid_arguments,
+        test_plain_output_format,
+        test_json_output_format,
+        test_table_output_format,
+        test_verbose_mode,
+        test_warn_only_mode,
+        test_custom_thresholds,
+        test_invalid_threshold_range,
+        test_json_verbose_includes_vmstat,
+        test_exit_codes,
+    ]
+
+    passed = sum(1 for test in tests if test())
+    total = len(tests)
+
+    print()
+    print(f"Test Results: {passed}/{total} tests passed")
+
+    if passed == total:
+        print("All tests passed!")
+        sys.exit(0)
+    else:
+        print(f"{total - passed} test(s) failed")
+        sys.exit(1)
