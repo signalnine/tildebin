@@ -100,6 +100,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_service_endpoint_monitor.py`: Monitor Service endpoint health to detect services without healthy endpoints, selector mismatches, LoadBalancer IP issues, and endpoint readiness problems
 - `k8s_service_health_monitor.py`: Monitor Kubernetes Service health by checking endpoint availability, identifying services with zero endpoints or partially ready endpoints, and correlating service configuration with endpoint status
 - `k8s_rbac_auditor.py`: Audit Kubernetes RBAC roles and bindings for security issues including cluster-admin access, wildcard permissions, dangerous verbs, anonymous user access, and overly permissive service account bindings
+- `k8s_pod_security_audit.py`: Audit pod security contexts and Linux capabilities for security risks including privileged containers, root user execution, dangerous capabilities, host namespace sharing, and missing security profiles
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -2817,3 +2818,61 @@ Security Use Cases:
   - **Cluster Health Checks**: Ensure all critical services have available endpoints
   - **Automated Monitoring**: JSON output for integration with monitoring systems
   - **Large-Scale Clusters**: Filter by namespace for focused troubleshooting
+
+### k8s_pod_security_audit.py
+```
+k8s_pod_security_audit.py [-n namespace] [--format {plain,json,table}] [-v] [-w]
+  -n, --namespace: Namespace to audit (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information for each issue
+  -w, --warn-only: Only show warnings (exclude LOW severity)
+```
+
+Audit pod security contexts and Linux capabilities to identify security risks. Identifies:
+- Privileged containers (CRITICAL) - full host access, container escape risk
+- Host namespace sharing: hostPID, hostIPC, hostNetwork (CRITICAL/HIGH)
+- Running as root user UID 0 (HIGH)
+- Dangerous Linux capabilities: CAP_SYS_ADMIN, CAP_NET_ADMIN, CAP_SYS_PTRACE, etc. (CRITICAL/HIGH/MEDIUM)
+- Privilege escalation enabled (HIGH/LOW)
+- Sensitive hostPath volume mounts (HIGH/MEDIUM)
+- Missing readOnlyRootFilesystem (LOW)
+- No AppArmor or Seccomp security profiles (LOW)
+
+Exit codes:
+  - 0: No critical or high security issues detected
+  - 1: Security issues found
+  - 2: Usage error or kubectl not available
+
+Examples:
+```bash
+# Audit all pods in all namespaces
+k8s_pod_security_audit.py
+
+# Audit specific namespace
+k8s_pod_security_audit.py -n production
+
+# Show only warnings (exclude LOW severity)
+k8s_pod_security_audit.py --warn-only
+
+# JSON output for monitoring/alerting
+k8s_pod_security_audit.py --format json
+
+# Verbose output with full details
+k8s_pod_security_audit.py -v
+
+# Table format for quick overview
+k8s_pod_security_audit.py --format table
+
+# Combine: production namespace, only warnings, JSON format
+k8s_pod_security_audit.py -n production -w --format json
+```
+
+Security Use Cases:
+  - **Compliance Auditing**: Validate pod security against CIS Kubernetes Benchmark, PCI-DSS, HIPAA
+  - **Container Escape Prevention**: Identify containers that could break out to the host
+  - **Zero Trust Security**: Verify pods follow least-privilege principles
+  - **Pre-deployment Review**: Audit security contexts before promoting to production
+  - **Incident Response**: Quickly identify over-privileged containers during security events
+  - **Security Posture**: Baseline and track security improvements over time
+  - **Multi-tenant Clusters**: Ensure tenant workloads don't have dangerous privileges
+  - **Baremetal Deployments**: Critical for on-prem clusters where container escapes are especially damaging
