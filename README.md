@@ -70,6 +70,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_slab_monitor.py`: Monitor kernel slab allocator health to detect memory fragmentation, kernel memory leaks, and runaway caches (dentry storms, inode leaks) before they cause system instability
 - `baremetal_zombie_process_monitor.py`: Detect and report zombie (defunct) processes, identify parent processes not properly reaping children, and track zombie age to prevent PID exhaustion
 - `baremetal_container_runtime_health.py`: Monitor container runtime health (Docker, containerd, podman) including service status, storage usage, container states, and image management
+- `baremetal_kernel_lockup_detector.py`: Detect kernel lockups, RCU stalls, hung tasks, and other indicators of system instability from dmesg/journalctl to identify hardware problems or driver bugs
 
 ### Kubernetes Management
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
