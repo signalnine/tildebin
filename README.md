@@ -60,6 +60,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `sysctl_audit.py`: Audit kernel parameters (sysctl) against a baseline configuration
 - `process_resource_monitor.py`: Monitor process resource consumption and detect zombie/resource-hungry processes
 - `baremetal_socket_state_monitor.py`: Monitor TCP/UDP socket state distribution to detect connection anomalies like excessive TIME_WAIT sockets (port exhaustion), CLOSE_WAIT accumulation (file descriptor leaks), and SYN flood attacks
+- `baremetal_listening_port_monitor.py`: Monitor listening ports and detect unexpected services by analyzing /proc/net files to identify all listening TCP/UDP ports with their associated processes, supporting expected/unexpected port validation and security auditing
 - `baremetal_swap_monitor.py`: Monitor swap usage and memory pressure indicators to detect insufficient RAM, excessive swap activity, and systems at risk of OOM killer activation
 - `baremetal_hugepage_monitor.py`: Monitor hugepage allocation and usage including static hugepages, THP status, per-NUMA distribution, and fragmentation issues for database and VM workloads
 - `baremetal_oom_risk_analyzer.py`: Analyze processes at risk of being killed by the Linux OOM killer by examining OOM scores and memory usage to identify candidates for termination before a memory crisis
@@ -1156,6 +1157,66 @@ baremetal_socket_state_monitor.py -v
 
 # Table format for quick overview
 baremetal_socket_state_monitor.py --format table
+```
+
+### baremetal_listening_port_monitor.py
+```
+python baremetal_listening_port_monitor.py [--format format] [-v] [-w] [--expected PORTS] [--unexpected PORTS] [--tcp-only] [--udp-only] [--port PORT] [--show-all-interfaces]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information
+  -w, --warn-only: Only output if issues are detected
+  --expected PORTS: Comma-separated list of expected ports (e.g., 22,80,443 or 8000-8010)
+  --unexpected PORTS: Comma-separated list of unexpected ports to alert on
+  --tcp-only: Only show TCP listening ports
+  --udp-only: Only show UDP listening ports
+  --port PORT: Filter to specific port number
+  --show-all-interfaces: Only show ports bound to all interfaces (0.0.0.0 or ::)
+```
+
+Features:
+  - List all listening TCP and UDP ports with process information
+  - Detect unexpected services binding to ports (security auditing)
+  - Verify expected services are running and listening
+  - Distinguish between ports bound to all interfaces vs localhost only
+  - Filter by protocol (TCP/UDP) or specific port numbers
+  - Process name and PID identification via /proc filesystem
+  - Multiple output formats for monitoring system integration
+
+Requirements:
+  - Linux /proc/net/tcp, /proc/net/tcp6, /proc/net/udp, /proc/net/udp6 files
+  - Read access to /proc/[pid]/fd for process identification (optional)
+  - No external dependencies required
+
+Exit codes:
+  - 0: No issues detected (all expected ports found, no unexpected ports)
+  - 1: Unexpected ports found or expected ports missing
+  - 2: Missing /proc files or usage error
+
+Examples:
+```bash
+# List all listening ports with process info
+baremetal_listening_port_monitor.py
+
+# Output in JSON format for monitoring integration
+baremetal_listening_port_monitor.py --format json
+
+# Verify expected services are listening
+baremetal_listening_port_monitor.py --expected 22,80,443
+
+# Alert if unexpected ports are found (security audit)
+baremetal_listening_port_monitor.py --unexpected 23,3389,5900
+
+# Only show TCP ports bound to all interfaces
+baremetal_listening_port_monitor.py --tcp-only --show-all-interfaces
+
+# Check specific port
+baremetal_listening_port_monitor.py --port 8080
+
+# Monitoring mode: only output on issues
+baremetal_listening_port_monitor.py --expected 22,80 --unexpected 23 --warn-only --format json
+
+# Table format for quick overview
+baremetal_listening_port_monitor.py --format table
 ```
 
 ### system_inventory.py
