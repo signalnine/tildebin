@@ -50,6 +50,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_bond_health_monitor.py`: Monitor network bond health with detailed diagnostics including slave status, failover readiness, link failures, and speed/duplex mismatch detection
 - `baremetal_boot_performance_monitor.py`: Monitor system boot performance and systemd initialization times to identify slow-booting systems and problematic services that delay startup
 - `baremetal_network_config_audit.py`: Audit network interface configuration for common misconfigurations (MTU mismatches, bonding inconsistencies, IPv6 configuration drift)
+- `baremetal_bandwidth_monitor.py`: Monitor network interface bandwidth utilization and throughput by sampling /proc/net/dev, calculating bytes/packets per second, utilization percentage, and detecting saturation with configurable thresholds
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
 - `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
 - `power_consumption_monitor.py`: Monitor server power consumption using IPMI, turbostat, and RAPL sensors
@@ -1008,6 +1009,57 @@ baremetal_network_config_audit.py --format table --warn-only
 ```
 
 Use Case: In large-scale baremetal deployments, network configuration mismatches are a leading cause of intermittent connectivity issues. Different MTU settings cause packet fragmentation, bonding mode inconsistencies reduce performance, and IPv6 configuration drift creates routing problems. This script audits network interface configuration for common misconfigurations that may not be immediately obvious but can cause significant issues in production. Complement network_interface_health.py by focusing on configuration correctness rather than operational health. Essential for ensuring consistent network configuration across baremetal fleets where manual configuration can lead to drift.
+
+### baremetal_bandwidth_monitor.py
+```
+python baremetal_bandwidth_monitor.py [-i SECONDS] [--interface IFACE] [--format format] [-v] [-w] [--warn PCT] [--crit PCT]
+  -i, --interval: Sampling interval in seconds (default: 1.0)
+  --interface: Monitor specific interface only
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information
+  -w, --warn-only: Only output if issues are detected
+  --warn: Warning threshold percentage (default: 80)
+  --crit: Critical threshold percentage (default: 95)
+  --exclude-down: Exclude interfaces that are not up
+```
+
+Features:
+- Samples /proc/net/dev to calculate real-time bandwidth
+- RX/TX bytes and packets per second
+- Bandwidth utilization percentage (when link speed is known)
+- Configurable warning and critical thresholds
+- Interface filtering and state filtering
+
+Exit codes:
+- 0: No issues (utilization within thresholds)
+- 1: Bandwidth utilization exceeds warning/critical threshold
+- 2: Missing /proc/net/dev or usage error
+
+Examples:
+```bash
+# Monitor all interfaces for 1 second
+baremetal_bandwidth_monitor.py
+
+# Longer sample for more accurate measurements
+baremetal_bandwidth_monitor.py -i 5
+
+# Monitor specific interface
+baremetal_bandwidth_monitor.py --interface eth0
+
+# JSON output for monitoring integration
+baremetal_bandwidth_monitor.py --format json
+
+# Custom thresholds (warn at 70%, critical at 90%)
+baremetal_bandwidth_monitor.py --warn 70 --crit 90
+
+# Only show if saturation detected
+baremetal_bandwidth_monitor.py --warn-only
+
+# Table format with only up interfaces
+baremetal_bandwidth_monitor.py --format table --exclude-down
+```
+
+Use Case: In large-scale baremetal environments, network bandwidth saturation causes latency spikes, packet loss, and application timeouts. This script provides real-time visibility into interface throughput and utilization, enabling capacity planning, bottleneck detection, and traffic pattern analysis. Essential for identifying overloaded network links before they impact production workloads, especially useful for high-bandwidth applications like storage replication, database sync, or media streaming.
 
 ### network_bond_status.sh
 ```
