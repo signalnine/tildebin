@@ -42,6 +42,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `firmware_version_audit.py`: Audit firmware versions for BIOS, BMC/IPMI, network interfaces, and RAID controllers to detect version drift across server fleets
 - `load_average_monitor.py`: Monitor system load averages and process queue depth to identify overloaded systems
 - `hardware_temperature_monitor.py`: Monitor hardware temperature sensors and fan speeds
+- `baremetal_thermal_throttle_monitor.py`: Monitor CPU thermal throttling events by reading kernel throttle counters to detect performance degradation from overheating
 - `gpu_health_monitor.py`: Monitor NVIDIA GPU health, temperature, memory, ECC errors, and power consumption
 - `ipmi_sel_monitor.py`: Monitor IPMI System Event Log (SEL) for hardware errors and critical events
 - `memory_health_monitor.py`: Monitor memory health, ECC errors, and memory pressure
@@ -575,6 +576,50 @@ hardware_temperature_monitor.py --format table --warn-only
 ```
 
 Use Case: In large-scale baremetal datacenters, thermal issues can lead to hardware throttling, system instability, or permanent damage. This script provides visibility into temperature sensors and fan speeds across servers, making it ideal for proactive thermal monitoring and capacity planning. Critical for high-density deployments where cooling is a concern.
+
+### baremetal_thermal_throttle_monitor.py
+```
+python baremetal_thermal_throttle_monitor.py [-f format] [-w] [-v] [--threshold N]
+  -f, --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -w, --warn-only: Only show CPUs with throttle events
+  -v, --verbose: Show detailed per-CPU information
+  --threshold N: Minimum throttle count to report as issue (default: 0)
+```
+
+Requirements:
+  - Linux kernel with thermal throttle interface
+  - Access to /sys/devices/system/cpu/cpu*/thermal_throttle/
+
+Features:
+  - Core-level throttle event counting
+  - Package-level throttle event counting
+  - Throttle time duration tracking (when available)
+  - Per-CPU breakdown of throttling events
+  - Threshold-based alerting
+  - JSON output for monitoring system integration
+
+Examples:
+```bash
+# Check for thermal throttling
+baremetal_thermal_throttle_monitor.py
+
+# Show only CPUs that have experienced throttling
+baremetal_thermal_throttle_monitor.py --warn-only
+
+# Verbose output with per-CPU details
+baremetal_thermal_throttle_monitor.py --verbose
+
+# JSON output for monitoring integration
+baremetal_thermal_throttle_monitor.py --format json
+
+# Table format for easy reading
+baremetal_thermal_throttle_monitor.py --format table
+
+# Only alert if more than 10 throttle events
+baremetal_thermal_throttle_monitor.py --threshold 10
+```
+
+Use Case: While temperature monitoring shows current thermal state, this script detects actual throttling events that indicate performance degradation has occurred. Essential for identifying servers with cooling problems that are silently underperforming. Throttle counters persist across time, making this useful for post-incident analysis and fleet-wide auditing.
 
 ### gpu_health_monitor.py
 ```
