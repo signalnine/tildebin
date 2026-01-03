@@ -84,6 +84,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
 - `k8s_statefulset_health.py`: Monitor StatefulSet health with detailed pod and PVC status checking
 - `k8s_daemonset_health_monitor.py`: Monitor DaemonSet health with node coverage verification, pod status on each node, and detection of scheduling issues
+- `k8s_cni_health_monitor.py`: Monitor CNI (Container Network Interface) health including plugin detection, DaemonSet status, node network conditions, and IPAM status
 - `k8s_dns_health_monitor.py`: Monitor DNS health including CoreDNS/kube-dns pod status and resolution testing
 - `k8s_event_monitor.py`: Monitor Kubernetes events to track cluster issues and anomalies
 - `k8s_node_capacity_planner.py`: Analyze cluster capacity and forecast resource allocation
@@ -1878,6 +1879,58 @@ k8s_daemonset_health_monitor.py --format json
 
 # Combine options: kube-system namespace, only problematic, JSON format
 k8s_daemonset_health_monitor.py -n kube-system -w -f json
+```
+
+### k8s_cni_health_monitor.py
+```
+python k8s_cni_health_monitor.py [--format format] [--warn-only] [--verbose]
+  --format, -f: Output format, either 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show output if issues or warnings are detected
+  --verbose, -v: Show detailed information including per-node status
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: All CNI components healthy
+  - 1: CNI issues detected
+  - 2: Usage error or kubectl not available
+
+Supported CNI plugins:
+  - Calico
+  - Cilium
+  - Flannel
+  - Weave
+  - AWS VPC CNI
+  - Azure CNI
+
+Features:
+  - Auto-detects installed CNI plugin
+  - Monitors CNI DaemonSet health (desired vs ready pods)
+  - Checks node NetworkUnavailable condition
+  - Verifies pod CIDR allocation on nodes
+  - Detects pods with network-related failures
+  - Checks CNI-specific IPAM status (Calico IPPool, Cilium)
+  - Identifies high-restart CNI pods indicating instability
+
+Examples:
+```bash
+# Check CNI health with plain output
+k8s_cni_health_monitor.py
+
+# JSON output for monitoring systems
+k8s_cni_health_monitor.py --format json
+
+# Only show problems
+k8s_cni_health_monitor.py --warn-only
+
+# Verbose output with per-node network status
+k8s_cni_health_monitor.py --verbose
+
+# Table format for easy reading
+k8s_cni_health_monitor.py --format table
 ```
 
 ### k8s_dns_health_monitor.py
