@@ -109,6 +109,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_service_health_monitor.py`: Monitor Kubernetes Service health by checking endpoint availability, identifying services with zero endpoints or partially ready endpoints, and correlating service configuration with endpoint status
 - `k8s_rbac_auditor.py`: Audit Kubernetes RBAC roles and bindings for security issues including cluster-admin access, wildcard permissions, dangerous verbs, anonymous user access, and overly permissive service account bindings
 - `k8s_pod_security_audit.py`: Audit pod security contexts and Linux capabilities for security risks including privileged containers, root user execution, dangerous capabilities, host namespace sharing, and missing security profiles
+- `k8s_control_plane_health.py`: Monitor Kubernetes control plane health including API server availability and latency, etcd cluster status, controller-manager and scheduler leader election, and control plane pod health
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -3091,3 +3092,57 @@ Security Use Cases:
   - **Security Posture**: Baseline and track security improvements over time
   - **Multi-tenant Clusters**: Ensure tenant workloads don't have dangerous privileges
   - **Baremetal Deployments**: Critical for on-prem clusters where container escapes are especially damaging
+
+### k8s_control_plane_health.py
+```
+k8s_control_plane_health.py [-n namespace] [--format {plain,json,table}] [-v] [-w]
+  -n, --namespace: Namespace for control plane components (default: kube-system)
+  -f, --format: Output format - 'plain', 'json', or 'table' (default: table)
+  -v, --verbose: Show detailed information
+  -w, --warn-only: Only show output if issues or warnings detected
+```
+
+Monitor Kubernetes control plane health. Checks:
+- API server availability and response latency
+- API server health endpoints (/healthz, /readyz, /livez)
+- etcd cluster health and quorum status
+- Controller-manager and scheduler leader election leases
+- Control plane pod health and restart counts
+
+Exit codes:
+  - 0: All control plane components healthy
+  - 1: Control plane issues detected
+  - 2: Usage error or kubectl not available
+
+Examples:
+```bash
+# Check control plane health (default table format)
+k8s_control_plane_health.py
+
+# Plain text output
+k8s_control_plane_health.py --format plain
+
+# JSON output for monitoring systems
+k8s_control_plane_health.py --format json
+
+# Only show if there are problems
+k8s_control_plane_health.py --warn-only
+
+# Check control plane in custom namespace
+k8s_control_plane_health.py -n kube-system
+
+# Verbose with all details
+k8s_control_plane_health.py -v
+
+# Combine: only warnings in JSON format
+k8s_control_plane_health.py -w --format json
+```
+
+Operational Use Cases:
+  - **Cluster Health Monitoring**: Continuous health checks for alerting
+  - **Upgrade Validation**: Verify control plane health after upgrades
+  - **Disaster Recovery**: Quick assessment of control plane availability
+  - **Performance Debugging**: Identify API server latency issues
+  - **etcd Quorum Monitoring**: Detect etcd degradation before data loss
+  - **Leader Election Tracking**: Monitor controller-manager and scheduler failovers
+  - **Baremetal Deployments**: Critical for self-managed control planes
