@@ -69,6 +69,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_oom_risk_analyzer.py`: Analyze processes at risk of being killed by the Linux OOM killer by examining OOM scores and memory usage to identify candidates for termination before a memory crisis
 - `baremetal_numa_balance_monitor.py`: Monitor NUMA topology and memory balance on multi-socket systems to detect cross-node memory imbalances, high NUMA miss ratios, and per-node memory pressure
 - `baremetal_cgroup_pressure_monitor.py`: Monitor cgroup v2 PSI (Pressure Stall Information) to detect CPU, memory, and I/O contention on container hosts before performance degradation or OOM kills occur
+- `baremetal_conntrack_monitor.py`: Monitor Linux connection tracking (conntrack) table saturation to detect DDoS attacks, traffic spikes, or misconfigured applications causing table exhaustion and dropped connections
 - `baremetal_io_latency_analyzer.py`: Analyze I/O latency patterns by sampling /proc/diskstats to identify slow storage operations, high latency devices, and I/O bottlenecks with configurable thresholds
 - `baremetal_systemd_journal_analyzer.py`: Analyze systemd journal for service failures, restart loops, OOM kills, segfaults, authentication failures, and error patterns to detect application-level issues before they cascade
 - `baremetal_slab_monitor.py`: Monitor kernel slab allocator health to detect memory fragmentation, kernel memory leaks, and runaway caches (dentry storms, inode leaks) before they cause system instability
@@ -1206,6 +1207,59 @@ baremetal_boot_performance_monitor.py --warn-only --format json
 
 # Table format for quick overview
 baremetal_boot_performance_monitor.py --format table -v
+```
+
+### baremetal_conntrack_monitor.py
+```
+python baremetal_conntrack_monitor.py [--format format] [-v] [-w] [--warn PERCENT] [--crit PERCENT]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including timeout settings
+  -w, --warn-only: Only show warnings and errors
+  --warn PERCENT: Warning threshold for usage percentage (default: 75)
+  --crit PERCENT: Critical threshold for usage percentage (default: 90)
+```
+
+Features:
+  - Monitor connection tracking table usage (current vs maximum entries)
+  - Detect table saturation that causes dropped connections
+  - Identify DDoS attacks or traffic spikes before they impact service
+  - Track hash bucket configuration for tuning recommendations
+  - Show timeout settings affecting connection lifecycle
+  - Multiple output formats for integration with monitoring systems
+
+Requirements:
+  - Linux system with netfilter/iptables (nf_conntrack module loaded)
+  - Read access to /proc/sys/net/netfilter/
+
+Exit codes:
+  - 0: Connection tracking usage is healthy
+  - 1: High usage detected (warning or critical threshold exceeded)
+  - 2: Connection tracking not available (module not loaded) or usage error
+
+Remediation:
+  - Increase max connections: sysctl -w net.netfilter.nf_conntrack_max=262144
+  - Reduce TCP established timeout: sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=3600
+  - Investigate applications creating excessive connections
+
+Examples:
+```bash
+# Check conntrack usage with default thresholds (75%/90%)
+baremetal_conntrack_monitor.py
+
+# Custom thresholds for high-traffic systems
+baremetal_conntrack_monitor.py --warn 80 --crit 95
+
+# Show timeout settings and hash bucket info
+baremetal_conntrack_monitor.py --verbose
+
+# JSON output for monitoring integration
+baremetal_conntrack_monitor.py --format json
+
+# Table format for human-readable output
+baremetal_conntrack_monitor.py --format table
+
+# Only alert when thresholds exceeded
+baremetal_conntrack_monitor.py --warn-only
 ```
 
 ### baremetal_socket_state_monitor.py
