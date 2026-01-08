@@ -70,6 +70,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_numa_balance_monitor.py`: Monitor NUMA topology and memory balance on multi-socket systems to detect cross-node memory imbalances, high NUMA miss ratios, and per-node memory pressure
 - `baremetal_cgroup_pressure_monitor.py`: Monitor cgroup v2 PSI (Pressure Stall Information) to detect CPU, memory, and I/O contention on container hosts before performance degradation or OOM kills occur
 - `baremetal_conntrack_monitor.py`: Monitor Linux connection tracking (conntrack) table saturation to detect DDoS attacks, traffic spikes, or misconfigured applications causing table exhaustion and dropped connections
+- `baremetal_fd_exhaustion_monitor.py`: Monitor system-wide and per-process file descriptor usage to detect fd exhaustion before "too many open files" errors cause service failures, connection drops, and application crashes
 - `baremetal_io_latency_analyzer.py`: Analyze I/O latency patterns by sampling /proc/diskstats to identify slow storage operations, high latency devices, and I/O bottlenecks with configurable thresholds
 - `baremetal_systemd_journal_analyzer.py`: Analyze systemd journal for service failures, restart loops, OOM kills, segfaults, authentication failures, and error patterns to detect application-level issues before they cascade
 - `baremetal_slab_monitor.py`: Monitor kernel slab allocator health to detect memory fragmentation, kernel memory leaks, and runaway caches (dentry storms, inode leaks) before they cause system instability
@@ -1262,6 +1263,62 @@ baremetal_conntrack_monitor.py --format table
 
 # Only alert when thresholds exceeded
 baremetal_conntrack_monitor.py --warn-only
+```
+
+### baremetal_fd_exhaustion_monitor.py
+```
+python baremetal_fd_exhaustion_monitor.py [--format format] [-v] [-w] [--warn PERCENT] [--crit PERCENT] [--process-warn PERCENT] [--top N]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show top file descriptor consumers
+  -w, --warn-only: Only show warnings and errors
+  --warn PERCENT: System warning threshold for usage percentage (default: 75)
+  --crit PERCENT: System critical threshold for usage percentage (default: 90)
+  --process-warn PERCENT: Per-process warning threshold (default: 80)
+  --top N: Number of top fd consumers to show (default: 10)
+```
+
+Features:
+  - Monitor system-wide file descriptor allocation vs kernel limit (file-max)
+  - Track per-process fd usage vs ulimit to detect approaching limits
+  - Identify top fd consuming processes (useful for finding leaks)
+  - Detect processes approaching their ulimit before failures occur
+  - Multiple output formats for monitoring system integration
+  - Customizable thresholds for different workloads
+
+Requirements:
+  - Linux /proc/sys/fs/file-nr, /proc/[pid]/fd, /proc/[pid]/limits
+  - No external dependencies required
+
+Exit codes:
+  - 0: File descriptor usage is healthy
+  - 1: High usage detected (system or process level)
+  - 2: Cannot read fd information or usage error
+
+Examples:
+```bash
+# Check fd usage with default thresholds (75%/90%)
+baremetal_fd_exhaustion_monitor.py
+
+# Show top fd consumers
+baremetal_fd_exhaustion_monitor.py --verbose
+
+# Show top 20 fd consumers
+baremetal_fd_exhaustion_monitor.py --verbose --top 20
+
+# Custom thresholds for high-load systems
+baremetal_fd_exhaustion_monitor.py --warn 80 --crit 95
+
+# Alert on processes using more than 50% of their limit
+baremetal_fd_exhaustion_monitor.py --process-warn 50
+
+# JSON output for monitoring integration
+baremetal_fd_exhaustion_monitor.py --format json --verbose
+
+# Table format for human-readable output
+baremetal_fd_exhaustion_monitor.py --format table
+
+# Only alert when thresholds exceeded
+baremetal_fd_exhaustion_monitor.py --warn-only
 ```
 
 ### baremetal_socket_state_monitor.py
