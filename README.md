@@ -80,6 +80,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_systemd_timer_monitor.py`: Monitor systemd timer health including failed timers, missed executions, and associated service failures to ensure scheduled tasks run reliably
 - `baremetal_ssl_cert_scanner.py`: Scan filesystem for SSL/TLS certificates and check expiration status to prevent outages from expired certificates in web servers, databases, and other services
 - `baremetal_disk_queue_monitor.py`: Monitor disk I/O queue depths to detect storage bottlenecks and saturation before they cause latency spikes, with configurable thresholds and IOPS tracking
+- `baremetal_iptables_audit.py`: Audit iptables firewall rules for security and performance issues including rule count analysis, empty chains, unused rules, overly permissive/restrictive rules, and default policy review
 
 ### Kubernetes Management
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
@@ -1319,6 +1320,59 @@ baremetal_fd_exhaustion_monitor.py --format table
 
 # Only alert when thresholds exceeded
 baremetal_fd_exhaustion_monitor.py --warn-only
+```
+
+### baremetal_iptables_audit.py
+```
+python baremetal_iptables_audit.py [--format format] [-v] [-w] [-t table] [--max-rules N] [--unused-threshold N]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed chain information
+  -w, --warn-only: Only show warnings and errors, suppress info messages
+  -t, --table: iptables table to audit: filter, nat, mangle, raw (default: filter)
+  --max-rules N: Warn if a chain has more than N rules (default: 50)
+  --unused-threshold N: Packet count threshold for "unused" detection (default: 0)
+```
+
+Features:
+  - Analyze total rule count and warn on high counts (performance impact)
+  - Detect empty chains that can be cleaned up
+  - Identify chains with excessive rules (suggests consolidation needed)
+  - Find rules with zero packet/byte counters (potentially unused)
+  - Detect overly permissive rules (ACCEPT all from anywhere)
+  - Detect overly restrictive rules (DROP all not at end of chain)
+  - Review default chain policies for security
+
+Requirements:
+  - Linux with iptables installed
+  - Root/sudo access to read iptables rules
+
+Exit codes:
+  - 0: No issues detected
+  - 1: Warnings or issues found
+  - 2: Usage error or iptables not available
+
+Examples:
+```bash
+# Basic audit with default thresholds
+baremetal_iptables_audit.py
+
+# Include detailed chain information
+baremetal_iptables_audit.py --verbose
+
+# JSON output for monitoring integration
+baremetal_iptables_audit.py --format json
+
+# Audit NAT table instead of filter
+baremetal_iptables_audit.py --table nat
+
+# Warn if any chain has more than 100 rules
+baremetal_iptables_audit.py --max-rules 100
+
+# Only show warnings and errors
+baremetal_iptables_audit.py --warn-only
+
+# Table format for human-readable output
+baremetal_iptables_audit.py --format table --verbose
 ```
 
 ### baremetal_socket_state_monitor.py
