@@ -70,6 +70,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_numa_balance_monitor.py`: Monitor NUMA topology and memory balance on multi-socket systems to detect cross-node memory imbalances, high NUMA miss ratios, and per-node memory pressure
 - `baremetal_cgroup_pressure_monitor.py`: Monitor cgroup v2 PSI (Pressure Stall Information) to detect CPU, memory, and I/O contention on container hosts before performance degradation or OOM kills occur
 - `baremetal_conntrack_monitor.py`: Monitor Linux connection tracking (conntrack) table saturation to detect DDoS attacks, traffic spikes, or misconfigured applications causing table exhaustion and dropped connections
+- `baremetal_cpu_vulnerability_scanner.py`: Scan CPU hardware vulnerabilities (Spectre, Meltdown, MDS, etc.) and verify kernel mitigations are enabled for security compliance across server fleets
 - `baremetal_fd_exhaustion_monitor.py`: Monitor system-wide and per-process file descriptor usage to detect fd exhaustion before "too many open files" errors cause service failures, connection drops, and application crashes
 - `baremetal_io_latency_analyzer.py`: Analyze I/O latency patterns by sampling /proc/diskstats to identify slow storage operations, high latency devices, and I/O bottlenecks with configurable thresholds
 - `baremetal_systemd_journal_analyzer.py`: Analyze systemd journal for service failures, restart loops, OOM kills, segfaults, authentication failures, and error patterns to detect application-level issues before they cascade
@@ -1264,6 +1265,61 @@ baremetal_conntrack_monitor.py --format table
 
 # Only alert when thresholds exceeded
 baremetal_conntrack_monitor.py --warn-only
+```
+
+### baremetal_cpu_vulnerability_scanner.py
+```
+python baremetal_cpu_vulnerability_scanner.py [--format format] [-v] [-w]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed CPU information (family, model, stepping)
+  -w, --warn-only: Only show warnings and issues (suppress normal output)
+```
+
+Features:
+  - Scan all known CPU vulnerabilities (Spectre v1/v2, Meltdown, MDS, L1TF, etc.)
+  - Verify kernel mitigations are active via /sys/devices/system/cpu/vulnerabilities/
+  - Detect disabled mitigations in kernel command line (mitigations=off, nopti, etc.)
+  - Report CPU model, vendor, and microcode version for fleet tracking
+  - Identify systems needing microcode updates or kernel patches
+  - Multiple output formats for security compliance dashboards
+
+Requirements:
+  - Linux kernel 4.14+ with vulnerability reporting support
+  - Read access to /sys/devices/system/cpu/vulnerabilities/
+  - Read access to /proc/cpuinfo and /proc/cmdline
+
+Exit codes:
+  - 0: All mitigations active, no vulnerabilities exposed
+  - 1: Vulnerabilities detected or mitigations not fully enabled
+  - 2: Vulnerability information not available or usage error
+
+Remediation:
+  - Enable mitigations: Remove 'mitigations=off' from kernel cmdline
+  - Update microcode: Install intel-microcode or amd-microcode packages
+  - Update kernel: Newer kernels include improved mitigations
+  - For performance-critical systems: Evaluate which mitigations can be disabled safely
+
+Examples:
+```bash
+# Scan CPU vulnerabilities with default output
+baremetal_cpu_vulnerability_scanner.py
+
+# Show detailed CPU information
+baremetal_cpu_vulnerability_scanner.py --verbose
+
+# JSON output for security compliance systems
+baremetal_cpu_vulnerability_scanner.py --format json
+
+# Table format for human-readable reports
+baremetal_cpu_vulnerability_scanner.py --format table
+
+# Only show issues (for alerting)
+baremetal_cpu_vulnerability_scanner.py --warn-only
+
+# Combine with fleet management for scanning all hosts
+for host in $(cat hosts.txt); do
+  ssh $host baremetal_cpu_vulnerability_scanner.py --format json
+done | jq -s '.'
 ```
 
 ### baremetal_fd_exhaustion_monitor.py
