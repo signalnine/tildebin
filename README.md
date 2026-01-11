@@ -82,6 +82,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_ssl_cert_scanner.py`: Scan filesystem for SSL/TLS certificates and check expiration status to prevent outages from expired certificates in web servers, databases, and other services
 - `baremetal_disk_queue_monitor.py`: Monitor disk I/O queue depths to detect storage bottlenecks and saturation before they cause latency spikes, with configurable thresholds and IOPS tracking
 - `baremetal_iptables_audit.py`: Audit iptables firewall rules for security and performance issues including rule count analysis, empty chains, unused rules, overly permissive/restrictive rules, and default policy review
+- `baremetal_process_limits_monitor.py`: Monitor per-process resource limits (ulimits) to detect processes approaching their configured limits before hitting "too many open files" or other resource exhaustion errors
 
 ### Kubernetes Management
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
@@ -1429,6 +1430,63 @@ baremetal_iptables_audit.py --warn-only
 
 # Table format for human-readable output
 baremetal_iptables_audit.py --format table --verbose
+```
+
+### baremetal_process_limits_monitor.py
+```
+python baremetal_process_limits_monitor.py [--format format] [-v] [-w] [--warn PCT] [--crit PCT] [--name PATTERN] [--top N]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed metrics for all processes
+  -w, --warn-only: Only show processes with warnings or critical issues
+  --warn PCT: Warning threshold percentage (default: 80)
+  --crit PCT: Critical threshold percentage (default: 95)
+  --name PATTERN: Filter processes by name (case-insensitive partial match)
+  --top N: Show only top N processes by file descriptor usage
+```
+
+Features:
+  - Monitor per-process open file descriptor usage vs RLIMIT_NOFILE
+  - Check virtual memory (address space) vs RLIMIT_AS limit
+  - Check stack size vs RLIMIT_STACK limit
+  - Track thread count per process
+  - Filter by process name pattern or user
+  - Sort by resource usage to find highest consumers
+  - Configurable warning/critical thresholds
+
+Requirements:
+  - Linux /proc filesystem
+  - Read access to /proc/[pid]/ directories (root for all processes)
+
+Exit codes:
+  - 0: All processes within safe limits
+  - 1: Processes found at risk (above warning threshold)
+  - 2: Usage error or /proc filesystem not available
+
+Examples:
+```bash
+# Check all accessible processes with default thresholds
+baremetal_process_limits_monitor.py
+
+# Show only processes with issues
+baremetal_process_limits_monitor.py --warn-only
+
+# Custom thresholds for high-load servers
+baremetal_process_limits_monitor.py --warn 70 --crit 90
+
+# Filter to check only nginx processes
+baremetal_process_limits_monitor.py --name nginx
+
+# Show top 10 file descriptor consumers
+baremetal_process_limits_monitor.py --top 10
+
+# JSON output for monitoring integration
+baremetal_process_limits_monitor.py --format json
+
+# Table format with verbose metrics
+baremetal_process_limits_monitor.py --format table --verbose
+
+# Combined: check nginx processes, alert at 60%
+baremetal_process_limits_monitor.py --name nginx --warn 60 --crit 85 --format json
 ```
 
 ### baremetal_socket_state_monitor.py
