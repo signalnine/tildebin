@@ -100,6 +100,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_node_drain_readiness.py`: Analyze node drainability and orchestrate graceful node maintenance
 - `k8s_memory_pressure_analyzer.py`: Detect memory pressure on nodes and analyze pod memory usage patterns
 - `k8s_pod_eviction_risk_analyzer.py`: Identify pods at risk of eviction due to resource pressure or QoS class
+- `k8s_pod_topology_analyzer.py`: Analyze pod topology spread constraints and affinity rules to ensure high availability
 - `k8s_node_restart_monitor.py`: Monitor node restart activity and detect nodes with excessive restarts
 - `k8s_pod_count_analyzer.py`: Audit pod counts, scaling configuration, and resource quota usage
 - `k8s_orphaned_resources_finder.py`: Find orphaned and unused resources (ConfigMaps, Secrets, PVCs, Services, ServiceAccounts)
@@ -2656,6 +2657,70 @@ Use Cases:
   - **SLA Compliance**: Ensure production workloads have Guaranteed QoS and proper resource limits
   - **Capacity Planning**: Identify when nodes are approaching resource exhaustion
   - **Monitoring Integration**: Export eviction risk via JSON for alerting systems
+
+### k8s_pod_topology_analyzer.py
+```
+python3 k8s_pod_topology_analyzer.py [options]
+  -n, --namespace: Analyze specific namespace (default: all namespaces)
+  -f, --format: Output format - 'plain', 'table', or 'json' (default: table)
+  -w, --warn-only: Only show workloads with topology issues
+  -v, --verbose: Show detailed topology information
+  -h, --help: Show help message
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No topology issues detected
+  - 1: Topology issues or risks found
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Analyzes TopologySpreadConstraints configuration on deployments and statefulsets
+  - Detects missing zone-level topology spread constraints
+  - Monitors pod affinity and anti-affinity rules
+  - Identifies required vs preferred anti-affinity configurations
+  - Analyzes actual pod distribution across nodes and zones
+  - Detects single points of failure (all pods on one node/zone)
+  - Flags workloads with high pod concentration on single nodes
+  - Multiple output formats for integration with monitoring systems
+
+Output Formats:
+  - **table**: Human-readable columnar format showing workloads and distribution issues (default)
+  - **plain**: Space-separated values for scripting/shell integration
+  - **json**: Machine-parseable JSON with detailed topology analysis
+
+Examples:
+```bash
+# Analyze all workloads for topology issues
+k8s_pod_topology_analyzer.py
+
+# Check specific namespace
+k8s_pod_topology_analyzer.py -n production
+
+# Show only workloads with issues
+k8s_pod_topology_analyzer.py --warn-only
+
+# Get table output for human review
+k8s_pod_topology_analyzer.py --format table
+
+# Get JSON output for monitoring integration
+k8s_pod_topology_analyzer.py --format json
+
+# Combine options: production namespace, warn-only, JSON format
+k8s_pod_topology_analyzer.py -n production -w -f json
+```
+
+Use Cases:
+  - **High Availability Validation**: Ensure critical workloads have proper topology constraints
+  - **Single Point of Failure Detection**: Identify when all replicas are on one node or zone
+  - **Pre-deployment Validation**: Check workload configurations before deploying to production
+  - **Cluster Topology Planning**: Understand how pods are distributed across infrastructure
+  - **Baremetal Deployments**: Critical for on-premises clusters where node failures are costly
+  - **Zone Failure Preparedness**: Ensure workloads can survive zone failures
+  - **Monitoring Integration**: Export topology analysis via JSON for alerting systems
 
 ### k8s_node_restart_monitor.py
 ```
