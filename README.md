@@ -72,6 +72,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_conntrack_monitor.py`: Monitor Linux connection tracking (conntrack) table saturation to detect DDoS attacks, traffic spikes, or misconfigured applications causing table exhaustion and dropped connections
 - `baremetal_cpu_vulnerability_scanner.py`: Scan CPU hardware vulnerabilities (Spectre, Meltdown, MDS, etc.) and verify kernel mitigations are enabled for security compliance across server fleets
 - `baremetal_fd_exhaustion_monitor.py`: Monitor system-wide and per-process file descriptor usage to detect fd exhaustion before "too many open files" errors cause service failures, connection drops, and application crashes
+- `baremetal_inode_exhaustion_monitor.py`: Monitor filesystem inode usage to detect exhaustion before cryptic "no space left on device" errors occur even when disk space is available - critical for systems with millions of small files
 - `baremetal_io_latency_analyzer.py`: Analyze I/O latency patterns by sampling /proc/diskstats to identify slow storage operations, high latency devices, and I/O bottlenecks with configurable thresholds
 - `baremetal_systemd_journal_analyzer.py`: Analyze systemd journal for service failures, restart loops, OOM kills, segfaults, authentication failures, and error patterns to detect application-level issues before they cascade
 - `baremetal_slab_monitor.py`: Monitor kernel slab allocator health to detect memory fragmentation, kernel memory leaks, and runaway caches (dentry storms, inode leaks) before they cause system instability
@@ -1378,6 +1379,60 @@ baremetal_fd_exhaustion_monitor.py --format table
 
 # Only alert when thresholds exceeded
 baremetal_fd_exhaustion_monitor.py --warn-only
+```
+
+### baremetal_inode_exhaustion_monitor.py
+```
+python baremetal_inode_exhaustion_monitor.py [--format format] [-v] [-w] [--warn PERCENT] [--crit PERCENT] [--mountpoint PATH]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed filesystem information
+  -w, --warn-only: Only show warnings and errors, suppress normal output
+  --warn PERCENT: Warning threshold for inode usage (default: 80%)
+  --crit PERCENT: Critical threshold for inode usage (default: 90%)
+  --mountpoint PATH: Only check specific mountpoint
+```
+
+Features:
+  - Monitor inode usage across all mounted filesystems
+  - Detect filesystems approaching inode exhaustion
+  - Filter to specific mountpoints for targeted monitoring
+  - Multiple output formats for integration with monitoring systems
+  - Remediation guidance in help text
+
+Requirements:
+  - Linux with standard df command
+  - No special permissions needed for basic monitoring
+
+Exit codes:
+  - 0: Inode usage healthy across all filesystems
+  - 1: High inode usage detected (warning or critical)
+  - 2: Usage error or cannot read filesystem information
+
+Examples:
+```bash
+# Check inode usage with default thresholds (80%/90%)
+baremetal_inode_exhaustion_monitor.py
+
+# Show detailed filesystem information
+baremetal_inode_exhaustion_monitor.py --verbose
+
+# Custom thresholds for strict monitoring
+baremetal_inode_exhaustion_monitor.py --warn 70 --crit 85
+
+# Check only root filesystem
+baremetal_inode_exhaustion_monitor.py --mountpoint /
+
+# JSON output for monitoring integration
+baremetal_inode_exhaustion_monitor.py --format json
+
+# Table format for human-readable output
+baremetal_inode_exhaustion_monitor.py --format table
+
+# Only alert when thresholds exceeded
+baremetal_inode_exhaustion_monitor.py --warn-only
+
+# Find directories with most inodes on a filesystem
+find /path -xdev -printf '%h\n' | sort | uniq -c | sort -rn | head -20
 ```
 
 ### baremetal_iptables_audit.py
