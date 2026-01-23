@@ -69,6 +69,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_hugepage_monitor.py`: Monitor hugepage allocation and usage including static hugepages, THP status, per-NUMA distribution, and fragmentation issues for database and VM workloads
 - `baremetal_oom_risk_analyzer.py`: Analyze processes at risk of being killed by the Linux OOM killer by examining OOM scores and memory usage to identify candidates for termination before a memory crisis
 - `baremetal_numa_balance_monitor.py`: Monitor NUMA topology and memory balance on multi-socket systems to detect cross-node memory imbalances, high NUMA miss ratios, and per-node memory pressure
+- `baremetal_memory_fragmentation_analyzer.py`: Analyze memory fragmentation using buddy allocator statistics to detect external fragmentation causing allocation failures despite available free memory, monitor hugepage availability, and identify need for memory compaction
 - `baremetal_cgroup_pressure_monitor.py`: Monitor cgroup v2 PSI (Pressure Stall Information) to detect CPU, memory, and I/O contention on container hosts before performance degradation or OOM kills occur
 - `baremetal_conntrack_monitor.py`: Monitor Linux connection tracking (conntrack) table saturation to detect DDoS attacks, traffic spikes, or misconfigured applications causing table exhaustion and dropped connections
 - `baremetal_cpu_vulnerability_scanner.py`: Scan CPU hardware vulnerabilities (Spectre, Meltdown, MDS, etc.) and verify kernel mitigations are enabled for security compliance across server fleets
