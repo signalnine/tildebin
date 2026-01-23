@@ -60,6 +60,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_network_config_audit.py`: Audit network interface configuration for common misconfigurations (MTU mismatches, bonding inconsistencies, IPv6 configuration drift)
 - `baremetal_bandwidth_monitor.py`: Monitor network interface bandwidth utilization and throughput by sampling /proc/net/dev, calculating bytes/packets per second, utilization percentage, and detecting saturation with configurable thresholds
 - `baremetal_tcp_retransmission_monitor.py`: Monitor TCP retransmission rates to detect packet loss, network congestion, and connectivity issues by sampling /proc/net/snmp statistics with configurable warning thresholds
+- `baremetal_packet_drop_analyzer.py`: Analyze per-interface packet drops with detailed breakdown by cause (rx_dropped, rx_errors, rx_missed, rx_fifo, tx_dropped, tx_carrier, etc.) to help distinguish between driver bugs, misconfigurations, buffer exhaustion, and potential attacks
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
 - `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
 - `baremetal_pcie_topology_analyzer.py`: Analyze PCIe topology including IOMMU groups, device-to-NUMA node mapping, PCIe link speed/width validation, and identification of suboptimal device placement for GPU clusters and high-performance workloads
