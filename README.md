@@ -55,6 +55,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_bandwidth_monitor.py`: Monitor network interface bandwidth utilization and throughput by sampling /proc/net/dev, calculating bytes/packets per second, utilization percentage, and detecting saturation with configurable thresholds
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
 - `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
+- `baremetal_pcie_topology_analyzer.py`: Analyze PCIe topology including IOMMU groups, device-to-NUMA node mapping, PCIe link speed/width validation, and identification of suboptimal device placement for GPU clusters and high-performance workloads
 - `power_consumption_monitor.py`: Monitor server power consumption using IPMI, turbostat, and RAPL sensors
 - `system_inventory.py`: Generate hardware inventory for baremetal systems
 - `systemd_service_monitor.py`: Monitor systemd service health and identify failed or degraded units
