@@ -63,6 +63,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_tcp_retransmission_monitor.py`: Monitor TCP retransmission rates to detect packet loss, network congestion, and connectivity issues by sampling /proc/net/snmp statistics with configurable warning thresholds
 - `baremetal_packet_drop_analyzer.py`: Analyze per-interface packet drops with detailed breakdown by cause (rx_dropped, rx_errors, rx_missed, rx_fifo, tx_dropped, tx_carrier, etc.) to help distinguish between driver bugs, misconfigurations, buffer exhaustion, and potential attacks
 - `baremetal_link_flap_detector.py`: Detect network interface link flapping by monitoring carrier state transitions over time to identify unstable cables, failing transceivers, bad switch ports, or auto-negotiation issues causing intermittent connectivity
+- `baremetal_route_health_monitor.py`: Monitor network routing health including default gateway reachability, routing table consistency, and interface status to detect routing issues causing connectivity problems
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
 - `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
 - `baremetal_pcie_topology_analyzer.py`: Analyze PCIe topology including IOMMU groups, device-to-NUMA node mapping, PCIe link speed/width validation, and identification of suboptimal device placement for GPU clusters and high-performance workloads
@@ -1344,6 +1345,58 @@ baremetal_link_flap_detector.py --warn-only -d 60
 ```
 
 Use Case: In large-scale baremetal datacenters, link flapping is a common symptom of failing network hardware. A bad cable, dying SFP transceiver, or faulty switch port can cause intermittent connectivity that's difficult to diagnose. This script monitors carrier state transitions over time to detect unstable links before they cause service disruptions. Essential for proactive hardware maintenance and troubleshooting hard-to-reproduce network issues.
+
+### baremetal_route_health_monitor.py
+```
+python baremetal_route_health_monitor.py [-v] [--format format] [--no-ping] [--warn-only] [--ping-count N] [--ping-timeout N]
+  -v, --verbose: Show detailed route and gateway information
+  --format: Output format, either 'plain' or 'json' (default: plain)
+  --no-ping: Skip gateway reachability checks (no ICMP ping)
+  --warn-only: Only show routes or gateways with issues
+  --ping-count: Number of ping packets to send (default: 3)
+  --ping-timeout: Ping timeout in seconds (default: 2)
+```
+
+Features:
+  - Monitors default gateway reachability via ICMP ping
+  - Tracks IPv4 and IPv6 default routes
+  - Detects unreachable gateways before they cause outages
+  - Measures gateway latency and packet loss
+  - Validates interface status for route interfaces
+  - Detects multiple default routes with same metric (potential issues)
+  - JSON output for monitoring integration
+
+Requirements:
+  - iproute2 (ip command)
+  - ping/ping6 for gateway reachability checks
+
+Exit codes:
+  - 0: All routes healthy, gateways reachable
+  - 1: Routing issues detected (unreachable gateway, interface down)
+  - 2: Missing dependencies or usage error
+
+Examples:
+```bash
+# Check all default routes and ping gateways
+baremetal_route_health_monitor.py
+
+# Skip ping checks (faster, useful in high-security environments)
+baremetal_route_health_monitor.py --no-ping
+
+# JSON output for monitoring integration
+baremetal_route_health_monitor.py --format json
+
+# Verbose output showing all routes
+baremetal_route_health_monitor.py -v
+
+# Only alert if issues detected
+baremetal_route_health_monitor.py --warn-only
+
+# Longer ping test with more packets
+baremetal_route_health_monitor.py --ping-count 10 --ping-timeout 5
+```
+
+Use Case: In large-scale baremetal environments, silent routing failures can cause cascading connectivity issues. A failed default gateway, missing route, or downed interface can isolate servers from the network without obvious symptoms. This script proactively monitors routing health by checking gateway reachability and interface status, detecting issues before they cause service disruptions. Essential for environments with redundant gateways, policy-based routing, or complex network topologies.
 
 ### network_bond_status.sh
 ```
