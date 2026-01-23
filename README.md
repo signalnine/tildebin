@@ -94,6 +94,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_iptables_audit.py`: Audit iptables firewall rules for security and performance issues including rule count analysis, empty chains, unused rules, overly permissive/restrictive rules, and default policy review
 - `baremetal_process_limits_monitor.py`: Monitor per-process resource limits (ulimits) to detect processes approaching their configured limits before hitting "too many open files" or other resource exhaustion errors
 - `baremetal_vmalloc_monitor.py`: Monitor kernel vmalloc memory usage to detect exhaustion before cryptic allocation failures, tracking total usage, fragmentation, and top consumers
+- `baremetal_scheduler_affinity_auditor.py`: Audit CPU affinity masks and scheduler policies (SCHED_FIFO, SCHED_RR, SCHED_OTHER) to detect misconfigurations causing latency spikes, RT process starvation risks, and CPU isolation violations
 
 ### Kubernetes Management
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
