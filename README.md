@@ -42,6 +42,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `iosched_audit.py`: Audit I/O scheduler configuration across block devices and detect misconfigurations (NVMe using complex schedulers, HDDs using 'none', etc.)
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
+- `baremetal_cpu_time_analyzer.py`: Analyze CPU time distribution (user, system, iowait, steal, softirq) for performance diagnosis
 - `firmware_version_audit.py`: Audit firmware versions for BIOS, BMC/IPMI, network interfaces, and RAID controllers to detect version drift across server fleets
 - `load_average_monitor.py`: Monitor system load averages and process queue depth to identify overloaded systems
 - `hardware_temperature_monitor.py`: Monitor hardware temperature sensors and fan speeds
@@ -918,6 +919,65 @@ cpu_frequency_monitor.py --no-throttle-check
 ```
 
 Use Case: In large-scale baremetal environments, incorrect CPU governor settings or unexpected frequency throttling can severely impact workload performance. This script helps identify nodes running at reduced clock speeds due to thermal throttling, power management misconfiguration, or BIOS settings. Essential for Kubernetes worker nodes and compute-intensive workloads where consistent CPU performance is critical. Use in your monitoring stack to detect performance degradation before it impacts production services.
+
+### baremetal_cpu_time_analyzer.py
+```
+python baremetal_cpu_time_analyzer.py [--format format] [--warn-only] [--verbose] [threshold options]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only: Only show issues, suppress normal output
+  --verbose: Show per-CPU breakdown
+  --steal-warn PCT: Steal time warning threshold (default: 5%)
+  --steal-crit PCT: Steal time critical threshold (default: 15%)
+  --iowait-warn PCT: I/O wait warning threshold (default: 10%)
+  --iowait-crit PCT: I/O wait critical threshold (default: 25%)
+  --interrupt-warn PCT: Interrupt time warning threshold (default: 10%)
+  --interrupt-crit PCT: Interrupt time critical threshold (default: 25%)
+  --system-warn PCT: System time warning threshold (default: 30%)
+  --system-crit PCT: System time critical threshold (default: 50%)
+  --imbalance-warn PCT: CPU imbalance warning threshold (default: 40%)
+  --imbalance-crit PCT: CPU imbalance critical threshold (default: 60%)
+```
+
+Requirements:
+  - Linux /proc/stat (available on all Linux systems)
+
+Exit codes:
+  - 0: No issues detected (all metrics within thresholds)
+  - 1: Warnings or issues detected (high steal, iowait, etc.)
+  - 2: Usage error or required files not available
+
+Features:
+  - Analyze CPU time distribution across all CPUs
+  - Monitor steal time for virtualization overhead detection
+  - Track I/O wait for storage bottleneck identification
+  - Measure IRQ/softIRQ time for interrupt storm detection
+  - Calculate system time for syscall overhead analysis
+  - Detect per-CPU load imbalance
+  - Configurable thresholds for all metrics
+  - Multiple output formats (plain, JSON, table)
+
+Examples:
+```bash
+# Basic CPU time analysis
+baremetal_cpu_time_analyzer.py
+
+# Show per-CPU breakdown
+baremetal_cpu_time_analyzer.py -v
+
+# JSON output for monitoring integration
+baremetal_cpu_time_analyzer.py --format json
+
+# Lower steal time threshold for sensitive workloads
+baremetal_cpu_time_analyzer.py --steal-warn 3 --steal-crit 10
+
+# Only show problems
+baremetal_cpu_time_analyzer.py --warn-only
+
+# Table format for quick overview
+baremetal_cpu_time_analyzer.py --format table
+```
+
+Use Case: Critical for diagnosing performance issues in large-scale environments. High steal time indicates hypervisor contention on VMs, high iowait suggests storage bottlenecks, elevated softirq time may indicate network interrupt storms, and CPU imbalance reveals workload distribution problems. Essential for troubleshooting "noisy neighbor" problems in virtualized environments and identifying misconfigured interrupt affinity in baremetal systems. Integrate into monitoring pipelines to catch performance degradation early.
 
 ### load_average_monitor.py
 ```
