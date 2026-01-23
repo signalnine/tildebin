@@ -44,6 +44,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
 - `baremetal_cpu_time_analyzer.py`: Analyze CPU time distribution (user, system, iowait, steal, softirq) for performance diagnosis
+- `baremetal_context_switch_monitor.py`: Monitor context switch rates to detect CPU contention, scheduling overhead, and run queue depth issues
 - `firmware_version_audit.py`: Audit firmware versions for BIOS, BMC/IPMI, network interfaces, and RAID controllers to detect version drift across server fleets
 - `load_average_monitor.py`: Monitor system load averages and process queue depth to identify overloaded systems
 - `hardware_temperature_monitor.py`: Monitor hardware temperature sensors and fan speeds
@@ -982,6 +983,67 @@ baremetal_cpu_time_analyzer.py --format table
 ```
 
 Use Case: Critical for diagnosing performance issues in large-scale environments. High steal time indicates hypervisor contention on VMs, high iowait suggests storage bottlenecks, elevated softirq time may indicate network interrupt storms, and CPU imbalance reveals workload distribution problems. Essential for troubleshooting "noisy neighbor" problems in virtualized environments and identifying misconfigured interrupt affinity in baremetal systems. Integrate into monitoring pipelines to catch performance degradation early.
+
+### baremetal_context_switch_monitor.py
+```
+python baremetal_context_switch_monitor.py [--format format] [--warn-only] [--verbose] [--interval SECONDS] [threshold options]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only: Only show issues, suppress normal output
+  --verbose: Show additional metrics (page faults)
+  --interval: Sampling interval in seconds (default: 1.0)
+  --ctxt-warn N: Context switches/sec per CPU warning threshold (default: 20000)
+  --ctxt-crit N: Context switches/sec per CPU critical threshold (default: 50000)
+  --intr-warn N: Interrupts/sec per CPU warning threshold (default: 50000)
+  --intr-crit N: Interrupts/sec per CPU critical threshold (default: 100000)
+  --run-queue-warn N: Run queue depth per CPU warning threshold (default: 2.0)
+  --run-queue-crit N: Run queue depth per CPU critical threshold (default: 5.0)
+  --blocked-warn N: Blocked process count warning threshold (default: 5)
+  --blocked-crit N: Blocked process count critical threshold (default: 20)
+  --fork-warn N: Process creation rate/sec warning threshold (default: 500)
+  --fork-crit N: Process creation rate/sec critical threshold (default: 2000)
+```
+
+Requirements:
+  - Linux /proc/stat and optionally /proc/vmstat
+  - Available on all modern Linux systems
+
+Exit codes:
+  - 0: Context switch rates and process metrics are within thresholds
+  - 1: Elevated context switches, run queue depth, or other issues detected
+  - 2: Usage error or /proc/stat not available
+
+Features:
+  - Monitor system-wide context switches per second
+  - Track per-CPU context switch rates to identify contention
+  - Measure interrupt rates that drive context switches
+  - Monitor run queue depth (runnable processes) for CPU saturation
+  - Track blocked processes waiting on I/O
+  - Detect fork storms (excessive process creation)
+  - Configurable sampling interval for different use cases
+  - Multiple output formats (plain, JSON, table)
+
+Examples:
+```bash
+# Basic context switch monitoring (1 second sample)
+baremetal_context_switch_monitor.py
+
+# Quick check with 100ms sample
+baremetal_context_switch_monitor.py --interval 0.1
+
+# JSON output for monitoring integration
+baremetal_context_switch_monitor.py --format json
+
+# Lower thresholds for latency-sensitive workloads
+baremetal_context_switch_monitor.py --ctxt-warn 10000 --run-queue-warn 1
+
+# Only show problems
+baremetal_context_switch_monitor.py --warn-only
+
+# Verbose output with page fault metrics
+baremetal_context_switch_monitor.py -v
+```
+
+Use Case: Essential for diagnosing CPU contention and scheduling overhead in busy systems. High context switch rates indicate too many threads competing for CPU time, lock contention, or inefficient application design. Elevated run queue depth reveals CPU saturation before it impacts response times. Monitor blocked processes to correlate with I/O bottlenecks. Detect fork storms from misbehaving applications or runaway scripts. Useful baseline: typical idle systems see 1,000-5,000 context switches/sec per CPU; busy but healthy systems see 5,000-20,000; rates above 50,000 usually indicate problems.
 
 ### load_average_monitor.py
 ```
