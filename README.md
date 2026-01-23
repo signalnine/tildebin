@@ -54,6 +54,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `baremetal_bond_health_monitor.py`: Monitor network bond health with detailed diagnostics including slave status, failover readiness, link failures, and speed/duplex mismatch detection
 - `baremetal_boot_performance_monitor.py`: Monitor system boot performance and systemd initialization times to identify slow-booting systems and problematic services that delay startup
+- `baremetal_uptime_monitor.py`: Monitor system uptime and reboot history to detect flapping servers with frequent reboots, analyze reboot patterns, and identify unstable systems in large baremetal environments
 - `baremetal_network_config_audit.py`: Audit network interface configuration for common misconfigurations (MTU mismatches, bonding inconsistencies, IPv6 configuration drift)
 - `baremetal_bandwidth_monitor.py`: Monitor network interface bandwidth utilization and throughput by sampling /proc/net/dev, calculating bytes/packets per second, utilization percentage, and detecting saturation with configurable thresholds
 - `baremetal_tcp_retransmission_monitor.py`: Monitor TCP retransmission rates to detect packet loss, network congestion, and connectivity issues by sampling /proc/net/snmp statistics with configurable warning thresholds
@@ -1321,6 +1322,52 @@ baremetal_boot_performance_monitor.py --warn-only --format json
 
 # Table format for quick overview
 baremetal_boot_performance_monitor.py --format table -v
+```
+
+### baremetal_uptime_monitor.py
+```
+python baremetal_uptime_monitor.py [--format format] [-v] [-w] [--min-uptime HOURS] [--max-reboots-24h N] [--max-reboots-7d N]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed reboot history
+  -w, --warn-only: Only output if issues are detected
+  --min-uptime HOURS: Minimum acceptable uptime in hours (default: 1)
+  --max-reboots-24h N: Maximum acceptable reboots in 24 hours (default: 2)
+  --max-reboots-7d N: Maximum acceptable reboots in 7 days (default: 5)
+```
+
+Features:
+  - Monitor current system uptime from /proc/uptime
+  - Track reboot history using the `last` command
+  - Detect flapping servers with frequent reboots
+  - Configurable thresholds for uptime and reboot frequency
+  - Identify unstable systems in large baremetal environments
+  - Multiple output formats for integration with monitoring systems
+
+Requirements:
+  - Linux system with /proc/uptime
+  - `last` command for reboot history (optional, degrades gracefully)
+
+Exit codes:
+  - 0: System is stable (uptime meets threshold, no excessive reboots)
+  - 1: Issues detected (low uptime or frequent reboots)
+  - 2: Usage error or required files not available
+
+Examples:
+```bash
+# Check uptime with default thresholds
+baremetal_uptime_monitor.py
+
+# Show detailed reboot history
+baremetal_uptime_monitor.py -v
+
+# Custom thresholds (2 hour minimum uptime, max 1 reboot in 24h)
+baremetal_uptime_monitor.py --min-uptime 2 --max-reboots-24h 1
+
+# Only alert on issues in JSON format (good for monitoring)
+baremetal_uptime_monitor.py --warn-only --format json
+
+# Table format for quick overview
+baremetal_uptime_monitor.py --format table -v
 ```
 
 ### baremetal_conntrack_monitor.py
