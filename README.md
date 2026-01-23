@@ -62,6 +62,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_bandwidth_monitor.py`: Monitor network interface bandwidth utilization and throughput by sampling /proc/net/dev, calculating bytes/packets per second, utilization percentage, and detecting saturation with configurable thresholds
 - `baremetal_tcp_retransmission_monitor.py`: Monitor TCP retransmission rates to detect packet loss, network congestion, and connectivity issues by sampling /proc/net/snmp statistics with configurable warning thresholds
 - `baremetal_packet_drop_analyzer.py`: Analyze per-interface packet drops with detailed breakdown by cause (rx_dropped, rx_errors, rx_missed, rx_fifo, tx_dropped, tx_carrier, etc.) to help distinguish between driver bugs, misconfigurations, buffer exhaustion, and potential attacks
+- `baremetal_link_flap_detector.py`: Detect network interface link flapping by monitoring carrier state transitions over time to identify unstable cables, failing transceivers, bad switch ports, or auto-negotiation issues causing intermittent connectivity
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
 - `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
 - `baremetal_pcie_topology_analyzer.py`: Analyze PCIe topology including IOMMU groups, device-to-NUMA node mapping, PCIe link speed/width validation, and identification of suboptimal device placement for GPU clusters and high-performance workloads
@@ -1289,6 +1290,59 @@ baremetal_bandwidth_monitor.py --format table --exclude-down
 ```
 
 Use Case: In large-scale baremetal environments, network bandwidth saturation causes latency spikes, packet loss, and application timeouts. This script provides real-time visibility into interface throughput and utilization, enabling capacity planning, bottleneck detection, and traffic pattern analysis. Essential for identifying overloaded network links before they impact production workloads, especially useful for high-bandwidth applications like storage replication, database sync, or media streaming.
+
+### baremetal_link_flap_detector.py
+```
+python baremetal_link_flap_detector.py [-d SECONDS] [-p SECONDS] [-I IFACE] [-t COUNT] [--format format] [-v] [-w]
+  -d, --duration: Monitoring duration in seconds (default: 10)
+  -p, --poll-interval: Polling interval for carrier state (default: 0.1)
+  -I, --interface: Specific interface to check (default: all)
+  -t, --threshold: Carrier changes threshold for flapping alert (default: 2)
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed transition information
+  -w, --warn-only: Only output if flapping is detected
+```
+
+Features:
+  - Uses kernel carrier_changes counter when available (Linux 3.18+) for accuracy
+  - Falls back to carrier state polling on older kernels
+  - Tracks carrier up/down counts (Linux 5.0+)
+  - Detects intermittent connectivity issues from failing hardware
+  - Records individual state transitions with timestamps
+  - Configurable monitoring duration and flapping threshold
+  - Multiple output formats for monitoring integration
+
+Requirements:
+  - Linux /sys/class/net filesystem
+  - Read access to interface sysfs files
+
+Exit codes:
+  - 0: No link flapping detected
+  - 1: Link flapping detected on one or more interfaces
+  - 2: Missing /sys filesystem or usage error
+
+Examples:
+```bash
+# Monitor all interfaces for 10 seconds (default)
+baremetal_link_flap_detector.py
+
+# Monitor for 60 seconds with verbose output
+baremetal_link_flap_detector.py -d 60 -v
+
+# Check specific interface
+baremetal_link_flap_detector.py -I eth0 -d 30
+
+# Alert on 4+ carrier changes in 30 seconds
+baremetal_link_flap_detector.py -d 30 -t 4
+
+# JSON output for monitoring integration
+baremetal_link_flap_detector.py --format json -d 60
+
+# Only alert if flapping detected
+baremetal_link_flap_detector.py --warn-only -d 60
+```
+
+Use Case: In large-scale baremetal datacenters, link flapping is a common symptom of failing network hardware. A bad cable, dying SFP transceiver, or faulty switch port can cause intermittent connectivity that's difficult to diagnose. This script monitors carrier state transitions over time to detect unstable links before they cause service disruptions. Essential for proactive hardware maintenance and troubleshooting hard-to-reproduce network issues.
 
 ### network_bond_status.sh
 ```
