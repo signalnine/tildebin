@@ -34,6 +34,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_interrupt_balance_monitor.py`: Monitor hardware interrupt (IRQ) distribution across CPU cores to detect performance issues from poor interrupt balancing
 - `baremetal_kernel_version_audit.py`: Audit kernel version and configuration to detect version drift across server fleets, identify outdated kernels, and verify kernel command-line parameters are consistent
 - `disk_health_check.py`: Monitor disk health using SMART attributes
+- `baremetal_disk_life_predictor.py`: Predict disk failure risk using SMART attribute trend analysis with weighted risk scoring for both SATA/SAS and NVMe drives
 - `nvme_health_monitor.py`: Monitor NVMe SSD health metrics including wear level, power cycles, unsafe shutdowns, media errors, and thermal throttling
 - `disk_io_monitor.py`: Monitor disk I/O performance and identify bottlenecks
 - `baremetal_block_error_monitor.py`: Monitor block device error statistics from /sys/block/*/stat to detect I/O errors, high queue times, and early signs of disk problems
@@ -400,6 +401,45 @@ Requirements:
   - smartmontools package (smartctl command)
   - Ubuntu/Debian: `sudo apt-get install smartmontools`
   - RHEL/CentOS: `sudo yum install smartmontools`
+
+### baremetal_disk_life_predictor.py
+```
+python baremetal_disk_life_predictor.py [-d disk] [-v] [-w] [--format format]
+  -d, --disk: Specific disk to check (e.g., /dev/sda)
+  -v, --verbose: Show detailed information for all disks
+  -w, --warn-only: Only show disks with elevated risk (LOW or higher)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+```
+
+Risk levels:
+  - MINIMAL: No concerning indicators (score < 10)
+  - LOW: Minor indicators, monitor closely (score 10-29)
+  - MEDIUM: Elevated risk, plan replacement (score 30-59)
+  - HIGH: Imminent failure likely, replace ASAP (score >= 60)
+
+Critical SMART attributes analyzed:
+  - Reallocated sectors (ID 5) - bad sectors remapped to spare area
+  - Pending sectors (ID 197) - sectors waiting to be remapped
+  - Offline uncorrectable (ID 198) - sectors that couldn't be recovered
+  - Reported uncorrect (ID 187) - uncorrectable errors reported
+  - Command timeout (ID 188) - drive command timeouts
+  - UDMA CRC errors (ID 199) - cable/connection issues
+
+NVMe-specific metrics:
+  - Percentage used (wear level)
+  - Media errors
+  - Available spare capacity
+
+Requirements:
+  - smartmontools package (smartctl command)
+  - nvme-cli package for NVMe devices (optional)
+  - Ubuntu/Debian: `sudo apt-get install smartmontools nvme-cli`
+  - RHEL/CentOS: `sudo yum install smartmontools nvme-cli`
+
+Exit codes:
+  - 0: All disks healthy (minimal risk)
+  - 1: Warnings detected (medium/high risk disks found)
+  - 2: Missing dependency or no disks found
 
 ### nvme_health_monitor.py
 ```
