@@ -85,6 +85,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_memory_fragmentation_analyzer.py`: Analyze memory fragmentation using buddy allocator statistics to detect external fragmentation causing allocation failures despite available free memory, monitor hugepage availability, and identify need for memory compaction
 - `baremetal_cgroup_pressure_monitor.py`: Monitor cgroup v2 PSI (Pressure Stall Information) to detect CPU, memory, and I/O contention on container hosts before performance degradation or OOM kills occur
 - `baremetal_conntrack_monitor.py`: Monitor Linux connection tracking (conntrack) table saturation to detect DDoS attacks, traffic spikes, or misconfigured applications causing table exhaustion and dropped connections
+- `baremetal_coredump_monitor.py`: Monitor coredump configuration and storage to ensure crash dumps are properly captured for debugging, including core pattern, ulimit settings, systemd-coredump config, and storage space
 - `baremetal_cpu_vulnerability_scanner.py`: Scan CPU hardware vulnerabilities (Spectre, Meltdown, MDS, etc.) and verify kernel mitigations are enabled for security compliance across server fleets
 - `baremetal_fd_exhaustion_monitor.py`: Monitor system-wide and per-process file descriptor usage to detect fd exhaustion before "too many open files" errors cause service failures, connection drops, and application crashes
 - `baremetal_inode_exhaustion_monitor.py`: Monitor filesystem inode usage to detect exhaustion before cryptic "no space left on device" errors occur even when disk space is available - critical for systems with millions of small files
@@ -1639,6 +1640,48 @@ baremetal_conntrack_monitor.py --format table
 
 # Only alert when thresholds exceeded
 baremetal_conntrack_monitor.py --warn-only
+```
+
+### baremetal_coredump_monitor.py
+```
+python baremetal_coredump_monitor.py [--format format] [-v] [-w] [--storage-warn PERCENT] [--storage-crit PERCENT]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show additional details
+  -w, --warn-only: Only show warnings and issues (suppress normal output)
+  --storage-warn: Storage warning threshold percentage (default: 75)
+  --storage-crit: Storage critical threshold percentage (default: 90)
+```
+
+Features:
+  - Monitor kernel core_pattern configuration
+  - Check core file size ulimit settings
+  - Detect systemd-coredump configuration (storage mode, compression)
+  - Monitor coredump storage space usage
+  - Find and report recent coredump files
+  - Check for ABRT (Automatic Bug Reporting Tool)
+  - Verify pipe handler limits for piped patterns
+
+Exit codes:
+  - 0: Coredump configuration is healthy
+  - 1: Issues detected (misconfiguration or storage concerns)
+  - 2: Usage error or system files not accessible
+
+Examples:
+```bash
+# Check coredump configuration
+baremetal_coredump_monitor.py
+
+# JSON output for monitoring integration
+baremetal_coredump_monitor.py --format json
+
+# Custom storage thresholds
+baremetal_coredump_monitor.py --storage-warn 70 --storage-crit 85
+
+# Only show problems
+baremetal_coredump_monitor.py --warn-only
+
+# Table format with all details
+baremetal_coredump_monitor.py --format table -v
 ```
 
 ### baremetal_cpu_vulnerability_scanner.py
