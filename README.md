@@ -136,6 +136,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_pod_count_analyzer.py`: Audit pod counts, scaling configuration, and resource quota usage
 - `k8s_orphaned_resources_finder.py`: Find orphaned and unused resources (ConfigMaps, Secrets, PVCs, Services, ServiceAccounts)
 - `k8s_container_restart_analyzer.py`: Analyze container restart patterns and identify root causes with remediation suggestions
+- `k8s_configmap_audit.py`: Audit ConfigMaps for size limits, unused ConfigMaps, missing keys referenced by pods, and configuration best practices
 - `k8s_network_policy_audit.py`: Audit network policies and identify security gaps, unprotected pods, and configuration issues
 - `k8s_node_taint_analyzer.py`: Analyze node taints and their impact on pod scheduling, identifying blocking taints, orphaned taints, and workload distribution
 - `k8s_resource_quota_auditor.py`: Audit ResourceQuota and LimitRange policies across namespaces to ensure proper resource governance
