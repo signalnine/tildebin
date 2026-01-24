@@ -91,6 +91,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_entropy_monitor.py`: Monitor system entropy pool levels for cryptographic operations, detecting low entropy that causes /dev/random blocking, TLS handshake delays, and key generation issues on high-traffic servers or VMs
 - `baremetal_hugepage_monitor.py`: Monitor hugepage allocation and usage including static hugepages, THP status, per-NUMA distribution, and fragmentation issues for database and VM workloads
 - `baremetal_oom_risk_analyzer.py`: Analyze processes at risk of being killed by the Linux OOM killer by examining OOM scores and memory usage to identify candidates for termination before a memory crisis
+- `baremetal_package_security_audit.py`: Audit system packages for pending security updates on apt/dnf/yum-based systems, categorizing by severity (critical/important/moderate/low) for compliance and vulnerability management
 - `baremetal_numa_balance_monitor.py`: Monitor NUMA topology and memory balance on multi-socket systems to detect cross-node memory imbalances, high NUMA miss ratios, and per-node memory pressure
 - `baremetal_memory_fragmentation_analyzer.py`: Analyze memory fragmentation using buddy allocator statistics to detect external fragmentation causing allocation failures despite available free memory, monitor hugepage availability, and identify need for memory compaction
 - `baremetal_cgroup_pressure_monitor.py`: Monitor cgroup v2 PSI (Pressure Stall Information) to detect CPU, memory, and I/O contention on container hosts before performance degradation or OOM kills occur
@@ -2156,6 +2157,59 @@ baremetal_iptables_audit.py --warn-only
 # Table format for human-readable output
 baremetal_iptables_audit.py --format table --verbose
 ```
+
+### baremetal_package_security_audit.py
+```
+python baremetal_package_security_audit.py [--format format] [-v] [-w] [--critical-only] [--package-manager TYPE]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed package information
+  -w, --warn-only: Only show output if updates are pending
+  --critical-only: Only return exit code 1 for critical/important updates
+  --package-manager: Force specific package manager (apt, dnf, yum, auto)
+```
+
+Features:
+  - Auto-detect package manager (apt, dnf, yum)
+  - Identify security updates by severity (critical, important, moderate, low)
+  - Support for Debian/Ubuntu (apt), RHEL/CentOS (yum), Fedora (dnf)
+  - JSON output for integration with monitoring and compliance systems
+  - Critical-only mode for alerting on high-priority patches
+
+Requirements:
+  - Linux with apt, dnf, or yum package manager
+  - Package list access (may need root for apt-get update)
+
+Exit codes:
+  - 0: No security updates pending (or only non-critical with --critical-only)
+  - 1: Security updates available or errors encountered
+  - 2: Usage error or unsupported package manager
+
+Examples:
+```bash
+# Check for security updates
+baremetal_package_security_audit.py
+
+# Verbose output showing all packages
+baremetal_package_security_audit.py --verbose
+
+# JSON output for monitoring integration
+baremetal_package_security_audit.py --format json
+
+# Table format for review
+baremetal_package_security_audit.py --format table
+
+# Only alert on critical/important updates
+baremetal_package_security_audit.py --critical-only
+
+# Force specific package manager
+baremetal_package_security_audit.py --package-manager apt
+```
+
+Use Cases:
+  - Security compliance: Track pending security patches across fleets
+  - Vulnerability management: Identify critical patches needing immediate attention
+  - Patch scheduling: Prioritize updates based on severity
+  - Audit reporting: Generate JSON reports for compliance systems
 
 ### baremetal_process_limits_monitor.py
 ```
