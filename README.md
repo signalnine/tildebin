@@ -69,6 +69,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_route_health_monitor.py`: Monitor network routing health including default gateway reachability, routing table consistency, and interface status to detect routing issues causing connectivity problems
 - `baremetal_dns_resolver_monitor.py`: Monitor DNS resolver configuration and health including /etc/resolv.conf validation, nameserver reachability testing, DNS resolution verification, and systemd-resolved status for large-scale baremetal environments
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
+- `baremetal_hwclock_drift_monitor.py`: Monitor hardware clock (RTC) drift against system time to detect failing CMOS batteries, clock crystal issues, or RTC misconfiguration that causes time jumps on reboot
 - `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
 - `baremetal_pcie_topology_analyzer.py`: Analyze PCIe topology including IOMMU groups, device-to-NUMA node mapping, PCIe link speed/width validation, and identification of suboptimal device placement for GPU clusters and high-performance workloads
 - `power_consumption_monitor.py`: Monitor server power consumption using IPMI, turbostat, and RAPL sensors
@@ -1339,6 +1340,51 @@ ntp_drift_monitor.py --format table
 ```
 
 Use Case: Time synchronization is critical for distributed systems, Kubernetes clusters, databases (especially distributed ones), and certificate validation. Clock drift can cause authentication failures, data inconsistencies, and cluster coordination issues. This script monitors NTP/Chrony status to detect and alert on time synchronization problems before they impact services.
+
+### baremetal_hwclock_drift_monitor.py
+```
+sudo baremetal_hwclock_drift_monitor.py [-f format] [-v] [-w threshold] [-c threshold]
+  -f, --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed RTC information
+  -w, --warn-threshold: Warning threshold for drift in seconds (default: 5.0)
+  -c, --crit-threshold: Critical threshold for drift in seconds (default: 60.0)
+```
+
+Requirements:
+  - hwclock command (part of util-linux, available on all Linux systems)
+  - Root/sudo access required to read the hardware clock
+
+Exit codes:
+  - 0: Hardware clock within acceptable drift
+  - 1: Warning or critical drift detected
+  - 2: Missing dependencies or permission denied
+
+Features:
+  - Monitors hardware clock (RTC) drift against system time
+  - Detects failing CMOS batteries causing RTC drift
+  - Identifies clock crystal degradation or RTC misconfiguration
+  - Complements ntp_drift_monitor.py by checking the local RTC
+  - Reports RTC device, time mode (UTC/local), and drift magnitude
+
+Examples:
+```bash
+# Check hardware clock drift (requires root)
+sudo baremetal_hwclock_drift_monitor.py
+
+# Show detailed RTC information
+sudo baremetal_hwclock_drift_monitor.py --verbose
+
+# Output as JSON for monitoring systems
+sudo baremetal_hwclock_drift_monitor.py --format json
+
+# Custom thresholds (warn at 1s, critical at 60s)
+sudo baremetal_hwclock_drift_monitor.py --warn-threshold 1.0 --crit-threshold 60.0
+
+# Table format for overview
+sudo baremetal_hwclock_drift_monitor.py --format table
+```
+
+Use Case: While NTP keeps system time synchronized during runtime, the hardware clock (RTC) determines initial time on boot. A drifting RTC from a failing CMOS battery or degraded clock crystal causes time jumps on reboot, breaking TLS certificate validation, distributed system coordination, and log timestamp accuracy. This script monitors RTC accuracy to detect hardware clock issues before they cause problems after the next reboot.
 
 Use Case: In large baremetal environments, network interface errors can indicate hardware problems, driver issues, or network congestion. This script provides quick visibility into interface health across all network adapters, making it ideal for periodic health checks or monitoring integration.
 
