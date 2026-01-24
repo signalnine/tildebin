@@ -137,6 +137,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_node_restart_monitor.py`: Monitor node restart activity and detect nodes with excessive restarts
 - `k8s_pod_count_analyzer.py`: Audit pod counts, scaling configuration, and resource quota usage
 - `k8s_orphaned_resources_finder.py`: Find orphaned and unused resources (ConfigMaps, Secrets, PVCs, Services, ServiceAccounts)
+- `k8s_configmap_secret_size_analyzer.py`: Analyze ConfigMap and Secret sizes to find oversized objects that stress etcd and degrade cluster performance
 - `k8s_finalizer_analyzer.py`: Find resources stuck in Terminating state due to finalizers blocking deletion
 - `k8s_container_restart_analyzer.py`: Analyze container restart patterns and identify root causes with remediation suggestions
 - `k8s_pod_startup_latency_analyzer.py`: Analyze pod startup latency to identify slow-starting pods, breaking down scheduling, init container, and container startup phases
@@ -3754,6 +3755,75 @@ Use Cases:
   - **Security Hardening**: Identify and remove unused ServiceAccounts
   - **Operational Efficiency**: Catch configuration mistakes before they accumulate
   - **Baremetal Operations**: Critical for on-premises clusters where resources are limited and expensive
+
+### k8s_configmap_secret_size_analyzer.py
+```
+python3 k8s_configmap_secret_size_analyzer.py [--namespace NAMESPACE] [--format FORMAT] [options]
+  --namespace, -n: Check specific namespace only (default: all namespaces)
+  --format, -f: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show objects above warning threshold
+  --verbose, -v: Show detailed information including largest keys
+  --warn-threshold: Warning threshold (default: 100KB)
+  --crit-threshold: Critical threshold (default: 500KB)
+  --skip-system: Skip kube-* system namespaces
+  --configmaps-only: Only analyze ConfigMaps
+  --secrets-only: Only analyze Secrets
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No oversized objects found
+  - 1: Oversized objects detected (above warning threshold)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Analyzes ConfigMap and Secret sizes across all or specific namespaces
+  - Identifies objects that stress etcd performance (etcd stores all K8s objects)
+  - Configurable thresholds for warning (100KB) and critical (500KB) sizes
+  - Shows individual key sizes to identify largest contributors
+  - Detects objects approaching Kubernetes 1MB hard limit
+  - Skips service account tokens automatically (managed by K8s)
+  - Multiple output formats for scripting and monitoring integration
+  - Calculates actual decoded size for base64-encoded secret data
+
+Examples:
+```bash
+# Analyze all ConfigMaps and Secrets cluster-wide
+k8s_configmap_secret_size_analyzer.py
+
+# Check specific namespace
+k8s_configmap_secret_size_analyzer.py -n production
+
+# Show only oversized objects
+k8s_configmap_secret_size_analyzer.py --warn-only
+
+# Custom thresholds for stricter monitoring
+k8s_configmap_secret_size_analyzer.py --warn-threshold 50KB --crit-threshold 200KB
+
+# Get JSON output for automation
+k8s_configmap_secret_size_analyzer.py --format json
+
+# Verbose output showing largest keys in oversized objects
+k8s_configmap_secret_size_analyzer.py -v -w
+
+# Only analyze Secrets (skip ConfigMaps)
+k8s_configmap_secret_size_analyzer.py --secrets-only
+
+# Table format for quick review
+k8s_configmap_secret_size_analyzer.py --format table --warn-only
+```
+
+Use Cases:
+  - **etcd Health**: Large objects stress etcd, causing slow API responses and increased memory usage
+  - **API Server Performance**: Large object transfers slow down watch streams and API latency
+  - **Kubelet Memory**: Large ConfigMaps/Secrets mounted as volumes consume kubelet memory
+  - **Cluster Capacity Planning**: Monitor total configuration data size before it impacts cluster
+  - **Configuration Best Practices**: Identify configs that should be externalized or split
+  - **Baremetal Operations**: Critical for resource-constrained clusters where etcd runs on limited hardware
+  - **Incident Prevention**: Catch objects approaching 1MB limit before they fail to save
 
 ### k8s_finalizer_analyzer.py
 ```
