@@ -44,6 +44,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `iosched_audit.py`: Audit I/O scheduler configuration across block devices and detect misconfigurations (NVMe using complex schedulers, HDDs using 'none', etc.)
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `baremetal_lvm_health_monitor.py`: Monitor LVM logical volumes, volume groups, and physical volumes for health issues including thin pool exhaustion, snapshot aging, and VG capacity warnings
+- `baremetal_multipath_health_monitor.py`: Monitor dm-multipath device health, detecting failed or degraded paths, path flapping, and configuration issues for SAN/NAS storage
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
 - `baremetal_cpu_time_analyzer.py`: Analyze CPU time distribution (user, system, iowait, steal, softirq) for performance diagnosis
 - `baremetal_context_switch_monitor.py`: Monitor context switch rates to detect CPU contention, scheduling overhead, and run queue depth issues
@@ -693,6 +694,56 @@ baremetal_lvm_health_monitor.py --warn-only
 
 # Warn about snapshots older than 14 days
 baremetal_lvm_health_monitor.py --snap-age 14
+```
+
+### baremetal_multipath_health_monitor.py
+```
+python baremetal_multipath_health_monitor.py [--format format] [-v] [-w] [--min-paths-warn N] [--min-paths-crit N]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed path information
+  -w, --warn-only: Only show warnings and errors
+  --min-paths-warn: Warn if active paths <= N (default: 1)
+  --min-paths-crit: Critical if active paths <= N (default: 0)
+```
+
+Requirements:
+  - multipath-tools package (multipath, multipathd commands)
+  - Ubuntu/Debian: `sudo apt-get install multipath-tools`
+  - RHEL/CentOS: `sudo yum install device-mapper-multipath`
+  - multipathd service must be running
+
+Exit codes:
+  - 0: All multipath devices healthy
+  - 1: Warnings or critical issues detected (failed paths, degraded devices)
+  - 2: Usage error, multipath tools not available, or multipathd not running
+
+Features:
+  - Monitor multipath device health and path status
+  - Detect failed or degraded paths to SAN/NAS storage
+  - Track path priority and load balancing health
+  - Identify devices with reduced redundancy
+  - Detect path checker failures and abnormal states
+  - Multiple output formats (plain, JSON, table)
+
+Examples:
+```bash
+# Check all multipath devices
+baremetal_multipath_health_monitor.py
+
+# Warn if fewer than 2 active paths per device
+baremetal_multipath_health_monitor.py --min-paths-warn 2
+
+# Show detailed path information
+baremetal_multipath_health_monitor.py --verbose
+
+# JSON output for monitoring integration
+baremetal_multipath_health_monitor.py --format json
+
+# Only show warnings and errors
+baremetal_multipath_health_monitor.py --warn-only
+
+# Table format with path details
+baremetal_multipath_health_monitor.py --format table --verbose
 ```
 
 ### hardware_temperature_monitor.py
