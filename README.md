@@ -130,6 +130,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_ingress_cert_checker.py`: Check Ingress certificates for expiration and health status
 - `k8s_node_drain_readiness.py`: Analyze node drainability and orchestrate graceful node maintenance
 - `k8s_memory_pressure_analyzer.py`: Detect memory pressure on nodes and analyze pod memory usage patterns
+- `k8s_pdb_health_monitor.py`: Monitor PodDisruptionBudget health to detect PDBs blocking maintenance or protecting unhealthy workloads
 - `k8s_pod_eviction_risk_analyzer.py`: Identify pods at risk of eviction due to resource pressure or QoS class
 - `k8s_pending_pod_analyzer.py`: Analyze pods stuck in Pending state and diagnose scheduling failures (resources, taints, affinity, PVC issues)
 - `k8s_pod_topology_analyzer.py`: Analyze pod topology spread constraints and affinity rules to ensure high availability
@@ -3313,6 +3314,69 @@ Use Cases:
   - **Baremetal Optimization**: Critical for on-premises clusters where memory is limited and evictions are expensive
   - **Proactive Scaling**: Identify when clusters need memory upgrades or node additions
   - **Compliance**: Ensure all pods have proper memory limits for SLA adherence
+
+### k8s_pdb_health_monitor.py
+```
+python3 k8s_pdb_health_monitor.py [options]
+  -n, --namespace: Check specific namespace (default: all namespaces)
+  --format: Output format - 'plain', 'table', or 'json' (default: plain)
+  -w, --warn-only: Only show PDBs with issues
+  -v, --verbose: Show detailed PDB information including selectors and workloads
+  -h, --help: Show help message
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: All PDBs healthy
+  - 1: PDB issues detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Detects PDBs blocking disruptions (disruptionsAllowed=0)
+  - Identifies PDBs with no matching pods
+  - Finds misconfigured PDBs (minAvailable > expected pods)
+  - Detects unhealthy pods protected by PDBs
+  - Cross-references PDBs with Deployments and StatefulSets
+  - Categorizes issues by severity (critical/warning)
+
+Issue Detection:
+  - **Critical**: PDB blocking disruptions - will prevent node drains
+  - **Critical**: minAvailable exceeds expected pod count
+  - **Warning**: No pods match PDB selector
+  - **Warning**: Unhealthy pods protected by PDB
+  - **Warning**: Matching workloads have unready replicas
+
+Examples:
+```bash
+# Check all PDBs across all namespaces
+k8s_pdb_health_monitor.py
+
+# Check PDBs in production namespace
+k8s_pdb_health_monitor.py -n production
+
+# Show only PDBs with issues
+k8s_pdb_health_monitor.py --warn-only
+
+# Verbose output with workload details
+k8s_pdb_health_monitor.py -v
+
+# Get JSON output for monitoring integration
+k8s_pdb_health_monitor.py --format json
+
+# Table format for quick overview
+k8s_pdb_health_monitor.py --format table
+```
+
+Use Cases:
+  - **Maintenance Planning**: Identify PDBs that will block node drains before starting maintenance
+  - **Cluster Health**: Detect PDBs protecting unhealthy workloads that need attention
+  - **Configuration Audit**: Find misconfigured PDBs that don't match any pods
+  - **Upgrade Readiness**: Verify PDBs allow sufficient disruptions for rolling upgrades
+  - **Baremetal Clusters**: Critical for on-premises environments where maintenance windows are planned
+  - **SLA Compliance**: Ensure PDBs are configured correctly to maintain availability guarantees
 
 ### k8s_pod_eviction_risk_analyzer.py
 ```
