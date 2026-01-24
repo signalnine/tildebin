@@ -153,6 +153,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_pod_security_audit.py`: Audit pod security contexts and Linux capabilities for security risks including privileged containers, root user execution, dangerous capabilities, host namespace sharing, and missing security profiles
 - `k8s_control_plane_health.py`: Monitor Kubernetes control plane health including API server availability and latency, etcd cluster status, controller-manager and scheduler leader election, and control plane pod health
 - `k8s_secret_expiry_monitor.py`: Monitor Kubernetes Secret age and TLS certificate expiration to detect expired certificates, approaching expirations, and stale secrets
+- `k8s_lease_monitor.py`: Monitor Kubernetes Lease objects for leader election health, detecting stale leases, orphaned holders, leadership instability, and missed renewals
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -4398,3 +4399,71 @@ Operational Use Cases:
   - **Compliance Auditing**: Ensure secrets are rotated within policy timeframes
   - **Ingress/Service Mesh**: Monitor TLS secrets used by ingress controllers
   - **Cert-Manager Integration**: Validate cert-manager is renewing certificates properly
+
+### k8s_lease_monitor.py
+```
+k8s_lease_monitor.py [-n namespace] [--format {plain,json,table}] [-v] [-w] [--stale-threshold SECONDS] [--skip-node-leases] [--check-orphans]
+  -n, --namespace: Namespace to check (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed lease information
+  -w, --warn-only: Only show leases with issues
+  --stale-threshold SECONDS: Seconds without renewal before lease is stale (default: 60)
+  --skip-node-leases: Skip node heartbeat leases in kube-node-lease namespace
+  --check-orphans: Check if lease holders still exist (requires extra API calls)
+```
+
+Monitor Kubernetes Lease objects for leader election health. Leases are the modern mechanism for leader election in Kubernetes. This script monitors all leases across the cluster to detect:
+- Stale leases (not renewed within threshold)
+- Orphaned leases (holder no longer exists)
+- Leader election contention or instability (high transition counts)
+- Missing expected leases for critical components
+
+Lease types detected:
+- **control-plane**: kube-controller-manager, kube-scheduler
+- **node-heartbeat**: Node heartbeat leases (kube-node-lease namespace)
+- **controller**: Various Kubernetes controllers
+- **operator**: Operator framework leases
+- **ingress**: Ingress controller leader election
+- **storage**: CSI and storage controller leases
+- **service-mesh**: Istio, Linkerd, etc.
+- **monitoring**: Prometheus, Grafana, etc.
+
+Exit codes:
+  - 0: All leases healthy
+  - 1: Stale or problematic leases detected
+  - 2: Usage error or kubectl not available
+
+Examples:
+```bash
+# Check all leases across all namespaces
+k8s_lease_monitor.py
+
+# Check leases in kube-system only
+k8s_lease_monitor.py -n kube-system
+
+# Show only leases with issues
+k8s_lease_monitor.py --warn-only
+
+# Output as JSON for automation
+k8s_lease_monitor.py --format json
+
+# Custom stale threshold (default: 60 seconds)
+k8s_lease_monitor.py --stale-threshold 120
+
+# Skip node heartbeat leases (can be noisy in large clusters)
+k8s_lease_monitor.py --skip-node-leases
+
+# Check for orphaned lease holders
+k8s_lease_monitor.py --check-orphans
+
+# Combine options: kube-system namespace, table format, issues only
+k8s_lease_monitor.py -n kube-system --format table --warn-only
+```
+
+Operational Use Cases:
+  - **HA Health Monitoring**: Verify leader election is working across all controllers
+  - **Controller Troubleshooting**: Detect controllers that have crashed or lost leadership
+  - **Node Health**: Monitor node heartbeat leases to detect node failures
+  - **Operator Health**: Ensure operator leader election is stable
+  - **Cluster Upgrades**: Verify control plane components maintain leadership during rolling updates
+  - **Service Mesh Health**: Monitor Istio/Linkerd controller leader election
