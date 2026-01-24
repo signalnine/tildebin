@@ -119,6 +119,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_node_drain_readiness.py`: Analyze node drainability and orchestrate graceful node maintenance
 - `k8s_memory_pressure_analyzer.py`: Detect memory pressure on nodes and analyze pod memory usage patterns
 - `k8s_pod_eviction_risk_analyzer.py`: Identify pods at risk of eviction due to resource pressure or QoS class
+- `k8s_pending_pod_analyzer.py`: Analyze pods stuck in Pending state and diagnose scheduling failures (resources, taints, affinity, PVC issues)
 - `k8s_pod_topology_analyzer.py`: Analyze pod topology spread constraints and affinity rules to ensure high availability
 - `k8s_node_restart_monitor.py`: Monitor node restart activity and detect nodes with excessive restarts
 - `k8s_pod_count_analyzer.py`: Audit pod counts, scaling configuration, and resource quota usage
@@ -3082,6 +3083,71 @@ Use Cases:
   - **SLA Compliance**: Ensure production workloads have Guaranteed QoS and proper resource limits
   - **Capacity Planning**: Identify when nodes are approaching resource exhaustion
   - **Monitoring Integration**: Export eviction risk via JSON for alerting systems
+
+### k8s_pending_pod_analyzer.py
+```
+python3 k8s_pending_pod_analyzer.py [options]
+  -n, --namespace: Analyze specific namespace (default: all namespaces)
+  -f, --format: Output format - 'plain', 'table', or 'json' (default: plain)
+  -v, --verbose: Show detailed failure reasons from events
+  -h, --help: Show help message
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No pending pods found
+  - 1: Pending pods found (with analysis)
+  - 2: Usage error or kubectl not available
+
+Output includes:
+  - Pending pod namespace and name
+  - Duration pod has been pending
+  - Resource requests (CPU/memory)
+  - Categorized failure reason
+  - Summary by failure type
+
+Failure types detected:
+  - **resources**: Insufficient CPU or memory on nodes
+  - **storage**: PVC binding or provisioning issues
+  - **taints**: Node taints without matching tolerations
+  - **affinity**: Node or pod affinity rules cannot be satisfied
+  - **antiAffinity**: Pod anti-affinity conflicts preventing scheduling
+  - **nodeSelector**: No nodes match the required selector
+  - **scheduling**: Other scheduling failures
+
+Examples:
+```bash
+# Analyze all pending pods across the cluster
+k8s_pending_pod_analyzer.py
+
+# Analyze pending pods in production namespace
+k8s_pending_pod_analyzer.py -n production
+
+# Verbose output with detailed failure reasons from events
+k8s_pending_pod_analyzer.py --verbose
+
+# Compact table view for quick review
+k8s_pending_pod_analyzer.py --format table
+
+# JSON output for monitoring integration
+k8s_pending_pod_analyzer.py --format json
+
+# Combine options: specific namespace, verbose, JSON format
+k8s_pending_pod_analyzer.py -n production -v -f json
+```
+
+Use Cases:
+  - **Scheduling Troubleshooting**: Quickly diagnose why pods cannot be scheduled
+  - **Resource Capacity Planning**: Identify when clusters need more capacity
+  - **Taint/Toleration Debugging**: Find mismatched taint configurations
+  - **PVC Issues**: Detect storage provisioning failures blocking deployments
+  - **Affinity Conflicts**: Identify when affinity rules prevent pod placement
+  - **Deployment Validation**: Verify new deployments can schedule successfully
+  - **Baremetal Operations**: Critical for on-premises clusters with limited node pools
+  - **Monitoring Integration**: Export pending pod data for alerting systems
 
 ### k8s_pod_topology_analyzer.py
 ```
