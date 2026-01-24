@@ -138,6 +138,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_orphaned_resources_finder.py`: Find orphaned and unused resources (ConfigMaps, Secrets, PVCs, Services, ServiceAccounts)
 - `k8s_finalizer_analyzer.py`: Find resources stuck in Terminating state due to finalizers blocking deletion
 - `k8s_container_restart_analyzer.py`: Analyze container restart patterns and identify root causes with remediation suggestions
+- `k8s_pod_startup_latency_analyzer.py`: Analyze pod startup latency to identify slow-starting pods, breaking down scheduling, init container, and container startup phases
 - `k8s_configmap_audit.py`: Audit ConfigMaps for size limits, unused ConfigMaps, missing keys referenced by pods, and configuration best practices
 - `k8s_network_policy_audit.py`: Audit network policies and identify security gaps, unprotected pods, and configuration issues
 - `k8s_node_taint_analyzer.py`: Analyze node taints and their impact on pod scheduling, identifying blocking taints, orphaned taints, and workload distribution
@@ -3820,6 +3821,76 @@ Use Cases:
   - **Health Probe Tuning**: Detect probe failures and tune liveness/readiness probe configurations
   - **Baremetal Operations**: Critical for large-scale environments where restart patterns indicate hardware or network issues
   - **Production Stability**: Regular analysis prevents cascading failures from unstable containers
+
+### k8s_pod_startup_latency_analyzer.py
+```
+python3 k8s_pod_startup_latency_analyzer.py [--namespace NAMESPACE] [--format FORMAT] [options]
+  --namespace, -n: Analyze pods in specific namespace (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --verbose, -v: Show detailed timing breakdown for each phase
+  --warn-only, -w: Only show slow pods or pods with issues
+  --slow-threshold SECONDS: Seconds above which a pod is considered slow (default: 60)
+  --include-completed: Include completed (Succeeded/Failed) pods in analysis
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: Analysis complete, no slow pods detected (below threshold)
+  - 1: Slow pods detected (above threshold)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Measures total startup time from pod creation to ready state
+  - Breaks down latency into phases: scheduling, init containers, container startup
+  - Identifies slow-starting pods above configurable threshold
+  - Detects image pull issues (ImagePullBackOff, ErrImagePull)
+  - Tracks container restarts during startup
+  - Identifies pods stuck in Pending state
+  - Calculates latency statistics (min, max, avg, p50, p90) in JSON output
+  - Multiple output formats for monitoring integration
+
+Examples:
+```bash
+# Analyze all pods across all namespaces
+k8s_pod_startup_latency_analyzer.py
+
+# Analyze pods in specific namespace
+k8s_pod_startup_latency_analyzer.py -n kube-system
+
+# Show only slow pods (above 60s threshold)
+k8s_pod_startup_latency_analyzer.py --warn-only
+
+# Custom slow threshold (2 minutes)
+k8s_pod_startup_latency_analyzer.py --slow-threshold 120
+
+# Verbose output with timing breakdown
+k8s_pod_startup_latency_analyzer.py -v
+
+# JSON output for automation and monitoring
+k8s_pod_startup_latency_analyzer.py --format json
+
+# Table format for quick overview
+k8s_pod_startup_latency_analyzer.py --format table
+
+# Combine options: namespace, verbose, show only slow pods
+k8s_pod_startup_latency_analyzer.py -n production -v --warn-only
+
+# Strict threshold for CI/CD pipelines
+k8s_pod_startup_latency_analyzer.py --slow-threshold 30 --format json
+```
+
+Use Cases:
+  - **Performance Optimization**: Identify slow-starting pods that impact deployment velocity
+  - **Image Pull Analysis**: Detect pods waiting on slow image pulls or registry issues
+  - **Init Container Debugging**: Find init containers that take too long to complete
+  - **Scheduling Bottlenecks**: Identify pods waiting for node scheduling
+  - **Capacity Planning**: Detect resource constraints causing scheduling delays
+  - **CI/CD Integration**: Verify deployment startup times meet SLA requirements
+  - **Incident Response**: Quickly identify pods stuck in startup phases during incidents
+  - **Baremetal Operations**: Critical for large-scale clusters where startup latency indicates node or storage issues
 
 ### k8s_network_policy_audit.py
 ```
