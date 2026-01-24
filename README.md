@@ -148,6 +148,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_rbac_auditor.py`: Audit Kubernetes RBAC roles and bindings for security issues including cluster-admin access, wildcard permissions, dangerous verbs, anonymous user access, and overly permissive service account bindings
 - `k8s_pod_security_audit.py`: Audit pod security contexts and Linux capabilities for security risks including privileged containers, root user execution, dangerous capabilities, host namespace sharing, and missing security profiles
 - `k8s_control_plane_health.py`: Monitor Kubernetes control plane health including API server availability and latency, etcd cluster status, controller-manager and scheduler leader election, and control plane pod health
+- `k8s_secret_expiry_monitor.py`: Monitor Kubernetes Secret age and TLS certificate expiration to detect expired certificates, approaching expirations, and stale secrets
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -4182,3 +4183,63 @@ Operational Use Cases:
   - **etcd Quorum Monitoring**: Detect etcd degradation before data loss
   - **Leader Election Tracking**: Monitor controller-manager and scheduler failovers
   - **Baremetal Deployments**: Critical for self-managed control planes
+
+### k8s_secret_expiry_monitor.py
+```
+k8s_secret_expiry_monitor.py [-n namespace] [--format {plain,json,table}] [-v] [-w] [--tls-only]
+  -n, --namespace: Namespace to check (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including service account tokens
+  -w, --warn-only: Only show secrets with issues
+  --expiry-warn DAYS: Days before certificate expiry to warn (default: 30)
+  --expiry-critical DAYS: Days before certificate expiry is critical (default: 7)
+  --stale-days DAYS: Days after which a secret is considered stale (default: 365)
+  --tls-only: Only check TLS secrets (kubernetes.io/tls type)
+```
+
+Monitor Kubernetes Secret age and TLS certificate expiration. Checks:
+- TLS certificate expiration dates for kubernetes.io/tls secrets
+- Expired certificates and approaching expiration thresholds
+- Stale secrets that haven't been updated in a configurable time period
+- Invalid or malformed TLS certificates
+- Service account tokens are skipped by default (auto-managed)
+
+Exit codes:
+  - 0: All secrets healthy
+  - 1: Expiring/expired secrets or issues detected
+  - 2: Usage error or kubectl not available
+
+Examples:
+```bash
+# Check all secrets across all namespaces
+k8s_secret_expiry_monitor.py
+
+# Check secrets in specific namespace
+k8s_secret_expiry_monitor.py -n production
+
+# Show only expiring/problematic secrets
+k8s_secret_expiry_monitor.py --warn-only
+
+# Check only TLS secrets with custom thresholds
+k8s_secret_expiry_monitor.py --tls-only --expiry-warn 60 --expiry-critical 14
+
+# JSON output for monitoring integration
+k8s_secret_expiry_monitor.py --format json
+
+# Table format for easy reading
+k8s_secret_expiry_monitor.py --format table
+
+# Include service account tokens in output
+k8s_secret_expiry_monitor.py --verbose
+
+# Combine options: production TLS secrets only with warnings
+k8s_secret_expiry_monitor.py -n production --tls-only -w --format table
+```
+
+Operational Use Cases:
+  - **Certificate Lifecycle Management**: Track TLS certificate expiration across cluster
+  - **Outage Prevention**: Alert before certificates expire and cause service failures
+  - **Security Hygiene**: Identify stale secrets that may indicate rotation issues
+  - **Compliance Auditing**: Ensure secrets are rotated within policy timeframes
+  - **Ingress/Service Mesh**: Monitor TLS secrets used by ingress controllers
+  - **Cert-Manager Integration**: Validate cert-manager is renewing certificates properly
