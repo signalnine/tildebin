@@ -155,6 +155,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_rbac_auditor.py`: Audit Kubernetes RBAC roles and bindings for security issues including cluster-admin access, wildcard permissions, dangerous verbs, anonymous user access, and overly permissive service account bindings
 - `k8s_pod_security_audit.py`: Audit pod security contexts and Linux capabilities for security risks including privileged containers, root user execution, dangerous capabilities, host namespace sharing, and missing security profiles
 - `k8s_control_plane_health.py`: Monitor Kubernetes control plane health including API server availability and latency, etcd cluster status, controller-manager and scheduler leader election, and control plane pod health
+- `k8s_api_latency_analyzer.py`: Analyze Kubernetes API server response times to detect performance degradation, measure latencies for various API operations (LIST, GET), and identify slow operations before they cause cluster issues
 - `k8s_secret_expiry_monitor.py`: Monitor Kubernetes Secret age and TLS certificate expiration to detect expired certificates, approaching expirations, and stale secrets
 - `k8s_lease_monitor.py`: Monitor Kubernetes Lease objects for leader election health, detecting stale leases, orphaned holders, leadership instability, and missed renewals
 
@@ -4544,6 +4545,67 @@ Operational Use Cases:
   - **etcd Quorum Monitoring**: Detect etcd degradation before data loss
   - **Leader Election Tracking**: Monitor controller-manager and scheduler failovers
   - **Baremetal Deployments**: Critical for self-managed control planes
+
+### k8s_api_latency_analyzer.py
+```
+k8s_api_latency_analyzer.py [-n namespace] [--format {plain,json,table}] [-v] [-w] [--samples N] [--warn-threshold MS] [--critical-threshold MS]
+  -n, --namespace: Namespace for scoped operations (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information about each test
+  -w, --warn-only: Only show output if issues or warnings are detected
+  --samples N: Number of samples per operation (default: 3)
+  --warn-threshold MS: Warning latency threshold in milliseconds (default: 500)
+  --critical-threshold MS: Critical latency threshold in milliseconds (default: 2000)
+```
+
+Analyze Kubernetes API server response times to detect performance degradation. Performs a series of kubectl operations and measures their latency:
+- LIST namespaces (cluster-wide, lightweight)
+- LIST nodes (includes node status)
+- LIST pods (potentially large, tests pagination)
+- GET cluster-info (tests connectivity)
+- LIST events (time-series data, often large)
+- GET api-resources (discovery endpoint)
+
+Exit codes:
+  - 0: All API operations within acceptable latency thresholds
+  - 1: Latency issues detected (operations exceeding thresholds)
+  - 2: Usage error or kubectl not available
+
+Examples:
+```bash
+# Basic latency check with plain output
+k8s_api_latency_analyzer.py
+
+# JSON output for monitoring integration
+k8s_api_latency_analyzer.py --format json
+
+# Check with lower thresholds for sensitive environments
+k8s_api_latency_analyzer.py --warn-threshold 200 --critical-threshold 1000
+
+# More samples for accurate measurement
+k8s_api_latency_analyzer.py --samples 5
+
+# Only show problems (for alerting)
+k8s_api_latency_analyzer.py --warn-only
+
+# Table format for easy reading
+k8s_api_latency_analyzer.py --format table
+
+# Namespace-scoped operations only
+k8s_api_latency_analyzer.py -n production
+
+# Combine options
+k8s_api_latency_analyzer.py -n production --samples 5 --warn-threshold 300 --format json
+```
+
+Operational Use Cases:
+  - **Early Warning System**: Detect API server degradation before cluster becomes unresponsive
+  - **Performance Baseline**: Establish normal latency ranges for your cluster
+  - **Upgrade Validation**: Compare API latency before and after control plane upgrades
+  - **Capacity Planning**: Identify when cluster size is affecting API performance
+  - **Troubleshooting**: Correlate slow cluster behavior with API latency
+  - **etcd Performance**: High latency often indicates etcd or storage issues
+  - **Baremetal Clusters**: Monitor self-managed control plane performance
 
 ### k8s_secret_expiry_monitor.py
 ```
