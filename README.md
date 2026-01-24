@@ -30,6 +30,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 
 ### Baremetal System Monitoring
 - `baremetal_dmesg_analyzer.py`: Analyze kernel messages (dmesg) for hardware errors and warnings across all subsystems (disk, memory, PCIe, CPU, network, filesystem, RAID, thermal)
+- `baremetal_efi_boot_audit.py`: Audit EFI/UEFI boot configuration including boot entries, boot order, Secure Boot status, and detect stale or duplicate entries for consistent boot configuration across server fleets
 - `baremetal_fd_limit_monitor.py`: Monitor file descriptor usage across system and per-process to prevent resource exhaustion and identify processes approaching their limits
 - `baremetal_interrupt_balance_monitor.py`: Monitor hardware interrupt (IRQ) distribution across CPU cores to detect performance issues from poor interrupt balancing
 - `baremetal_kernel_version_audit.py`: Audit kernel version and configuration to detect version drift across server fleets, identify outdated kernels, and verify kernel command-line parameters are consistent
@@ -363,6 +364,45 @@ baremetal_dmesg_analyzer.py --warn-only -v
 
 # Table format for recent critical issues
 baremetal_dmesg_analyzer.py --since "24 hours ago" --format table
+```
+
+### baremetal_efi_boot_audit.py
+```
+python baremetal_efi_boot_audit.py [--format FORMAT] [-v] [-w]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed boot entry information and device paths
+  -w, --warn-only: Only show warnings and issues
+```
+
+Audits UEFI/EFI boot configuration:
+  - Boot entry inventory and status
+  - Boot order validation
+  - Secure Boot status and Setup Mode detection
+  - Duplicate or stale entry detection
+  - Orphaned entries not in boot order
+  - Boot timeout configuration
+
+Exit codes:
+  - 0: No issues detected
+  - 1: Warnings detected (misconfiguration, duplicate entries, etc.)
+  - 2: Usage error or not an EFI system (efibootmgr not available)
+
+Examples:
+```bash
+# Basic EFI boot audit
+baremetal_efi_boot_audit.py
+
+# Show detailed boot entries and device paths
+baremetal_efi_boot_audit.py --verbose
+
+# Table format with full details
+baremetal_efi_boot_audit.py --format table -v
+
+# JSON output for automation
+baremetal_efi_boot_audit.py --format json
+
+# Only show issues (for monitoring)
+baremetal_efi_boot_audit.py --warn-only
 ```
 
 ### baremetal_fd_limit_monitor.py
