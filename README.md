@@ -136,6 +136,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_node_restart_monitor.py`: Monitor node restart activity and detect nodes with excessive restarts
 - `k8s_pod_count_analyzer.py`: Audit pod counts, scaling configuration, and resource quota usage
 - `k8s_orphaned_resources_finder.py`: Find orphaned and unused resources (ConfigMaps, Secrets, PVCs, Services, ServiceAccounts)
+- `k8s_finalizer_analyzer.py`: Find resources stuck in Terminating state due to finalizers blocking deletion
 - `k8s_container_restart_analyzer.py`: Analyze container restart patterns and identify root causes with remediation suggestions
 - `k8s_configmap_audit.py`: Audit ConfigMaps for size limits, unused ConfigMaps, missing keys referenced by pods, and configuration best practices
 - `k8s_network_policy_audit.py`: Audit network policies and identify security gaps, unprotected pods, and configuration issues
@@ -3687,6 +3688,68 @@ Use Cases:
   - **Security Hardening**: Identify and remove unused ServiceAccounts
   - **Operational Efficiency**: Catch configuration mistakes before they accumulate
   - **Baremetal Operations**: Critical for on-premises clusters where resources are limited and expensive
+
+### k8s_finalizer_analyzer.py
+```
+python3 k8s_finalizer_analyzer.py [--namespace NAMESPACE] [--format FORMAT] [options]
+  --namespace, -n: Check specific namespace only (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --namespaces-only: Only check for terminating namespaces
+  --resource-type: Specific resource type to check (default: all)
+  --verbose, -v: Show detailed information including conditions
+  --warn-only, -w: Only show resources stuck for more than 5 minutes
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No stuck resources found
+  - 1: Stuck resources detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Detects namespaces stuck in Terminating state due to finalizers
+  - Finds resources (pods, deployments, PVCs, etc.) that cannot be deleted
+  - Reports how long resources have been stuck (age since deletion requested)
+  - Identifies specific finalizers blocking deletion
+  - Checks cluster-scoped resources like PersistentVolumes
+  - Provides common finalizer documentation and remediation hints
+  - Multiple output formats for scripting and monitoring integration
+
+Examples:
+```bash
+# Check all namespaces for stuck resources
+k8s_finalizer_analyzer.py
+
+# Check specific namespace
+k8s_finalizer_analyzer.py -n my-stuck-namespace
+
+# Show only terminating namespaces
+k8s_finalizer_analyzer.py --namespaces-only
+
+# Get JSON output for automation
+k8s_finalizer_analyzer.py --format json
+
+# Check only pods
+k8s_finalizer_analyzer.py --resource-type pods
+
+# Show only resources stuck for more than 5 minutes
+k8s_finalizer_analyzer.py --warn-only
+
+# Verbose output with conditions
+k8s_finalizer_analyzer.py -v
+```
+
+Use Cases:
+  - **Namespace Deletion Issues**: Diagnose why namespace deletions are hanging
+  - **Custom Controller Debugging**: Identify resources stuck due to failing custom controllers
+  - **Cluster Maintenance**: Find and resolve stuck resources before maintenance windows
+  - **PV/PVC Issues**: Detect PersistentVolumes stuck due to protection finalizers
+  - **CRD Cleanup**: Find custom resources that cannot be deleted
+  - **Incident Response**: Quickly identify the cause of stuck deletion operations
+  - **Baremetal Operations**: Critical for on-premises clusters where manual intervention is often needed
 
 ### k8s_container_restart_analyzer.py
 ```
