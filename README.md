@@ -47,6 +47,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `baremetal_lvm_health_monitor.py`: Monitor LVM logical volumes, volume groups, and physical volumes for health issues including thin pool exhaustion, snapshot aging, and VG capacity warnings
 - `baremetal_multipath_health_monitor.py`: Monitor dm-multipath device health, detecting failed or degraded paths, path flapping, and configuration issues for SAN/NAS storage
+- `baremetal_iscsi_health.py`: Monitor iSCSI session health including target connectivity, session state, error counts, and multipath status for SAN storage environments
 - `baremetal_nfs_mount_monitor.py`: Monitor NFS mount health including stale mount detection, server connectivity, mount latency, and configuration validation for large-scale environments with shared storage
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
 - `baremetal_cpu_time_analyzer.py`: Analyze CPU time distribution (user, system, iowait, steal, softirq) for performance diagnosis
@@ -793,6 +794,56 @@ baremetal_multipath_health_monitor.py --warn-only
 
 # Table format with path details
 baremetal_multipath_health_monitor.py --format table --verbose
+```
+
+### baremetal_iscsi_health.py
+```
+python baremetal_iscsi_health.py [--format format] [-v] [-w] [--skip-multipath]
+  --format, -f: Output format - 'plain' or 'json' (default: plain)
+  -v, --verbose: Show detailed session information including devices and I/O stats
+  -w, --warn-only: Only show sessions with warnings or errors
+  --skip-multipath: Skip multipath status check
+```
+
+Requirements:
+  - open-iscsi package (iscsiadm command)
+  - Ubuntu/Debian: `sudo apt-get install open-iscsi`
+  - RHEL/CentOS: `sudo yum install iscsi-initiator-utils`
+  - Optional: multipath-tools for multipath status
+
+Exit codes:
+  - 0: All iSCSI sessions healthy
+  - 1: Issues found (degraded sessions, errors, connectivity problems)
+  - 2: Usage error or iscsiadm not available
+
+Features:
+  - Monitor active iSCSI sessions and their state
+  - Check target connectivity and portal availability
+  - Track session error counts (timeout, digest errors)
+  - Analyze attached SCSI devices and their state
+  - Check multipath status for iSCSI devices
+  - Detect degraded or failed connections
+  - Multiple output formats (plain, JSON)
+
+Examples:
+```bash
+# Check all iSCSI sessions
+baremetal_iscsi_health.py
+
+# Verbose output with device details
+baremetal_iscsi_health.py --verbose
+
+# JSON output for monitoring integration
+baremetal_iscsi_health.py --format json
+
+# Only show sessions with issues
+baremetal_iscsi_health.py --warn-only
+
+# Skip multipath check (faster, if not using multipath)
+baremetal_iscsi_health.py --skip-multipath
+
+# Combine options for targeted monitoring
+baremetal_iscsi_health.py -v -w -f json
 ```
 
 ### hardware_temperature_monitor.py
