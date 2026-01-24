@@ -43,6 +43,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_block_error_monitor.py`: Monitor block device error statistics from /sys/block/*/stat to detect I/O errors, high queue times, and early signs of disk problems
 - `iosched_audit.py`: Audit I/O scheduler configuration across block devices and detect misconfigurations (NVMe using complex schedulers, HDDs using 'none', etc.)
 - `check_raid.py`: Check status of hardware and software RAID arrays
+- `baremetal_lvm_health_monitor.py`: Monitor LVM logical volumes, volume groups, and physical volumes for health issues including thin pool exhaustion, snapshot aging, and VG capacity warnings
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
 - `baremetal_cpu_time_analyzer.py`: Analyze CPU time distribution (user, system, iowait, steal, softirq) for performance diagnosis
 - `baremetal_context_switch_monitor.py`: Monitor context switch rates to detect CPU contention, scheduling overhead, and run queue depth issues
@@ -641,6 +642,58 @@ Requirements:
   - LSI/Broadcom hardware RAID: MegaCli
   - HP hardware RAID: hpacucli/ssacli
   - Requires root privileges for hardware RAID detection
+
+### baremetal_lvm_health_monitor.py
+```
+python baremetal_lvm_health_monitor.py [--format format] [-v] [-w] [--thin-warn PCT] [--thin-crit PCT] [--vg-warn PCT] [--vg-crit PCT] [--snap-age DAYS]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed LVM information
+  -w, --warn-only: Only show warnings and errors
+  --thin-warn: Warning threshold for thin pool usage (default: 80%)
+  --thin-crit: Critical threshold for thin pool usage (default: 90%)
+  --vg-warn: Warning threshold for volume group usage (default: 85%)
+  --vg-crit: Critical threshold for volume group usage (default: 95%)
+  --snap-age: Warning threshold for snapshot age in days (default: 7, 0 to disable)
+```
+
+Requirements:
+  - LVM2 tools (lvs, vgs, pvs commands)
+  - Ubuntu/Debian: `sudo apt-get install lvm2`
+  - RHEL/CentOS: `sudo yum install lvm2`
+
+Exit codes:
+  - 0: All LVM components healthy
+  - 1: Warnings or critical issues detected
+  - 2: Usage error or LVM tools not available
+
+Features:
+  - Monitor thin pool data and metadata usage
+  - Detect snapshot space exhaustion before failure
+  - Track aging snapshots consuming space
+  - Monitor volume group capacity
+  - Detect missing or orphaned physical volumes
+  - Multiple output formats (plain, JSON, table)
+
+Examples:
+```bash
+# Check all LVM components with default thresholds
+baremetal_lvm_health_monitor.py
+
+# Custom thin pool thresholds
+baremetal_lvm_health_monitor.py --thin-warn 70 --thin-crit 85
+
+# Show detailed LVM information
+baremetal_lvm_health_monitor.py --verbose
+
+# JSON output for monitoring integration
+baremetal_lvm_health_monitor.py --format json
+
+# Only show warnings and errors
+baremetal_lvm_health_monitor.py --warn-only
+
+# Warn about snapshots older than 14 days
+baremetal_lvm_health_monitor.py --snap-age 14
+```
 
 ### hardware_temperature_monitor.py
 ```
