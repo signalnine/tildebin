@@ -142,6 +142,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_configmap_secret_size_analyzer.py`: Analyze ConfigMap and Secret sizes to find oversized objects that stress etcd and degrade cluster performance
 - `k8s_finalizer_analyzer.py`: Find resources stuck in Terminating state due to finalizers blocking deletion
 - `k8s_container_restart_analyzer.py`: Analyze container restart patterns and identify root causes with remediation suggestions
+- `k8s_workload_restart_age_analyzer.py`: Analyze workload age and restart patterns to detect stale deployments and track deployment freshness
 - `k8s_pod_startup_latency_analyzer.py`: Analyze pod startup latency to identify slow-starting pods, breaking down scheduling, init container, and container startup phases
 - `k8s_configmap_audit.py`: Audit ConfigMaps for size limits, unused ConfigMaps, missing keys referenced by pods, and configuration best practices
 - `k8s_network_policy_audit.py`: Audit network policies and identify security gaps, unprotected pods, and configuration issues
@@ -4061,6 +4062,68 @@ Use Cases:
   - **Health Probe Tuning**: Detect probe failures and tune liveness/readiness probe configurations
   - **Baremetal Operations**: Critical for large-scale environments where restart patterns indicate hardware or network issues
   - **Production Stability**: Regular analysis prevents cascading failures from unstable containers
+
+### k8s_workload_restart_age_analyzer.py
+```
+python3 k8s_workload_restart_age_analyzer.py [--namespace NAMESPACE] [--format FORMAT] [options]
+  --namespace, -n: Analyze pods in specific namespace (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --stale-days DAYS: Days after which a workload is considered stale (default: 30)
+  --fresh-hours HOURS: Hours within which a workload is considered fresh (default: 1)
+  --warn-only, -w: Only show stale workloads
+  --verbose, -v: Show detailed information for all workloads
+  --exclude-namespace NAMESPACE: Namespaces to exclude (can be repeated)
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: All workloads within acceptable age bounds
+  - 1: Stale workloads found (older than threshold)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Analyzes pod age to identify stale deployments that haven't been updated
+  - Categorizes workloads as stale, normal, or fresh based on configurable thresholds
+  - Tracks restart counts alongside age analysis
+  - Identifies owner types (Deployment, StatefulSet, DaemonSet, etc.)
+  - Multiple output formats for scripting and monitoring integration
+  - Exclude specific namespaces from analysis
+
+Examples:
+```bash
+# Analyze all pods across all namespaces
+k8s_workload_restart_age_analyzer.py
+
+# Analyze pods in specific namespace
+k8s_workload_restart_age_analyzer.py -n production
+
+# Only show stale workloads (older than 30 days)
+k8s_workload_restart_age_analyzer.py --warn-only
+
+# Custom stale threshold (14 days)
+k8s_workload_restart_age_analyzer.py --stale-days 14
+
+# Exclude system namespaces
+k8s_workload_restart_age_analyzer.py --exclude-namespace kube-system --exclude-namespace kube-public
+
+# JSON output for monitoring integration
+k8s_workload_restart_age_analyzer.py --format json
+
+# Table format with verbose output
+k8s_workload_restart_age_analyzer.py --format table -v
+```
+
+Use Cases:
+  - **Security Compliance**: Audit deployment freshness to ensure workloads are regularly updated
+  - **Stale Deployment Detection**: Identify pods that haven't been redeployed in months
+  - **Orphaned Workload Detection**: Find pods that survived multiple deployments
+  - **Capacity Planning**: Understand workload age distribution across the cluster
+  - **Change Management**: Track deployment cadence across namespaces
+  - **Incident Response**: Identify long-running pods that may need attention
+  - **Baremetal Operations**: Critical for large-scale clusters where stale workloads can accumulate
 
 ### k8s_pod_startup_latency_analyzer.py
 ```
