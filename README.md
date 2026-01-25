@@ -135,6 +135,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_daemonset_health_monitor.py`: Monitor DaemonSet health with node coverage verification, pod status on each node, and detection of scheduling issues
 - `k8s_cni_health_monitor.py`: Monitor CNI (Container Network Interface) health including plugin detection, DaemonSet status, node network conditions, and IPAM status
 - `k8s_dns_health_monitor.py`: Monitor DNS health including CoreDNS/kube-dns pod status and resolution testing
+- `k8s_metrics_server_health_monitor.py`: Monitor Metrics Server health critical for HPA/VPA functionality, including deployment status, API availability, and metrics freshness
 - `k8s_event_monitor.py`: Monitor Kubernetes events to track cluster issues and anomalies
 - `k8s_node_capacity_planner.py`: Analyze cluster capacity and forecast resource allocation
 - `k8s_cpu_throttling_detector.py`: Detect pods experiencing or at risk of CPU throttling
@@ -3359,6 +3360,55 @@ k8s_dns_health_monitor.py --test-domain my-service.production.svc.cluster.local
 
 # Table format for easy reading
 k8s_dns_health_monitor.py --format table
+```
+
+### k8s_metrics_server_health_monitor.py
+```
+python k8s_metrics_server_health_monitor.py [--namespace NAMESPACE] [--format format] [--verbose] [--warn-only]
+  --namespace, -n: Namespace where metrics-server is deployed (default: kube-system)
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  --verbose, -v: Show detailed information including node metrics breakdown
+  --warn-only: Only show output if issues or warnings are detected
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+  - Metrics Server deployed in the cluster
+
+Exit codes:
+  - 0: Metrics server healthy and operational
+  - 1: Issues detected (warnings or errors)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Monitors Metrics Server deployment health and readiness
+  - Checks API service (v1beta1.metrics.k8s.io) availability
+  - Verifies node and pod metrics are being collected
+  - Detects silently failing metrics server (breaks HPA/VPA)
+  - Tracks pod restarts that may indicate instability
+  - Warns on single-replica deployments (no HA)
+  - Supports plain text, JSON, and table output formats
+
+Examples:
+```bash
+# Basic health check
+k8s_metrics_server_health_monitor.py
+
+# JSON output for monitoring systems
+k8s_metrics_server_health_monitor.py --format json
+
+# Verbose output with node details
+k8s_metrics_server_health_monitor.py --verbose
+
+# Only show if there are problems
+k8s_metrics_server_health_monitor.py --warn-only
+
+# Check metrics server in custom namespace
+k8s_metrics_server_health_monitor.py --namespace monitoring
+
+# Table format for easy reading
+k8s_metrics_server_health_monitor.py --format table
 ```
 
 ### k8s_event_monitor.py
