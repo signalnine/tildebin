@@ -97,6 +97,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_hugepage_monitor.py`: Monitor hugepage allocation and usage including static hugepages, THP status, per-NUMA distribution, and fragmentation issues for database and VM workloads
 - `baremetal_oom_risk_analyzer.py`: Analyze processes at risk of being killed by the Linux OOM killer by examining OOM scores and memory usage to identify candidates for termination before a memory crisis
 - `baremetal_package_security_audit.py`: Audit system packages for pending security updates on apt/dnf/yum-based systems, categorizing by severity (critical/important/moderate/low) for compliance and vulnerability management
+- `baremetal_security_policy_monitor.py`: Monitor Linux Security Module (LSM) status including SELinux and AppArmor, detecting disabled/permissive modes, policy violations, recent denials, and configuration drift for enterprise security compliance
 - `baremetal_numa_balance_monitor.py`: Monitor NUMA topology and memory balance on multi-socket systems to detect cross-node memory imbalances, high NUMA miss ratios, and per-node memory pressure
 - `baremetal_memory_fragmentation_analyzer.py`: Analyze memory fragmentation using buddy allocator statistics to detect external fragmentation causing allocation failures despite available free memory, monitor hugepage availability, and identify need for memory compaction
 - `baremetal_cgroup_pressure_monitor.py`: Monitor cgroup v2 PSI (Pressure Stall Information) to detect CPU, memory, and I/O contention on container hosts before performance degradation or OOM kills occur
@@ -2466,6 +2467,63 @@ Use Cases:
   - Vulnerability management: Identify critical patches needing immediate attention
   - Patch scheduling: Prioritize updates based on severity
   - Audit reporting: Generate JSON reports for compliance systems
+
+### baremetal_security_policy_monitor.py
+```
+python baremetal_security_policy_monitor.py [--format format] [-v] [-w] [--expected MODE] [--require-lsm]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information
+  -w, --warn-only: Only show output if issues are found
+  --expected MODE: Expected security mode (enforcing, permissive, complain, disabled)
+  --require-lsm: Exit with error if no LSM is active
+```
+
+Features:
+  - Detect active Linux Security Module (SELinux or AppArmor)
+  - Report enforcement mode (enforcing, permissive, complain, disabled)
+  - Parse recent security denials from audit logs and journal
+  - Support for both SELinux (RHEL/CentOS/Fedora) and AppArmor (Ubuntu/Debian/SUSE)
+  - Check for configuration drift from expected state
+  - Count AppArmor profiles in enforce vs complain mode
+
+Requirements:
+  - Linux kernel with LSM support
+  - Optional: getenforce, sestatus, ausearch (SELinux)
+  - Optional: aa-status (AppArmor)
+  - Optional: journalctl for denial log analysis
+
+Exit codes:
+  - 0: Security policy is healthy and enforcing
+  - 1: Security issues detected (disabled, permissive, denials)
+  - 2: Error determining LSM status
+
+Examples:
+```bash
+# Check security policy status
+baremetal_security_policy_monitor.py
+
+# JSON output for monitoring integration
+baremetal_security_policy_monitor.py --format json
+
+# Table format for review
+baremetal_security_policy_monitor.py --format table
+
+# Alert if not in enforcing mode
+baremetal_security_policy_monitor.py --expected enforcing
+
+# Only output if issues found (for alerting)
+baremetal_security_policy_monitor.py --warn-only
+
+# Require MAC to be active
+baremetal_security_policy_monitor.py --require-lsm
+```
+
+Use Cases:
+  - Security compliance: Verify mandatory access control is active and enforcing
+  - Fleet auditing: Detect systems with SELinux/AppArmor disabled
+  - Incident response: Find recent security policy denials
+  - Configuration drift: Alert when security mode changes unexpectedly
+  - Enterprise standards: Enforce consistent security policy across servers
 
 ### baremetal_process_limits_monitor.py
 ```
