@@ -134,6 +134,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_pv_health_check.py`: Check persistent volume health and storage status
 - `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
 - `k8s_statefulset_health.py`: Monitor StatefulSet health with detailed pod and PVC status checking
+- `k8s_job_monitor.py`: Monitor Kubernetes Jobs and CronJobs health, detecting failed jobs, stuck jobs, and CronJob scheduling issues
 - `k8s_daemonset_health_monitor.py`: Monitor DaemonSet health with node coverage verification, pod status on each node, and detection of scheduling issues
 - `k8s_cni_health_monitor.py`: Monitor CNI (Container Network Interface) health including plugin detection, DaemonSet status, node network conditions, and IPAM status
 - `k8s_dns_health_monitor.py`: Monitor DNS health including CoreDNS/kube-dns pod status and resolution testing
@@ -3258,6 +3259,60 @@ k8s_statefulset_health.py --format json
 
 # Combine options: production namespace, only problematic, JSON format
 k8s_statefulset_health.py -n production -w -f json
+```
+
+### k8s_job_monitor.py
+```
+python k8s_job_monitor.py [--namespace NAMESPACE] [--format format] [--warn-only] [--failed-only] [--max-duration HOURS]
+  --namespace, -n: Namespace to check (default: all namespaces)
+  --format, -f: Output format, either 'plain' or 'json' (default: plain)
+  --warn-only, -w: Only show jobs with issues
+  --failed-only: Only show failed jobs
+  --max-duration: Maximum job duration in hours before flagging as stuck (default: 24)
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: All jobs healthy (no failed jobs, no stuck jobs)
+  - 1: One or more jobs failed or stuck
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Monitor Job completion status (succeeded, failed, active)
+  - Track job duration and timing
+  - Monitor CronJob schedule and last run status
+  - Detect failed jobs with reason analysis
+  - Identify stuck or long-running jobs
+  - Check backoff limit reached status
+  - Detect CronJobs with concurrent job issues
+  - Alert on CronJobs without recent successful runs
+  - Supports plain text and JSON output formats
+
+Examples:
+```bash
+# Check all jobs and cronjobs with plain output
+k8s_job_monitor.py
+
+# Show only jobs with issues
+k8s_job_monitor.py --warn-only
+
+# Show only failed jobs
+k8s_job_monitor.py --failed-only
+
+# Check specific namespace
+k8s_job_monitor.py -n production
+
+# Get JSON output for monitoring integration
+k8s_job_monitor.py --format json
+
+# Flag jobs running longer than 12 hours as stuck
+k8s_job_monitor.py --max-duration 12
+
+# Combine options: production namespace, only problematic, JSON format
+k8s_job_monitor.py -n production -w -f json
 ```
 
 ### k8s_daemonset_health_monitor.py
