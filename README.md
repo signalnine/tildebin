@@ -33,6 +33,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_efi_boot_audit.py`: Audit EFI/UEFI boot configuration including boot entries, boot order, Secure Boot status, and detect stale or duplicate entries for consistent boot configuration across server fleets
 - `baremetal_failed_login_monitor.py`: Monitor failed SSH and login attempts from auth logs to detect brute-force attacks, track offending IPs, and identify targeted user accounts for security monitoring
 - `baremetal_fd_limit_monitor.py`: Monitor file descriptor usage across system and per-process to prevent resource exhaustion and identify processes approaching their limits
+- `baremetal_open_file_monitor.py`: Monitor open file handles across the system to identify processes with high FD counts, detect potential FD leaks, and find processes holding deleted files open (common disk space leak after log rotation)
 - `baremetal_interrupt_balance_monitor.py`: Monitor hardware interrupt (IRQ) distribution across CPU cores to detect performance issues from poor interrupt balancing
 - `baremetal_kernel_version_audit.py`: Audit kernel version and configuration to detect version drift across server fleets, identify outdated kernels, and verify kernel command-line parameters are consistent
 - `baremetal_kernel_module_audit.py`: Audit loaded kernel modules for security and compliance, identifying unsigned modules, out-of-tree modules, proprietary drivers, and kernel taint sources
@@ -467,6 +468,62 @@ baremetal_fd_limit_monitor.py --format json
 
 # Table format with verbose output
 baremetal_fd_limit_monitor.py --format table --verbose
+```
+
+### baremetal_open_file_monitor.py
+```
+python baremetal_open_file_monitor.py [--format FORMAT] [-v] [--min-fds N] [--warn-percent PCT] [--top N] [--name PATTERN] [--user USER] [--deleted-only] [-w]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including file type breakdown
+  --min-fds N: Minimum open FD count to report (default: 10)
+  --warn-percent PCT: Warn when FD usage exceeds this percentage (default: 80)
+  --top N: Show only top N processes by FD count (default: 20, 0=all)
+  --name PATTERN: Filter by process name (case-insensitive substring match)
+  --user USER: Filter by username
+  --deleted-only: Only show processes holding deleted files open
+  -w, --warn-only: Only show processes with warnings
+```
+
+Monitors open file handles to detect resource leaks and disk space issues:
+  - Lists processes with highest open file descriptor counts
+  - Detects processes holding deleted files open (disk space leaks after log rotation)
+  - Identifies file types (regular files, sockets, pipes, devices)
+  - Shows per-process FD usage vs limits
+  - Supports filtering by process name, user, or minimum FD count
+
+Exit codes:
+  - 0: No issues detected (all processes within thresholds)
+  - 1: Warnings detected (high FD usage or deleted files held open)
+  - 2: Usage error or missing dependency
+
+Examples:
+```bash
+# Show top processes by open FD count
+baremetal_open_file_monitor.py
+
+# Only show processes with 100+ open FDs
+baremetal_open_file_monitor.py --min-fds 100
+
+# Find processes holding deleted files (disk space leak)
+baremetal_open_file_monitor.py --deleted-only
+
+# Filter by process name
+baremetal_open_file_monitor.py --name nginx
+
+# Filter by user
+baremetal_open_file_monitor.py --user www-data
+
+# Top 10 in table format
+baremetal_open_file_monitor.py --top 10 --format table
+
+# JSON output for monitoring systems
+baremetal_open_file_monitor.py --format json
+
+# Verbose with type breakdown
+baremetal_open_file_monitor.py -v --min-fds 50
+
+# Custom warning threshold (50%)
+baremetal_open_file_monitor.py --warn-percent 50
 ```
 
 ### disk_health_check.py
