@@ -63,6 +63,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `memory_health_monitor.py`: Monitor memory health, ECC errors, and memory pressure
 - `network_interface_health.py`: Monitor network interface health and error statistics
 - `baremetal_nic_firmware_audit.py`: Audit NIC driver and firmware versions across physical interfaces to detect version inconsistencies that cause subtle packet loss, latency issues, or performance degradation in large-scale baremetal environments
+- `baremetal_nic_link_speed_audit.py`: Audit NIC link speeds to detect interfaces negotiating at suboptimal speeds due to cable issues, switch misconfigurations, or auto-negotiation failures
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `baremetal_bond_health_monitor.py`: Monitor network bond health with detailed diagnostics including slave status, failover readiness, link failures, and speed/duplex mismatch detection
 - `baremetal_boot_performance_monitor.py`: Monitor system boot performance and systemd initialization times to identify slow-booting systems and problematic services that delay startup
@@ -1399,6 +1400,54 @@ network_interface_health.py --warn-only
 # Output as JSON for monitoring
 network_interface_health.py --format json
 ```
+
+### baremetal_nic_link_speed_audit.py
+```
+python baremetal_nic_link_speed_audit.py [-i interface] [--min-speed MBPS] [--format format] [-v] [-w]
+  -i, --interface: Specific interface to check (default: all physical NICs)
+  --min-speed: Minimum expected speed in Mbps (e.g., 10000 for 10Gb/s)
+  --format: Output format - 'plain' or 'json' (default: plain)
+  -v, --verbose: Show detailed interface information
+  -w, --warn-only: Only show interfaces with issues
+```
+
+Requirements:
+  - ethtool package
+  - Ubuntu/Debian: `sudo apt-get install ethtool`
+  - RHEL/CentOS: `sudo yum install ethtool`
+
+Exit codes:
+  - 0: All interfaces at expected speeds
+  - 1: One or more interfaces at suboptimal speeds
+  - 2: Usage error or missing dependency
+
+Features:
+  - Detects NICs negotiating at suboptimal speeds
+  - Compares actual speed vs maximum supported speed
+  - Identifies half-duplex negotiation issues
+  - Filters physical interfaces only (excludes bridges, bonds, vlans)
+  - Reports driver and auto-negotiation status
+  - JSON output for monitoring integration
+
+Examples:
+```bash
+# Check all physical NICs
+baremetal_nic_link_speed_audit.py
+
+# Check specific interface with details
+baremetal_nic_link_speed_audit.py -i eth0 -v
+
+# Flag any NIC below 10Gb/s
+baremetal_nic_link_speed_audit.py --min-speed 10000
+
+# Only show interfaces with issues
+baremetal_nic_link_speed_audit.py --warn-only
+
+# Output as JSON for monitoring
+baremetal_nic_link_speed_audit.py --format json
+```
+
+Use Case: In large baremetal environments, NICs often silently negotiate to lower speeds due to cable problems (damaged, wrong category, too long), switch port misconfigurations, or auto-negotiation failures. A 10Gb NIC running at 1Gb or 100Mb causes significant but non-obvious performance degradation. This script audits all physical NICs to detect these issues before they impact production workloads.
 
 ### ntp_drift_monitor.py
 ```
