@@ -176,6 +176,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_api_latency_analyzer.py`: Analyze Kubernetes API server response times to detect performance degradation, measure latencies for various API operations (LIST, GET), and identify slow operations before they cause cluster issues
 - `k8s_secret_expiry_monitor.py`: Monitor Kubernetes Secret age and TLS certificate expiration to detect expired certificates, approaching expirations, and stale secrets
 - `k8s_lease_monitor.py`: Monitor Kubernetes Lease objects for leader election health, detecting stale leases, orphaned holders, leadership instability, and missed renewals
+- `k8s_priority_class_analyzer.py`: Analyze PriorityClass configuration and usage including pod scheduling priorities, preemption policies, global defaults, and identify pods without explicit priority assignment
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
