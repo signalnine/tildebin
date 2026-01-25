@@ -114,6 +114,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_container_runtime_health.py`: Monitor container runtime health (Docker, containerd, podman) including service status, storage usage, container states, and image management
 - `baremetal_kernel_lockup_detector.py`: Detect kernel lockups, RCU stalls, hung tasks, and other indicators of system instability from dmesg/journalctl to identify hardware problems or driver bugs
 - `baremetal_systemd_timer_monitor.py`: Monitor systemd timer health including failed timers, missed executions, and associated service failures to ensure scheduled tasks run reliably
+- `baremetal_systemd_restart_loop_detector.py`: Detect systemd services stuck in restart loops by monitoring restart counts within configurable time windows, identifying services that are repeatedly crashing and restarting
 - `baremetal_ssl_cert_scanner.py`: Scan filesystem for SSL/TLS certificates and check expiration status to prevent outages from expired certificates in web servers, databases, and other services
 - `baremetal_disk_queue_monitor.py`: Monitor disk I/O queue depths to detect storage bottlenecks and saturation before they cause latency spikes, with configurable thresholds and IOPS tracking
 - `baremetal_iptables_audit.py`: Audit iptables firewall rules for security and performance issues including rule count analysis, empty chains, unused rules, overly permissive/restrictive rules, and default policy review
