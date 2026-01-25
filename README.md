@@ -129,6 +129,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 
 ### Kubernetes Management
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
+- `k8s_kubelet_health_monitor.py`: Monitor kubelet health on Kubernetes nodes including node conditions, heartbeat staleness, restart frequency, and version consistency across the cluster
 - `k8s_pod_resource_audit.py`: Audit pod resource usage and identify resource issues
 - `k8s_pv_health_check.py`: Check persistent volume health and storage status
 - `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
@@ -5185,6 +5186,67 @@ Operational Use Cases:
   - **etcd Quorum Monitoring**: Detect etcd degradation before data loss
   - **Leader Election Tracking**: Monitor controller-manager and scheduler failovers
   - **Baremetal Deployments**: Critical for self-managed control planes
+
+### k8s_kubelet_health_monitor.py
+```
+k8s_kubelet_health_monitor.py [--node NODE] [-l LABEL] [--format {plain,json,table}] [-w] [-v] [--skip-events]
+  -n, --node: Check specific node by name
+  -l, --label: Filter nodes by label selector (e.g., node-role.kubernetes.io/worker=)
+  -f, --format: Output format - 'plain', 'json', or 'table' (default: table)
+  -w, --warn-only: Only show nodes with issues
+  -v, --verbose: Show detailed information
+  --skip-events: Skip event collection (faster but less info)
+```
+
+Monitor kubelet health on Kubernetes nodes. The kubelet is the primary node agent that runs on each node and is responsible for:
+- Registering the node with the API server
+- Watching for PodSpecs and ensuring containers are running
+- Reporting node and pod status to the API server
+- Running container health checks (liveness/readiness probes)
+
+This script checks:
+- Node conditions (Ready, MemoryPressure, DiskPressure, PIDPressure)
+- Kubelet heartbeat staleness (detects connectivity issues)
+- Kubelet restart frequency via node events
+- Kubelet version consistency across the cluster
+- Cordoned/unschedulable node status
+
+Exit codes:
+  - 0: All kubelets healthy and versions consistent
+  - 1: Kubelet issues detected or version mismatch
+  - 2: Usage error or kubectl not available
+
+Examples:
+```bash
+# Check all nodes (default table format)
+k8s_kubelet_health_monitor.py
+
+# Check specific node
+k8s_kubelet_health_monitor.py --node worker-1
+
+# Check worker nodes only
+k8s_kubelet_health_monitor.py -l node-role.kubernetes.io/worker=
+
+# Show only unhealthy kubelets
+k8s_kubelet_health_monitor.py --warn-only
+
+# JSON output for monitoring integration
+k8s_kubelet_health_monitor.py --format json
+
+# Quick check without event collection
+k8s_kubelet_health_monitor.py --skip-events
+
+# Plain text output
+k8s_kubelet_health_monitor.py --format plain
+```
+
+Operational Use Cases:
+  - **Node Health Monitoring**: Proactive detection of kubelet issues before pods fail
+  - **Upgrade Validation**: Verify kubelet version consistency after rolling upgrades
+  - **Connectivity Issues**: Detect nodes with stale heartbeats (network partitions)
+  - **Capacity Planning**: Identify nodes under resource pressure
+  - **Maintenance Windows**: Verify kubelet health before/after node maintenance
+  - **Baremetal Clusters**: Critical for self-managed nodes without cloud provider integration
 
 ### k8s_api_latency_analyzer.py
 ```
