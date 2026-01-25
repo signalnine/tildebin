@@ -103,6 +103,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_conntrack_monitor.py`: Monitor Linux connection tracking (conntrack) table saturation to detect DDoS attacks, traffic spikes, or misconfigured applications causing table exhaustion and dropped connections
 - `baremetal_coredump_monitor.py`: Monitor coredump configuration and storage to ensure crash dumps are properly captured for debugging, including core pattern, ulimit settings, systemd-coredump config, and storage space
 - `baremetal_cpu_vulnerability_scanner.py`: Scan CPU hardware vulnerabilities (Spectre, Meltdown, MDS, etc.) and verify kernel mitigations are enabled for security compliance across server fleets
+- `baremetal_cpu_microcode_monitor.py`: Monitor CPU microcode versions across sockets and cores to detect outdated or inconsistent microcode, verify security patches are applied, and support fleet-wide compliance checking with minimum version enforcement
 - `baremetal_fd_exhaustion_monitor.py`: Monitor system-wide and per-process file descriptor usage to detect fd exhaustion before "too many open files" errors cause service failures, connection drops, and application crashes
 - `baremetal_inode_exhaustion_monitor.py`: Monitor filesystem inode usage to detect exhaustion before cryptic "no space left on device" errors occur even when disk space is available - critical for systems with millions of small files
 - `baremetal_io_latency_analyzer.py`: Analyze I/O latency patterns by sampling /proc/diskstats to identify slow storage operations, high latency devices, and I/O bottlenecks with configurable thresholds
@@ -2194,6 +2195,58 @@ baremetal_cpu_vulnerability_scanner.py --warn-only
 # Combine with fleet management for scanning all hosts
 for host in $(cat hosts.txt); do
   ssh $host baremetal_cpu_vulnerability_scanner.py --format json
+done | jq -s '.'
+```
+
+### baremetal_cpu_microcode_monitor.py
+```
+python baremetal_cpu_microcode_monitor.py [--format format] [-v] [-w] [--min-version VERSION]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed per-socket information
+  -w, --warn-only: Only show warnings and issues (suppress normal output)
+  --min-version VERSION: Minimum acceptable microcode version (hex, e.g., 0x20)
+```
+
+Features:
+  - Monitor CPU microcode versions from /proc/cpuinfo
+  - Detect inconsistent microcode versions across sockets or cores
+  - Verify microcode updates are applied after security patches
+  - Support minimum version checking for fleet compliance
+  - Track microcode by physical socket for multi-socket systems
+  - Identify systems with missing or unknown microcode information
+
+Requirements:
+  - Linux system with /proc/cpuinfo
+  - Microcode information available in /proc/cpuinfo (most modern CPUs)
+
+Exit codes:
+  - 0: Consistent microcode versions, no issues detected
+  - 1: Microcode issues detected (inconsistent, outdated, or missing)
+  - 2: /proc/cpuinfo not available or usage error
+
+Examples:
+```bash
+# Check microcode status with default output
+baremetal_cpu_microcode_monitor.py
+
+# Show detailed per-socket information
+baremetal_cpu_microcode_monitor.py --verbose
+
+# JSON output for monitoring systems
+baremetal_cpu_microcode_monitor.py --format json
+
+# Table format for human-readable reports
+baremetal_cpu_microcode_monitor.py --format table
+
+# Only show issues (for alerting)
+baremetal_cpu_microcode_monitor.py --warn-only
+
+# Check against minimum version for compliance
+baremetal_cpu_microcode_monitor.py --min-version 0x830107d
+
+# Fleet-wide microcode inventory
+for host in $(cat hosts.txt); do
+  echo "=== $host ===" && ssh $host baremetal_cpu_microcode_monitor.py --format json
 done | jq -s '.'
 ```
 
