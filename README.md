@@ -31,6 +31,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 ### Baremetal System Monitoring
 - `baremetal_dmesg_analyzer.py`: Analyze kernel messages (dmesg) for hardware errors and warnings across all subsystems (disk, memory, PCIe, CPU, network, filesystem, RAID, thermal)
 - `baremetal_efi_boot_audit.py`: Audit EFI/UEFI boot configuration including boot entries, boot order, Secure Boot status, and detect stale or duplicate entries for consistent boot configuration across server fleets
+- `baremetal_failed_login_monitor.py`: Monitor failed SSH and login attempts from auth logs to detect brute-force attacks, track offending IPs, and identify targeted user accounts for security monitoring
 - `baremetal_fd_limit_monitor.py`: Monitor file descriptor usage across system and per-process to prevent resource exhaustion and identify processes approaching their limits
 - `baremetal_interrupt_balance_monitor.py`: Monitor hardware interrupt (IRQ) distribution across CPU cores to detect performance issues from poor interrupt balancing
 - `baremetal_kernel_version_audit.py`: Audit kernel version and configuration to detect version drift across server fleets, identify outdated kernels, and verify kernel command-line parameters are consistent
