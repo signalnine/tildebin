@@ -145,6 +145,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_configmap_audit.py`: Audit ConfigMaps for size limits, unused ConfigMaps, missing keys referenced by pods, and configuration best practices
 - `k8s_network_policy_audit.py`: Audit network policies and identify security gaps, unprotected pods, and configuration issues
 - `k8s_node_taint_analyzer.py`: Analyze node taints and their impact on pod scheduling, identifying blocking taints, orphaned taints, and workload distribution
+- `k8s_node_label_auditor.py`: Audit node labels and annotations for consistency, compliance with naming conventions, missing topology/role labels, and deprecated labels
 - `k8s_resource_quota_auditor.py`: Audit ResourceQuota and LimitRange policies across namespaces to ensure proper resource governance
 - `k8s_namespace_resource_analyzer.py`: Analyze namespace resource utilization for capacity planning, chargeback, and multi-tenant governance
 - `k8s_image_pull_analyzer.py`: Analyze image pull issues including ImagePullBackOff errors, slow pulls, registry connectivity, and authentication failures
@@ -4193,6 +4194,68 @@ Use cases:
   - Capacity planning: Understand how many nodes are unavailable due to taints
   - Troubleshooting: Identify why pods aren't scheduling (blocking taints)
   - Cleanup: Find orphaned taints that are no longer needed
+
+### k8s_node_label_auditor.py
+```
+python3 k8s_node_label_auditor.py [--format FORMAT] [--verbose] [--warn-only] [--require-label LABEL] [--skip-deprecated] [--skip-consistency]
+  --format, -f: Output format - 'plain', 'json', or 'table' (default: plain)
+  --verbose, -v: Show detailed information including info messages
+  --warn-only, -w: Only show nodes with issues or warnings
+  --require-label, -l: Label that must be present on all nodes (can be specified multiple times)
+  --skip-deprecated: Skip checking for deprecated labels
+  --skip-consistency: Skip label consistency checks across similar nodes
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: All nodes pass audit checks
+  - 1: Audit issues detected (missing labels, inconsistencies, format violations)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Checks for required custom labels (via --require-label)
+  - Validates standard Kubernetes labels (hostname, os, arch)
+  - Warns about missing topology labels (zone, region)
+  - Detects deprecated labels (beta.kubernetes.io/*, failure-domain.*)
+  - Validates label key/value format per Kubernetes naming conventions
+  - Monitors annotation sizes (warns at 100KB, errors at 256KB limit)
+  - Checks label consistency across nodes with the same role
+  - Identifies nodes without role labels
+
+Examples:
+```bash
+# Basic audit of all nodes
+k8s_node_label_auditor.py
+
+# Require specific labels for compliance
+k8s_node_label_auditor.py --require-label env --require-label team
+
+# Show only nodes with issues
+k8s_node_label_auditor.py --warn-only
+
+# JSON output for automation
+k8s_node_label_auditor.py --format json
+
+# Table format with verbose info
+k8s_node_label_auditor.py --format table -v
+
+# Skip deprecated label warnings
+k8s_node_label_auditor.py --skip-deprecated
+
+# Full audit with multiple required labels
+k8s_node_label_auditor.py -l env -l team -l region --format table
+```
+
+Use cases:
+  - **Compliance Auditing**: Ensure all nodes have required labels for cost allocation, environment tracking
+  - **Migration Planning**: Identify deprecated labels that need updating before cluster upgrades
+  - **Scheduling Verification**: Confirm topology labels are set for proper pod distribution
+  - **Fleet Consistency**: Detect label drift across similar nodes (e.g., workers with different labels)
+  - **Capacity Planning**: Verify node roles are properly labeled for resource planning
+  - **Security Auditing**: Ensure nodes in production have required security labels
 
 ### k8s_resource_quota_auditor.py
 ```
