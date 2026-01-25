@@ -146,6 +146,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_network_policy_audit.py`: Audit network policies and identify security gaps, unprotected pods, and configuration issues
 - `k8s_node_taint_analyzer.py`: Analyze node taints and their impact on pod scheduling, identifying blocking taints, orphaned taints, and workload distribution
 - `k8s_resource_quota_auditor.py`: Audit ResourceQuota and LimitRange policies across namespaces to ensure proper resource governance
+- `k8s_namespace_resource_analyzer.py`: Analyze namespace resource utilization for capacity planning, chargeback, and multi-tenant governance
 - `k8s_image_pull_analyzer.py`: Analyze image pull issues including ImagePullBackOff errors, slow pulls, registry connectivity, and authentication failures
 - `k8s_job_health_monitor.py`: Monitor Job and CronJob health including completion status, scheduling patterns, stuck jobs, and resource consumption
 - `k8s_webhook_health_monitor.py`: Monitor admission webhook health including certificate expiration, endpoint availability, failure policies, and recent webhook rejections
@@ -4259,6 +4260,54 @@ Use Cases:
   - **Baremetal Clusters**: Critical for shared infrastructure without cloud auto-scaling
   - **Development Environments**: Ensure dev/test namespaces don't consume prod resources
   - **Incident Prevention**: Detect quota issues before they cause application failures
+
+### k8s_namespace_resource_analyzer.py
+```
+python3 k8s_namespace_resource_analyzer.py [--format FORMAT] [--warn-only] [--top N] [--verbose]
+  --format, -f: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show namespaces with issues
+  --top, -t: Show only top N namespaces by CPU requests
+  --verbose, -v: Show additional details including limits
+```
+
+Analyzes resource utilization across all namespaces in a Kubernetes cluster, providing:
+- Aggregate CPU and memory requests/limits per namespace
+- Percentage of cluster resources consumed by each namespace
+- Pod and container counts by namespace
+- Resource quota utilization percentages
+- Identification of namespaces without resource quotas
+- Detection of pods missing requests or limits
+
+Examples:
+```bash
+# Analyze all namespaces
+k8s_namespace_resource_analyzer.py
+
+# Tabular output for quick overview
+k8s_namespace_resource_analyzer.py --format table
+
+# Show top 10 resource consumers
+k8s_namespace_resource_analyzer.py --top 10
+
+# Only show namespaces with governance issues
+k8s_namespace_resource_analyzer.py --warn-only
+
+# JSON output for automation/chargeback systems
+k8s_namespace_resource_analyzer.py --format json
+
+# Verbose output with limits info
+k8s_namespace_resource_analyzer.py -v
+
+# Top 5 consumers with issues, verbose
+k8s_namespace_resource_analyzer.py -t 5 -w -v
+```
+
+Use Cases:
+  - **Chargeback/Showback**: Generate reports of resource consumption by team/namespace for cost allocation
+  - **Capacity Planning**: Identify resource distribution and plan for cluster growth
+  - **Governance Auditing**: Find namespaces without resource quotas that could consume unlimited resources
+  - **Multi-Tenant Clusters**: Monitor resource fairness across teams in shared clusters
+  - **Resource Optimization**: Identify namespaces with pods missing requests/limits
 
 ### k8s_image_pull_analyzer.py
 ```
