@@ -64,6 +64,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `network_interface_health.py`: Monitor network interface health and error statistics
 - `baremetal_nic_firmware_audit.py`: Audit NIC driver and firmware versions across physical interfaces to detect version inconsistencies that cause subtle packet loss, latency issues, or performance degradation in large-scale baremetal environments
 - `baremetal_nic_link_speed_audit.py`: Audit NIC link speeds to detect interfaces negotiating at suboptimal speeds due to cable issues, switch misconfigurations, or auto-negotiation failures
+- `baremetal_vlan_config_audit.py`: Audit VLAN configuration and health to detect orphaned VLANs, MTU mismatches, parent interface issues, and VLAN ID conflicts in datacenter environments
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `baremetal_bond_health_monitor.py`: Monitor network bond health with detailed diagnostics including slave status, failover readiness, link failures, and speed/duplex mismatch detection
 - `baremetal_boot_performance_monitor.py`: Monitor system boot performance and systemd initialization times to identify slow-booting systems and problematic services that delay startup
@@ -1449,6 +1450,44 @@ baremetal_nic_link_speed_audit.py --format json
 ```
 
 Use Case: In large baremetal environments, NICs often silently negotiate to lower speeds due to cable problems (damaged, wrong category, too long), switch port misconfigurations, or auto-negotiation failures. A 10Gb NIC running at 1Gb or 100Mb causes significant but non-obvious performance degradation. This script audits all physical NICs to detect these issues before they impact production workloads.
+
+### baremetal_vlan_config_audit.py
+```
+python baremetal_vlan_config_audit.py [--format format] [-v] [-w]
+  --format: Output format - 'plain' or 'json' (default: plain)
+  -v, --verbose: Show detailed VLAN information
+  -w, --warn-only: Only show VLANs with issues
+```
+
+Exit codes:
+  - 0: All VLANs healthy (or no VLANs configured)
+  - 1: One or more VLANs have configuration issues
+  - 2: Usage error or missing dependency
+
+Features:
+  - Detect orphaned VLANs (parent interface no longer exists)
+  - Check MTU mismatches between VLAN and parent interface
+  - Verify parent interface is up and has carrier
+  - Detect VLAN ID conflicts on the same parent
+  - Identify VLANs without IP addresses configured
+  - Works with 802.1Q VLANs via /proc/net/vlan/config and sysfs
+
+Examples:
+```bash
+# Audit all VLAN interfaces
+baremetal_vlan_config_audit.py
+
+# Show detailed VLAN information
+baremetal_vlan_config_audit.py -v
+
+# Only show VLANs with issues
+baremetal_vlan_config_audit.py --warn-only
+
+# Output as JSON for monitoring
+baremetal_vlan_config_audit.py --format json
+```
+
+Use Case: In datacenter environments, VLANs are commonly used for network segmentation but misconfigurations often go unnoticed until they cause connectivity issues. Common problems include VLANs whose parent interface was removed during network reconfiguration, MTU mismatches causing fragmentation, and parent interfaces going down without proper alerting. This script audits VLAN configuration to catch these issues proactively.
 
 ### ntp_drift_monitor.py
 ```
