@@ -92,6 +92,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `process_resource_monitor.py`: Monitor process resource consumption and detect zombie/resource-hungry processes
 - `baremetal_socket_state_monitor.py`: Monitor TCP/UDP socket state distribution to detect connection anomalies like excessive TIME_WAIT sockets (port exhaustion), CLOSE_WAIT accumulation (file descriptor leaks), and SYN flood attacks
 - `baremetal_listening_port_monitor.py`: Monitor listening ports and detect unexpected services by analyzing /proc/net files to identify all listening TCP/UDP ports with their associated processes, supporting expected/unexpected port validation and security auditing
+- `baremetal_ephemeral_port_monitor.py`: Monitor ephemeral (dynamic) port usage against the kernel-configured range to detect exhaustion risk before services fail with "Cannot assign requested address" errors, tracking TIME_WAIT accumulation and per-destination port consumption
 - `baremetal_swap_monitor.py`: Monitor swap usage and memory pressure indicators to detect insufficient RAM, excessive swap activity, and systems at risk of OOM killer activation
 - `baremetal_sysv_ipc_monitor.py`: Monitor System V IPC resource usage (semaphores, shared memory, message queues) to detect exhaustion before "No space left on device" errors impact databases (PostgreSQL, Oracle, SAP), middleware, and HPC applications
 - `baremetal_entropy_monitor.py`: Monitor system entropy pool levels for cryptographic operations, detecting low entropy that causes /dev/random blocking, TLS handshake delays, and key generation issues on high-traffic servers or VMs
@@ -2693,6 +2694,54 @@ baremetal_listening_port_monitor.py --expected 22,80 --unexpected 23 --warn-only
 
 # Table format for quick overview
 baremetal_listening_port_monitor.py --format table
+```
+
+### baremetal_ephemeral_port_monitor.py
+```
+python baremetal_ephemeral_port_monitor.py [--format format] [-v] [-w] [--warning PERCENT] [--critical PERCENT] [--time-wait-percent PERCENT]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including top destinations
+  -w, --warn-only: Only output if issues are detected
+  --warning: Warning threshold percentage (default: 70)
+  --critical: Critical threshold percentage (default: 85)
+  --time-wait-percent: TIME_WAIT accumulation warning threshold (default: 30)
+```
+
+Monitors ephemeral port usage against the kernel's configured range (`/proc/sys/net/ipv4/ip_local_port_range`) to detect exhaustion before "Cannot assign requested address" errors occur.
+
+**Metrics tracked:**
+- Ephemeral port range and availability
+- Current usage percentage
+- Connection state distribution (ESTABLISHED, TIME_WAIT, etc.)
+- Top remote destinations consuming ports
+
+**Common causes of exhaustion:**
+- Load balancers with many backend connections
+- High-throughput web servers or proxies
+- Connection leaks in applications
+- TIME_WAIT accumulation from short-lived connections
+
+Exit codes: 0=healthy, 1=high usage or issues detected, 2=missing /proc files or usage error
+
+Examples:
+```bash
+# Check ephemeral port usage
+baremetal_ephemeral_port_monitor.py
+
+# Output in JSON format for monitoring integration
+baremetal_ephemeral_port_monitor.py --format json
+
+# Custom thresholds for high-traffic servers
+baremetal_ephemeral_port_monitor.py --warning 60 --critical 80
+
+# Verbose output showing top destinations
+baremetal_ephemeral_port_monitor.py -v
+
+# Monitoring mode: only output on issues
+baremetal_ephemeral_port_monitor.py --warn-only --format json
+
+# Table format for quick overview
+baremetal_ephemeral_port_monitor.py --format table
 ```
 
 ### system_inventory.py
