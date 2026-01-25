@@ -46,6 +46,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `iosched_audit.py`: Audit I/O scheduler configuration across block devices and detect misconfigurations (NVMe using complex schedulers, HDDs using 'none', etc.)
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `baremetal_lvm_health_monitor.py`: Monitor LVM logical volumes, volume groups, and physical volumes for health issues including thin pool exhaustion, snapshot aging, and VG capacity warnings
+- `baremetal_mce_monitor.py`: Monitor Machine Check Exceptions (MCE) for hardware fault detection including CPU cache errors, memory bus errors, system bus errors, and thermal events - critical for detecting failing hardware before data corruption
 - `baremetal_multipath_health_monitor.py`: Monitor dm-multipath device health, detecting failed or degraded paths, path flapping, and configuration issues for SAN/NAS storage
 - `baremetal_iscsi_health.py`: Monitor iSCSI session health including target connectivity, session state, error counts, and multipath status for SAN storage environments
 - `baremetal_nfs_mount_monitor.py`: Monitor NFS mount health including stale mount detection, server connectivity, mount latency, and configuration validation for large-scale environments with shared storage
@@ -756,6 +757,57 @@ baremetal_lvm_health_monitor.py --warn-only
 
 # Warn about snapshots older than 14 days
 baremetal_lvm_health_monitor.py --snap-age 14
+```
+
+### baremetal_mce_monitor.py
+```
+python baremetal_mce_monitor.py [--format format] [-v] [-w]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed MCE configuration and all events
+  -w, --warn-only: Only show issues, suppress OK status messages
+```
+
+Requirements:
+  - Linux kernel with MCE support (x86/x86_64 architecture)
+  - Access to /sys/devices/system/machinecheck/ (requires root for some info)
+  - Optional: mcelog daemon for enhanced diagnostics
+
+Exit codes:
+  - 0: No MCE errors detected
+  - 1: MCE warnings or errors detected (hardware fault found)
+  - 2: Usage error or missing dependencies
+
+Features:
+  - Monitor Machine Check Exceptions from multiple data sources
+  - Parse MCE sysfs interface for CPU/memory controller errors
+  - Detect retired memory pages from RAS (Reliability, Availability, Serviceability)
+  - Analyze dmesg and journalctl for MCE-related kernel messages
+  - Report CPU microcode versions (outdated microcode can cause MCEs)
+  - Multiple output formats for monitoring integration
+
+What MCE detects:
+  - CPU cache parity/ECC errors
+  - Memory controller errors (internal and bus)
+  - System bus errors
+  - Thermal throttling events
+  - Internal CPU errors
+
+Examples:
+```bash
+# Check MCE status with default output
+baremetal_mce_monitor.py
+
+# JSON output for monitoring systems (Prometheus, Nagios, etc.)
+baremetal_mce_monitor.py --format json
+
+# Only show issues, suppress "OK" messages
+baremetal_mce_monitor.py --warn-only
+
+# Verbose output with CPU MCE configuration
+baremetal_mce_monitor.py --verbose
+
+# Table format for quick review
+baremetal_mce_monitor.py --format table
 ```
 
 ### baremetal_multipath_health_monitor.py
