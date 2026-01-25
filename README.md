@@ -169,6 +169,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_storageclass_health_monitor.py`: Monitor StorageClass provisioners and CSI driver health including provisioner status, PVC failures, and stuck volume attachments
 - `k8s_hpa_health_monitor.py`: Monitor HorizontalPodAutoscaler health and effectiveness including metrics server availability, scaling issues, and HPA misconfigurations
 - `k8s_service_endpoint_monitor.py`: Monitor Service endpoint health to detect services without healthy endpoints, selector mismatches, LoadBalancer IP issues, and endpoint readiness problems
+- `k8s_endpointslice_health_monitor.py`: Monitor EndpointSlice health for service discovery issues including no-ready endpoints, high not-ready ratios, missing EndpointSlices, and slice fragmentation
 - `k8s_service_health_monitor.py`: Monitor Kubernetes Service health by checking endpoint availability, identifying services with zero endpoints or partially ready endpoints, and correlating service configuration with endpoint status
 - `k8s_rbac_auditor.py`: Audit Kubernetes RBAC roles and bindings for security issues including cluster-admin access, wildcard permissions, dangerous verbs, anonymous user access, and overly permissive service account bindings
 - `k8s_pod_security_audit.py`: Audit pod security contexts and Linux capabilities for security risks including privileged containers, root user execution, dangerous capabilities, host namespace sharing, and missing security profiles
@@ -5037,6 +5038,54 @@ Use Cases:
   - **Scheduling Issues**: Find CronJobs that haven't run recently or are suspended
   - **Concurrent Job Analysis**: Detect CronJobs spawning too many simultaneous jobs
   - **Capacity Planning**: Understand batch workload resource consumption patterns
+
+### k8s_endpointslice_health_monitor.py
+```
+k8s_endpointslice_health_monitor.py [-n namespace] [--format {plain,json}] [-w] [--include-headless] [--frag-threshold N] [--skip-coverage-check]
+  -n, --namespace: Namespace to check (default: all namespaces)
+  --format: Output format - 'plain' or 'json' (default: plain)
+  -w, --warn-only: Only show EndpointSlices with issues
+  --include-headless: Include headless services in coverage check
+  --frag-threshold: EndpointSlice count threshold for fragmentation warning (default: 10)
+  --skip-coverage-check: Skip checking for services missing EndpointSlices
+```
+
+Monitor EndpointSlice health for service discovery issues. EndpointSlices are the modern replacement for Endpoints resources, providing better scalability for large clusters. This script identifies:
+- EndpointSlices with no ready endpoints (service down)
+- High not-ready endpoint ratio (>50% not ready)
+- Services missing EndpointSlices entirely
+- EndpointSlice fragmentation (too many slices per service)
+- Stale terminating endpoints
+
+Examples:
+```bash
+# Check all EndpointSlices in all namespaces
+k8s_endpointslice_health_monitor.py
+
+# Check EndpointSlices in specific namespace
+k8s_endpointslice_health_monitor.py -n production
+
+# Only show unhealthy EndpointSlices
+k8s_endpointslice_health_monitor.py --warn-only
+
+# JSON output for automation
+k8s_endpointslice_health_monitor.py --format json
+
+# Include headless services in missing service check
+k8s_endpointslice_health_monitor.py --include-headless
+
+# Flag services with more than 5 EndpointSlices
+k8s_endpointslice_health_monitor.py --frag-threshold 5
+
+# Skip service coverage check (faster)
+k8s_endpointslice_health_monitor.py --skip-coverage-check
+```
+
+Use Cases:
+  - **Service Discovery Debugging**: Identify why services aren't receiving traffic
+  - **Pre-deployment Validation**: Verify EndpointSlice health before rolling out changes
+  - **Large Cluster Operations**: Detect fragmentation issues affecting kube-proxy performance
+  - **Service Mesh Debugging**: Troubleshoot service mesh data plane issues
 
 ### k8s_service_health_monitor.py
 ```
