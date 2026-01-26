@@ -139,6 +139,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_systemd_timer_monitor.py`: Monitor systemd timer health including failed timers, missed executions, and associated service failures to ensure scheduled tasks run reliably
 - `baremetal_cron_job_monitor.py`: Monitor cron job health including syntax errors, invalid commands, orphaned user crontabs, and permission issues across system crontabs and user crontabs
 - `baremetal_systemd_restart_loop_detector.py`: Detect systemd services stuck in restart loops by monitoring restart counts within configurable time windows, identifying services that are repeatedly crashing and restarting
+- `baremetal_systemd_unit_drift_detector.py`: Detect systemd unit files with local overrides, drop-in configurations, or masked states that differ from package defaults - useful for security auditing, configuration management, and fleet consistency
 - `baremetal_watchdog_monitor.py`: Monitor hardware and software watchdog timer status to ensure automatic system recovery from hangs, checking watchdog device availability, daemon status, timeout settings, and systemd watchdog configuration
 - `baremetal_ssl_cert_scanner.py`: Scan filesystem for SSL/TLS certificates and check expiration status to prevent outages from expired certificates in web servers, databases, and other services
 - `baremetal_disk_queue_monitor.py`: Monitor disk I/O queue depths to detect storage bottlenecks and saturation before they cause latency spikes, with configurable thresholds and IOPS tracking
@@ -3092,6 +3093,62 @@ systemd_service_monitor.py --format table --warn-only
 ```
 
 Use Case: In large baremetal fleets, tracking systemd service health across all hosts is essential for identifying failed services, degraded states, or configuration errors. This script provides a quick overview of all systemd units, making it ideal for automated health checks, pre-deployment validation, or troubleshooting. Integration with monitoring systems (via JSON output) enables alerting on service failures.
+
+### baremetal_systemd_unit_drift_detector.py
+```
+python baremetal_systemd_unit_drift_detector.py [--format format] [--warn-only] [--verbose] [--type type] [--unit unit]
+  -f, --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -w, --warn-only: Only show units with drift
+  -v, --verbose: Show detailed information including file paths and drop-ins
+  -t, --type: Filter by unit type (service, timer, socket, etc.)
+  -u, --unit: Check a specific unit
+```
+
+Requirements:
+  - systemctl (systemd package, standard on modern Linux systems)
+
+Exit codes:
+  - 0: No configuration drift detected (all units match package defaults)
+  - 1: Drift detected (local overrides, drop-ins, or masked units found)
+  - 2: systemctl not available or usage error
+
+Features:
+  - Detects local admin overrides in /etc/systemd/system
+  - Finds drop-in configuration files (.d/*.conf overrides)
+  - Identifies masked units (symlinked to /dev/null)
+  - Multiple output formats for automation and human readability
+  - Filter by unit type or check specific units
+
+Drift types detected:
+  - `local_override`: Unit file exists in /etc/systemd/system overriding package version
+  - `has_drop_ins`: Unit has drop-in configuration files modifying behavior
+  - `masked`: Unit is masked (disabled by linking to /dev/null)
+
+Examples:
+```bash
+# Check all units for configuration drift
+baremetal_systemd_unit_drift_detector.py
+
+# Show only units with drift
+baremetal_systemd_unit_drift_detector.py --warn-only
+
+# Check only services
+baremetal_systemd_unit_drift_detector.py --type service --warn-only
+
+# Verbose output showing file paths
+baremetal_systemd_unit_drift_detector.py --verbose --warn-only
+
+# JSON output for automation
+baremetal_systemd_unit_drift_detector.py --format json
+
+# Check a specific unit
+baremetal_systemd_unit_drift_detector.py --unit sshd.service --verbose
+
+# Table format for overview
+baremetal_systemd_unit_drift_detector.py --format table --type service
+```
+
+Use Case: In large baremetal fleets, configuration drift is a significant source of inconsistency and security risk. This script detects when systemd units have been locally modified, overridden with drop-in files, or masked. Useful for security auditing (detecting tampering), configuration management (tracking customizations), troubleshooting (finding non-standard configurations), and ensuring fleet consistency. Integrates with monitoring systems via JSON output.
 
 ### filesystem_usage_tracker.py
 ```
