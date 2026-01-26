@@ -57,6 +57,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_multipath_health_monitor.py`: Monitor dm-multipath device health, detecting failed or degraded paths, path flapping, and configuration issues for SAN/NAS storage
 - `baremetal_iscsi_health.py`: Monitor iSCSI session health including target connectivity, session state, error counts, and multipath status for SAN storage environments
 - `baremetal_nfs_mount_monitor.py`: Monitor NFS mount health including stale mount detection, server connectivity, mount latency, and configuration validation for large-scale environments with shared storage
+- `baremetal_mount_health_monitor.py`: Monitor all mounted filesystems for hung mounts (NFS/CIFS/FUSE that stop responding), stale NFS handles, read-only remounts, bind mount consistency, and mount option issues - critical for detecting storage problems before they cascade into system-wide failures
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
 - `baremetal_cpu_time_analyzer.py`: Analyze CPU time distribution (user, system, iowait, steal, softirq) for performance diagnosis
 - `baremetal_context_switch_monitor.py`: Monitor context switch rates to detect CPU contention, scheduling overhead, and run queue depth issues
