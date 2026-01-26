@@ -47,6 +47,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `nvme_health_monitor.py`: Monitor NVMe SSD health metrics including wear level, power cycles, unsafe shutdowns, media errors, and thermal throttling
 - `disk_io_monitor.py`: Monitor disk I/O performance and identify bottlenecks
 - `baremetal_block_error_monitor.py`: Monitor block device error statistics from /sys/block/*/stat to detect I/O errors, high queue times, and early signs of disk problems
+- `baremetal_scsi_error_monitor.py`: Monitor SCSI/SAS device error counters (ioerr_cnt, iotmo_cnt) from sysfs to detect failing disks, SAS cable issues, or HBA problems before complete failure
 - `iosched_audit.py`: Audit I/O scheduler configuration across block devices and detect misconfigurations (NVMe using complex schedulers, HDDs using 'none', etc.)
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `baremetal_lvm_health_monitor.py`: Monitor LVM logical volumes, volume groups, and physical volumes for health issues including thin pool exhaustion, snapshot aging, and VG capacity warnings
