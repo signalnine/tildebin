@@ -39,6 +39,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_kernel_module_audit.py`: Audit loaded kernel modules for security and compliance, identifying unsigned modules, out-of-tree modules, proprietary drivers, and kernel taint sources
 - `baremetal_kernel_taint_monitor.py`: Monitor kernel taint status for fleet consistency, compliance auditing, and operations alerting, detecting proprietary modules, crashes, MCEs, unsigned modules, and other kernel-tainting conditions
 - `baremetal_livepatch_monitor.py`: Monitor kernel live patching status (kpatch, livepatch, ksplice) for security compliance, detecting active patches, disabled patches, and systems missing security patches that can be applied without reboots
+- `baremetal_kernel_log_rate_monitor.py`: Monitor kernel log message rates to detect anomalies that may indicate hardware problems, driver issues, or system instability with configurable thresholds and burst detection
 - `disk_health_check.py`: Monitor disk health using SMART attributes
 - `baremetal_disk_life_predictor.py`: Predict disk failure risk using SMART attribute trend analysis with weighted risk scoring for both SATA/SAS and NVMe drives
 - `baremetal_trim_status_monitor.py`: Monitor TRIM/discard status for SSDs and NVMe drives to identify misconfigured devices where TRIM is not enabled, causing performance degradation over time
@@ -399,6 +400,47 @@ baremetal_dmesg_analyzer.py --warn-only -v
 
 # Table format for recent critical issues
 baremetal_dmesg_analyzer.py --since "24 hours ago" --format table
+```
+
+### baremetal_kernel_log_rate_monitor.py
+```
+python baremetal_kernel_log_rate_monitor.py [--warn-rate RATE] [--crit-rate RATE] [--burst-threshold N] [--format FORMAT] [-v] [-w]
+  --warn-rate: Warning threshold in messages/minute (default: 50)
+  --crit-rate: Critical threshold in messages/minute (default: 200)
+  --burst-threshold: Burst detection threshold - messages in 5 seconds (default: 20)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including priority breakdown
+  -w, --warn-only: Only show output if issues are detected
+```
+
+Monitors kernel log message rates to detect anomalies:
+  - Calculates overall message rate from kernel ring buffer
+  - Detects rate anomalies using configurable thresholds
+  - Identifies burst patterns (many messages in short time)
+  - Tracks high-priority messages (emerg, alert, crit, err)
+  - Early warning for hardware problems or driver issues
+
+Exit codes:
+  - 0: Normal message rate, no anomalies
+  - 1: Elevated rate or anomalies detected
+  - 2: Usage error or dmesg not available
+
+Examples:
+```bash
+# Check current message rates
+baremetal_kernel_log_rate_monitor.py
+
+# JSON output for monitoring integration
+baremetal_kernel_log_rate_monitor.py --format json
+
+# Custom warning threshold
+baremetal_kernel_log_rate_monitor.py --warn-rate 100 --crit-rate 500
+
+# Verbose output with priority breakdown
+baremetal_kernel_log_rate_monitor.py -v
+
+# Only alert on issues (for monitoring scripts)
+baremetal_kernel_log_rate_monitor.py --warn-only
 ```
 
 ### baremetal_efi_boot_audit.py
