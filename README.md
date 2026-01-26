@@ -80,6 +80,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_link_flap_detector.py`: Detect network interface link flapping by monitoring carrier state transitions over time to identify unstable cables, failing transceivers, bad switch ports, or auto-negotiation issues causing intermittent connectivity
 - `baremetal_route_health_monitor.py`: Monitor network routing health including default gateway reachability, routing table consistency, and interface status to detect routing issues causing connectivity problems
 - `baremetal_dns_resolver_monitor.py`: Monitor DNS resolver configuration and health including /etc/resolv.conf validation, nameserver reachability testing, DNS resolution verification, and systemd-resolved status for large-scale baremetal environments
+- `baremetal_service_port_monitor.py`: Monitor service port availability and responsiveness with support for common service presets (redis, mysql, postgres, http, https, ssh, etc.) and custom port definitions, useful for verifying critical services are listening and responding without requiring service-specific clients
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
 - `baremetal_hwclock_drift_monitor.py`: Monitor hardware clock (RTC) drift against system time to detect failing CMOS batteries, clock crystal issues, or RTC misconfiguration that causes time jumps on reboot
 - `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
