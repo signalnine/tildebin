@@ -65,6 +65,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_psu_monitor.py`: Monitor Power Supply Unit (PSU) health via IPMI including power supply status, redundancy, voltage sensors, and FRU information for proactive failure detection
 - `baremetal_ups_monitor.py`: Monitor UPS (Uninterruptible Power Supply) status via NUT or apcaccess including battery charge, runtime remaining, load percentage, and power status for datacenter power monitoring
 - `memory_health_monitor.py`: Monitor memory health, ECC errors, and memory pressure
+- `baremetal_tmpfs_monitor.py`: Monitor tmpfs filesystem usage including /dev/shm, /run, and /tmp to detect high usage that could lead to silent OOM conditions, with configurable warning/critical thresholds
 - `network_interface_health.py`: Monitor network interface health and error statistics
 - `baremetal_nic_firmware_audit.py`: Audit NIC driver and firmware versions across physical interfaces to detect version inconsistencies that cause subtle packet loss, latency issues, or performance degradation in large-scale baremetal environments
 - `baremetal_nic_link_speed_audit.py`: Audit NIC link speeds to detect interfaces negotiating at suboptimal speeds due to cable issues, switch misconfigurations, or auto-negotiation failures
@@ -1218,6 +1219,57 @@ memory_health_monitor.py --format table --warn-only
 ```
 
 Use Case: In large-scale baremetal environments, memory failures are a leading cause of system crashes and data corruption. ECC memory can detect and correct single-bit errors, but tracking these errors is critical for predictive maintenance. This script monitors ECC error counts at both the memory controller and individual DIMM level, enabling proactive replacement of failing DIMMs before uncorrectable errors occur. It also monitors memory pressure to detect capacity issues. Essential for maintaining reliability in production baremetal infrastructure.
+
+### baremetal_tmpfs_monitor.py
+```
+python baremetal_tmpfs_monitor.py [--format format] [--warn-only] [--verbose] [--warn PCT] [--critical PCT] [--mountpoint PATH]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show tmpfs with warnings or critical status
+  --verbose, -v: Show detailed information including inodes and options
+  --warn: Warning threshold percentage (default: 80)
+  --critical: Critical threshold percentage (default: 90)
+  --mountpoint, -m: Monitor only this specific tmpfs mountpoint
+```
+
+Requirements:
+  - Linux system with /proc/mounts (all Linux systems)
+  - No special permissions required for reading tmpfs stats
+
+Exit codes:
+  - 0: All tmpfs filesystems healthy (usage below thresholds)
+  - 1: Warning or critical usage detected on one or more tmpfs
+  - 2: Usage error or invalid arguments
+
+Features:
+  - Monitor all tmpfs mounts including /dev/shm, /run, /tmp
+  - Track both space and inode usage
+  - Configurable warning and critical thresholds
+  - Filter to specific mountpoints
+  - Multiple output formats (plain, JSON, table)
+  - Warn-only mode to focus on issues
+
+Examples:
+```bash
+# Check all tmpfs filesystems
+baremetal_tmpfs_monitor.py
+
+# Show only warnings and critical issues
+baremetal_tmpfs_monitor.py --warn-only
+
+# Output in JSON format for monitoring systems
+baremetal_tmpfs_monitor.py --format json
+
+# Custom thresholds (warn at 70%, critical at 85%)
+baremetal_tmpfs_monitor.py --warn 70 --critical 85
+
+# Monitor specific mountpoint
+baremetal_tmpfs_monitor.py --mountpoint /dev/shm
+
+# Verbose output with inode details
+baremetal_tmpfs_monitor.py --verbose
+```
+
+Use Case: tmpfs filesystems are RAM-backed and commonly used for /dev/shm (shared memory), /run (runtime data), and /tmp (temporary files). Unlike regular disk filesystems, tmpfs exhaustion doesn't trigger standard disk space alerts and can cause silent OOM conditions or application failures. This is particularly critical for systems running databases (which use shared memory heavily), containerized workloads, or applications that rely on fast temporary storage. Monitoring tmpfs usage proactively prevents these hard-to-diagnose failures.
 
 ### firmware_version_audit.py
 ```
