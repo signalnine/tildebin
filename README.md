@@ -143,6 +143,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_metrics_server_health_monitor.py`: Monitor Metrics Server health critical for HPA/VPA functionality, including deployment status, API availability, and metrics freshness
 - `k8s_event_monitor.py`: Monitor Kubernetes events to track cluster issues and anomalies
 - `k8s_node_capacity_planner.py`: Analyze cluster capacity and forecast resource allocation
+- `k8s_crd_health_analyzer.py`: Analyze Custom Resource Definition (CRD) health including establishment status, version compatibility, conversion webhooks, and unused CRD detection for operators like Prometheus, Cert-Manager, etc.
 - `k8s_cpu_throttling_detector.py`: Detect pods experiencing or at risk of CPU throttling
 - `k8s_ingress_cert_checker.py`: Check Ingress certificates for expiration and health status
 - `k8s_node_drain_readiness.py`: Analyze node drainability and orchestrate graceful node maintenance
