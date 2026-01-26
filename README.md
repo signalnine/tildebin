@@ -123,6 +123,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_cpu_vulnerability_scanner.py`: Scan CPU hardware vulnerabilities (Spectre, Meltdown, MDS, etc.) and verify kernel mitigations are enabled for security compliance across server fleets
 - `baremetal_smt_status_monitor.py`: Monitor SMT (Simultaneous Multithreading/Hyperthreading) status and security implications including CPU topology, thread siblings, and vulnerabilities that can be mitigated by disabling SMT (L1TF, MDS, TAA) - essential for security-sensitive environments
 - `baremetal_cpu_microcode_monitor.py`: Monitor CPU microcode versions across sockets and cores to detect outdated or inconsistent microcode, verify security patches are applied, and support fleet-wide compliance checking with minimum version enforcement
+- `baremetal_cstate_residency_monitor.py`: Monitor CPU C-state (idle state) residency to analyze power management effectiveness, detect CPUs stuck in shallow sleep states, identify workloads preventing deep sleep, and validate datacenter power configurations
 - `baremetal_fd_exhaustion_monitor.py`: Monitor system-wide and per-process file descriptor usage to detect fd exhaustion before "too many open files" errors cause service failures, connection drops, and application crashes
 - `baremetal_inotify_exhaustion_monitor.py`: Monitor inotify watch usage to detect exhaustion risk before "No space left on device" errors impact kubelet, IDEs, file sync tools, and build systems that rely on filesystem event monitoring
 - `baremetal_inode_exhaustion_monitor.py`: Monitor filesystem inode usage to detect exhaustion before cryptic "no space left on device" errors occur even when disk space is available - critical for systems with millions of small files
@@ -2478,6 +2479,63 @@ baremetal_cpu_microcode_monitor.py --min-version 0x830107d
 for host in $(cat hosts.txt); do
   echo "=== $host ===" && ssh $host baremetal_cpu_microcode_monitor.py --format json
 done | jq -s '.'
+```
+
+### baremetal_cstate_residency_monitor.py
+```
+python baremetal_cstate_residency_monitor.py [--format format] [-v] [-w] [--min-deep-residency PCT]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed per-CPU C-state information
+  -w, --warn-only: Only show warnings and issues
+  --min-deep-residency PCT: Minimum deep C-state residency percentage before warning (default: 10)
+```
+
+Features:
+  - Monitor CPU idle state (C-state) residency across all CPUs
+  - Analyze power management effectiveness by tracking time in each C-state
+  - Detect CPUs stuck in shallow sleep states (wasting power)
+  - Identify workloads preventing deep C-states (C3, C6, etc.)
+  - Show cpuidle driver and governor configuration
+  - Track disabled C-states that may impact power efficiency
+  - Aggregate and per-CPU residency analysis
+
+Requirements:
+  - Linux cpuidle sysfs interface (/sys/devices/system/cpu/cpuN/cpuidle)
+  - Kernel with CONFIG_CPU_IDLE enabled
+  - cpuidle driver loaded (intel_idle, acpi_idle, etc.)
+
+Exit codes:
+  - 0: C-state data retrieved successfully
+  - 1: Issues detected (low deep sleep residency, disabled states)
+  - 2: Usage error or no cpuidle support
+
+Examples:
+```bash
+# Check C-state residency summary
+baremetal_cstate_residency_monitor.py
+
+# Show detailed per-CPU information
+baremetal_cstate_residency_monitor.py --verbose
+
+# Only show CPUs with potential issues
+baremetal_cstate_residency_monitor.py --warn-only
+
+# Output in JSON format for automation
+baremetal_cstate_residency_monitor.py --format json
+
+# Table format for quick overview
+baremetal_cstate_residency_monitor.py --format table
+
+# Custom threshold for deep sleep warning (default 10%)
+baremetal_cstate_residency_monitor.py --min-deep-residency 5
+
+# Fleet-wide power management audit
+for host in $(cat hosts.txt); do
+  echo "=== $host ===" && ssh $host baremetal_cstate_residency_monitor.py --format json
+done | jq -s '.'
+
+# Check for power management issues across datacenter
+baremetal_cstate_residency_monitor.py --warn-only --format table
 ```
 
 ### baremetal_fd_exhaustion_monitor.py
