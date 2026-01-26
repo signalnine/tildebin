@@ -38,6 +38,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_kernel_version_audit.py`: Audit kernel version and configuration to detect version drift across server fleets, identify outdated kernels, and verify kernel command-line parameters are consistent
 - `baremetal_kernel_module_audit.py`: Audit loaded kernel modules for security and compliance, identifying unsigned modules, out-of-tree modules, proprietary drivers, and kernel taint sources
 - `baremetal_kernel_taint_monitor.py`: Monitor kernel taint status for fleet consistency, compliance auditing, and operations alerting, detecting proprietary modules, crashes, MCEs, unsigned modules, and other kernel-tainting conditions
+- `baremetal_livepatch_monitor.py`: Monitor kernel live patching status (kpatch, livepatch, ksplice) for security compliance, detecting active patches, disabled patches, and systems missing security patches that can be applied without reboots
 - `disk_health_check.py`: Monitor disk health using SMART attributes
 - `baremetal_disk_life_predictor.py`: Predict disk failure risk using SMART attribute trend analysis with weighted risk scoring for both SATA/SAS and NVMe drives
 - `baremetal_trim_status_monitor.py`: Monitor TRIM/discard status for SSDs and NVMe drives to identify misconfigured devices where TRIM is not enabled, causing performance degradation over time
