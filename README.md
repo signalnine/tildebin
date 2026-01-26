@@ -151,6 +151,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
 - `k8s_kubelet_health_monitor.py`: Monitor kubelet health on Kubernetes nodes including node conditions, heartbeat staleness, restart frequency, and version consistency across the cluster
 - `k8s_pod_resource_audit.py`: Audit pod resource usage and identify resource issues
+- `k8s_extended_resources_audit.py`: Audit extended resources (GPUs, FPGAs, custom device plugins) allocation and utilization across heterogeneous baremetal clusters
 - `k8s_pv_health_check.py`: Check persistent volume health and storage status
 - `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
 - `k8s_statefulset_health.py`: Monitor StatefulSet health with detailed pod and PVC status checking
@@ -3415,6 +3416,64 @@ k8s_pod_resource_audit.py --show-quotas
 # Combine options: only problematic pods in JSON format
 k8s_pod_resource_audit.py -w -f json -n kube-system
 ```
+
+### k8s_extended_resources_audit.py
+```
+python k8s_extended_resources_audit.py [--namespace NAMESPACE] [--format format] [--warn-only] [--verbose]
+  --namespace, -n: Namespace to audit (default: all namespaces)
+  --format, -f: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show warnings (hide INFO level issues)
+  --verbose, -v: Show detailed per-node and per-pod information
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No issues detected
+  - 1: Issues found (underutilization, pending pods, misconfigurations)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Audits extended resources: NVIDIA GPUs, AMD GPUs, Intel devices, FPGAs, SR-IOV NICs, hugepages, custom device plugins
+  - Shows cluster-wide resource utilization for all extended resources
+  - Identifies pending pods waiting for unavailable hardware
+  - Detects underutilized extended resources (capacity waste)
+  - Warns about pods requesting hardware without proper node affinity
+  - Per-node breakdown showing which pods consume each resource
+
+Examples:
+```bash
+# Audit all extended resources cluster-wide
+k8s_extended_resources_audit.py
+
+# Audit extended resources in GPU workloads namespace
+k8s_extended_resources_audit.py -n gpu-workloads
+
+# Get JSON output for monitoring integration
+k8s_extended_resources_audit.py --format json
+
+# Tabular output for reporting
+k8s_extended_resources_audit.py --format table
+
+# Show only warnings (hide INFO)
+k8s_extended_resources_audit.py -w
+
+# Verbose output with per-pod details
+k8s_extended_resources_audit.py -v
+
+# Combine options: verbose JSON in specific namespace
+k8s_extended_resources_audit.py -n ml-training -f json -v
+```
+
+Use Cases:
+  - **GPU Cluster Management**: Track NVIDIA/AMD GPU allocation and utilization across ML training nodes
+  - **Heterogeneous Hardware**: Audit clusters with mixed hardware (GPUs, FPGAs, NVMe, SR-IOV)
+  - **Capacity Planning**: Identify underutilized extended resources for better scheduling
+  - **Scheduling Diagnostics**: Find pending pods blocked on unavailable hardware
+  - **Cost Optimization**: Detect expensive hardware sitting idle in baremetal clusters
+  - **Compliance Auditing**: Ensure workloads have proper placement constraints for specialized hardware
 
 ### k8s_pv_health_check.py
 ```
