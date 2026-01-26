@@ -32,12 +32,14 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_dmesg_analyzer.py`: Analyze kernel messages (dmesg) for hardware errors and warnings across all subsystems (disk, memory, PCIe, CPU, network, filesystem, RAID, thermal)
 - `baremetal_efi_boot_audit.py`: Audit EFI/UEFI boot configuration including boot entries, boot order, Secure Boot status, and detect stale or duplicate entries for consistent boot configuration across server fleets
 - `baremetal_failed_login_monitor.py`: Monitor failed SSH and login attempts from auth logs to detect brute-force attacks, track offending IPs, and identify targeted user accounts for security monitoring
+- `baremetal_active_sessions_monitor.py`: Monitor active login sessions to detect unauthorized users, idle sessions exceeding thresholds, root logins, and sessions from unusual source IPs for security auditing
 - `baremetal_fd_limit_monitor.py`: Monitor file descriptor usage across system and per-process to prevent resource exhaustion and identify processes approaching their limits
 - `baremetal_open_file_monitor.py`: Monitor open file handles across the system to identify processes with high FD counts, detect potential FD leaks, and find processes holding deleted files open (common disk space leak after log rotation)
 - `baremetal_interrupt_balance_monitor.py`: Monitor hardware interrupt (IRQ) distribution across CPU cores to detect performance issues from poor interrupt balancing
 - `baremetal_kernel_version_audit.py`: Audit kernel version and configuration to detect version drift across server fleets, identify outdated kernels, and verify kernel command-line parameters are consistent
 - `baremetal_kernel_module_audit.py`: Audit loaded kernel modules for security and compliance, identifying unsigned modules, out-of-tree modules, proprietary drivers, and kernel taint sources
 - `baremetal_kernel_taint_monitor.py`: Monitor kernel taint status for fleet consistency, compliance auditing, and operations alerting, detecting proprietary modules, crashes, MCEs, unsigned modules, and other kernel-tainting conditions
+- `baremetal_kernel_config_audit.py`: Audit kernel runtime configuration (sysctl) against security and performance baselines with built-in profiles for security hardening, performance tuning, and balanced configurations
 - `baremetal_livepatch_monitor.py`: Monitor kernel live patching status (kpatch, livepatch, ksplice) for security compliance, detecting active patches, disabled patches, and systems missing security patches that can be applied without reboots
 - `baremetal_kernel_log_rate_monitor.py`: Monitor kernel log message rates to detect anomalies that may indicate hardware problems, driver issues, or system instability with configurable thresholds and burst detection
 - `disk_health_check.py`: Monitor disk health using SMART attributes
@@ -87,6 +89,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_packet_drop_analyzer.py`: Analyze per-interface packet drops with detailed breakdown by cause (rx_dropped, rx_errors, rx_missed, rx_fifo, tx_dropped, tx_carrier, etc.) to help distinguish between driver bugs, misconfigurations, buffer exhaustion, and potential attacks
 - `baremetal_link_flap_detector.py`: Detect network interface link flapping by monitoring carrier state transitions over time to identify unstable cables, failing transceivers, bad switch ports, or auto-negotiation issues causing intermittent connectivity
 - `baremetal_route_health_monitor.py`: Monitor network routing health including default gateway reachability, routing table consistency, and interface status to detect routing issues causing connectivity problems
+- `baremetal_arp_table_monitor.py`: Monitor ARP table health to detect stale entries, duplicate MACs (potential IP conflicts or spoofing), table exhaustion, and gateway reachability issues for network troubleshooting
 - `baremetal_dns_resolver_monitor.py`: Monitor DNS resolver configuration and health including /etc/resolv.conf validation, nameserver reachability testing, DNS resolution verification, and systemd-resolved status for large-scale baremetal environments
 - `baremetal_service_port_monitor.py`: Monitor service port availability and responsiveness with support for common service presets (redis, mysql, postgres, http, https, ssh, etc.) and custom port definitions, useful for verifying critical services are listening and responding without requiring service-specific clients
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
@@ -119,6 +122,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_smt_status_monitor.py`: Monitor SMT (Simultaneous Multithreading/Hyperthreading) status and security implications including CPU topology, thread siblings, and vulnerabilities that can be mitigated by disabling SMT (L1TF, MDS, TAA) - essential for security-sensitive environments
 - `baremetal_cpu_microcode_monitor.py`: Monitor CPU microcode versions across sockets and cores to detect outdated or inconsistent microcode, verify security patches are applied, and support fleet-wide compliance checking with minimum version enforcement
 - `baremetal_fd_exhaustion_monitor.py`: Monitor system-wide and per-process file descriptor usage to detect fd exhaustion before "too many open files" errors cause service failures, connection drops, and application crashes
+- `baremetal_inotify_exhaustion_monitor.py`: Monitor inotify watch usage to detect exhaustion risk before "No space left on device" errors impact kubelet, IDEs, file sync tools, and build systems that rely on filesystem event monitoring
 - `baremetal_inode_exhaustion_monitor.py`: Monitor filesystem inode usage to detect exhaustion before cryptic "no space left on device" errors occur even when disk space is available - critical for systems with millions of small files
 - `baremetal_io_latency_analyzer.py`: Analyze I/O latency patterns by sampling /proc/diskstats to identify slow storage operations, high latency devices, and I/O bottlenecks with configurable thresholds
 - `baremetal_systemd_journal_analyzer.py`: Analyze systemd journal for service failures, restart loops, OOM kills, segfaults, authentication failures, and error patterns to detect application-level issues before they cascade
@@ -131,6 +135,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_systemd_timer_monitor.py`: Monitor systemd timer health including failed timers, missed executions, and associated service failures to ensure scheduled tasks run reliably
 - `baremetal_cron_job_monitor.py`: Monitor cron job health including syntax errors, invalid commands, orphaned user crontabs, and permission issues across system crontabs and user crontabs
 - `baremetal_systemd_restart_loop_detector.py`: Detect systemd services stuck in restart loops by monitoring restart counts within configurable time windows, identifying services that are repeatedly crashing and restarting
+- `baremetal_watchdog_monitor.py`: Monitor hardware and software watchdog timer status to ensure automatic system recovery from hangs, checking watchdog device availability, daemon status, timeout settings, and systemd watchdog configuration
 - `baremetal_ssl_cert_scanner.py`: Scan filesystem for SSL/TLS certificates and check expiration status to prevent outages from expired certificates in web servers, databases, and other services
 - `baremetal_disk_queue_monitor.py`: Monitor disk I/O queue depths to detect storage bottlenecks and saturation before they cause latency spikes, with configurable thresholds and IOPS tracking
 - `baremetal_iptables_audit.py`: Audit iptables firewall rules for security and performance issues including rule count analysis, empty chains, unused rules, overly permissive/restrictive rules, and default policy review
@@ -180,6 +185,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_job_health_monitor.py`: Monitor Job and CronJob health including completion status, scheduling patterns, stuck jobs, and resource consumption
 - `k8s_webhook_health_monitor.py`: Monitor admission webhook health including certificate expiration, endpoint availability, failure policies, and recent webhook rejections
 - `k8s_storageclass_health_monitor.py`: Monitor StorageClass provisioners and CSI driver health including provisioner status, PVC failures, and stuck volume attachments
+- `k8s_volume_snapshot_monitor.py`: Monitor VolumeSnapshot health and backup operations including failed or stuck snapshots, old snapshots exceeding retention, orphaned VolumeSnapshotContent, and missing VolumeSnapshotClass configuration
 - `k8s_hpa_health_monitor.py`: Monitor HorizontalPodAutoscaler health and effectiveness including metrics server availability, scaling issues, and HPA misconfigurations
 - `k8s_service_endpoint_monitor.py`: Monitor Service endpoint health to detect services without healthy endpoints, selector mismatches, LoadBalancer IP issues, and endpoint readiness problems
 - `k8s_endpointslice_health_monitor.py`: Monitor EndpointSlice health for service discovery issues including no-ready endpoints, high not-ready ratios, missing EndpointSlices, and slice fragmentation
