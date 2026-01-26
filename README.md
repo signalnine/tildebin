@@ -78,6 +78,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_bond_health_monitor.py`: Monitor network bond health with detailed diagnostics including slave status, failover readiness, link failures, and speed/duplex mismatch detection
 - `baremetal_boot_performance_monitor.py`: Monitor system boot performance and systemd initialization times to identify slow-booting systems and problematic services that delay startup
 - `baremetal_uptime_monitor.py`: Monitor system uptime and reboot history to detect flapping servers with frequent reboots, analyze reboot patterns, and identify unstable systems in large baremetal environments
+- `baremetal_load_average_monitor.py`: Monitor system load averages relative to CPU count, providing normalized load per CPU metrics, trend analysis (increasing/decreasing/stable), and configurable thresholds for capacity planning and overload detection
 - `baremetal_network_config_audit.py`: Audit network interface configuration for common misconfigurations (MTU mismatches, bonding inconsistencies, IPv6 configuration drift)
 - `baremetal_netns_health_monitor.py`: Monitor network namespace health on container hosts, detecting orphaned namespaces, dangling veth pairs, and namespace interface issues
 - `baremetal_bandwidth_monitor.py`: Monitor network interface bandwidth utilization and throughput by sampling /proc/net/dev, calculating bytes/packets per second, utilization percentage, and detecting saturation with configurable thresholds
@@ -2167,6 +2168,57 @@ baremetal_uptime_monitor.py --warn-only --format json
 # Table format for quick overview
 baremetal_uptime_monitor.py --format table -v
 ```
+
+### baremetal_load_average_monitor.py
+```
+python baremetal_load_average_monitor.py [--format format] [-v] [-w] [--warning THRESHOLD] [--critical THRESHOLD]
+  --format, -f: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including process counts
+  -w, --warn-only: Only show output if issues or warnings detected
+  --warning, -W THRESHOLD: Warning threshold for normalized load per CPU (default: 0.7)
+  --critical, -C THRESHOLD: Critical threshold for normalized load per CPU (default: 1.0)
+```
+
+Requirements:
+  - Linux system with /proc/loadavg (standard on all Linux systems)
+  - Python 3.6+
+
+Exit codes:
+  - 0: Load averages within acceptable thresholds
+  - 1: Load issues detected (overload or warnings)
+  - 2: Usage error or unable to read system metrics
+
+Features:
+  - Monitor 1, 5, and 15-minute load averages
+  - Calculate normalized load per CPU for meaningful cross-system comparison
+  - Trend analysis (increasing, decreasing, stable)
+  - Track online vs configured CPUs (detect offline CPUs)
+  - Configurable warning/critical thresholds
+  - Multiple output formats (plain, JSON, table)
+  - Process count information in verbose mode
+
+Examples:
+```bash
+# Basic load check
+baremetal_load_average_monitor.py
+
+# JSON output for monitoring integration
+baremetal_load_average_monitor.py --format json
+
+# Custom thresholds (warn at 80% CPU utilization, critical at 150%)
+baremetal_load_average_monitor.py --warning 0.8 --critical 1.5
+
+# Only show output when load is concerning
+baremetal_load_average_monitor.py --warn-only
+
+# Table format for quick overview
+baremetal_load_average_monitor.py --format table
+
+# Verbose output with process counts
+baremetal_load_average_monitor.py -v
+```
+
+Use Case: In large-scale baremetal environments, raw load averages can be misleading - a load of 10 is healthy on a 256-core system but critical on a 4-core system. This script normalizes load by CPU count, making it easy to compare system health across heterogeneous hardware. The trend analysis helps identify runaway processes or gradually increasing load before it becomes critical. Essential for capacity planning and workload balancing in datacenter environments.
 
 ### baremetal_conntrack_monitor.py
 ```
