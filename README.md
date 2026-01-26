@@ -171,6 +171,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_node_label_auditor.py`: Audit node labels and annotations for consistency, compliance with naming conventions, missing topology/role labels, and deprecated labels
 - `k8s_resource_quota_auditor.py`: Audit ResourceQuota and LimitRange policies across namespaces to ensure proper resource governance
 - `k8s_namespace_resource_analyzer.py`: Analyze namespace resource utilization for capacity planning, chargeback, and multi-tenant governance
+- `k8s_resource_right_sizer.py`: Analyze resource requests/limits against actual usage to identify over-provisioned and under-provisioned workloads for cost optimization
 - `k8s_image_pull_analyzer.py`: Analyze image pull issues including ImagePullBackOff errors, slow pulls, registry connectivity, and authentication failures
 - `k8s_job_health_monitor.py`: Monitor Job and CronJob health including completion status, scheduling patterns, stuck jobs, and resource consumption
 - `k8s_webhook_health_monitor.py`: Monitor admission webhook health including certificate expiration, endpoint availability, failure policies, and recent webhook rejections
@@ -5003,6 +5004,78 @@ Use Cases:
   - **Governance Auditing**: Find namespaces without resource quotas that could consume unlimited resources
   - **Multi-Tenant Clusters**: Monitor resource fairness across teams in shared clusters
   - **Resource Optimization**: Identify namespaces with pods missing requests/limits
+
+### k8s_resource_right_sizer.py
+```
+python3 k8s_resource_right_sizer.py [--namespace NAMESPACE] [--format FORMAT] [--warn-only] [--verbose] [--cpu-threshold PCT] [--mem-threshold PCT] [--exclude-namespace NS]
+  --namespace, -n: Analyze specific namespace (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show over/under-provisioned workloads
+  --verbose, -v: Show detailed recommendations with suggested values
+  --cpu-threshold: CPU efficiency % below which pod is over-provisioned (default: 30)
+  --mem-threshold: Memory efficiency % below which pod is over-provisioned (default: 30)
+  --exclude-namespace: Namespaces to exclude (can be specified multiple times)
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+  - metrics-server running in cluster for usage data
+
+Exit codes:
+  - 0: All workloads appropriately sized
+  - 1: Right-sizing opportunities found
+  - 2: Usage error or kubectl/metrics unavailable
+
+Features:
+  - Compares resource requests/limits against actual usage from metrics-server
+  - Identifies over-provisioned pods wasting cluster resources
+  - Detects under-provisioned pods at risk of OOM or throttling
+  - Calculates potential resource savings from right-sizing
+  - Groups analysis by namespace and owner (Deployment, StatefulSet, etc.)
+  - Suggests concrete resource request values based on actual usage
+  - Multiple output formats for monitoring integration
+  - Configurable thresholds for different environments
+
+Examples:
+```bash
+# Analyze all pods in cluster
+k8s_resource_right_sizer.py
+
+# Analyze specific namespace
+k8s_resource_right_sizer.py -n production
+
+# Show only over/under-provisioned workloads
+k8s_resource_right_sizer.py --warn-only
+
+# Verbose output with suggested new values
+k8s_resource_right_sizer.py -v
+
+# Custom thresholds (flag pods using <20% of requests)
+k8s_resource_right_sizer.py --cpu-threshold 20 --mem-threshold 25
+
+# JSON output for automation/cost analysis
+k8s_resource_right_sizer.py --format json
+
+# Table format for quick overview
+k8s_resource_right_sizer.py --format table
+
+# Exclude system namespaces
+k8s_resource_right_sizer.py --exclude-namespace kube-system --exclude-namespace kube-public
+
+# Combine options: production namespace, verbose, only issues
+k8s_resource_right_sizer.py -n production -v -w
+```
+
+Use Cases:
+  - **Cost Optimization**: Identify pods requesting far more resources than they use
+  - **Capacity Planning**: Reclaim wasted resources for new workloads
+  - **OOM Prevention**: Find pods at risk of OOMKilled due to tight limits
+  - **Performance Tuning**: Detect CPU throttling from insufficient limits
+  - **Resource Governance**: Audit pods missing resource requests/limits
+  - **Baremetal Clusters**: Critical for maximizing utilization of fixed capacity
+  - **Multi-Tenant Clusters**: Ensure fair resource allocation between teams
+  - **FinOps**: Generate data for cost attribution and optimization reports
 
 ### k8s_image_pull_analyzer.py
 ```
