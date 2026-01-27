@@ -137,6 +137,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_zombie_process_monitor.py`: Detect and report zombie (defunct) processes, identify parent processes not properly reaping children, and track zombie age to prevent PID exhaustion
 - `baremetal_uninterruptible_process_monitor.py`: Detect processes stuck in uninterruptible sleep (D-state), identify wait channels (NFS hangs, disk I/O, kernel locks), and categorize blocking causes to diagnose storage, network, or driver issues before cascading failures
 - `baremetal_container_runtime_health.py`: Monitor container runtime health (Docker, containerd, podman) including service status, storage usage, container states, and image management
+- `baremetal_libvirt_health_monitor.py`: Monitor libvirt/KVM hypervisor and virtual machine health including VM states, autostart configuration, storage pools, and virtual networks
 - `baremetal_kernel_lockup_detector.py`: Detect kernel lockups, RCU stalls, hung tasks, and other indicators of system instability from dmesg/journalctl to identify hardware problems or driver bugs
 - `baremetal_systemd_timer_monitor.py`: Monitor systemd timer health including failed timers, missed executions, and associated service failures to ensure scheduled tasks run reliably
 - `baremetal_cron_job_monitor.py`: Monitor cron job health including syntax errors, invalid commands, orphaned user crontabs, and permission issues across system crontabs and user crontabs
@@ -3128,6 +3129,49 @@ baremetal_etcd_health_monitor.py --format table
 ```
 
 Use Case: etcd is the backbone of many distributed systems including Kubernetes. For standalone etcd clusters used in pre-Kubernetes infrastructure, service discovery, or configuration management, monitoring cluster health is critical. This script detects leader election issues, quorum loss, database size problems (which can cause write failures), and active alarms before they cause outages. Integrates with monitoring systems via JSON output.
+
+### baremetal_libvirt_health_monitor.py
+```
+python baremetal_libvirt_health_monitor.py [--vm NAME] [-v] [--format format] [-w] [--check-autostart] [--skip-pools] [--skip-networks]
+  --vm: Check specific VM only
+  -v, --verbose: Show detailed VM information
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -w, --warn-only: Only show VMs with warnings or issues
+  --check-autostart: Warn if running VMs do not have autostart enabled
+  --skip-pools: Skip storage pool checks
+  --skip-networks: Skip network checks
+```
+
+Requirements:
+  - virsh (libvirt-clients)
+  - Ubuntu/Debian: `sudo apt-get install libvirt-clients`
+  - RHEL/CentOS: `sudo yum install libvirt-client`
+
+Examples:
+```bash
+# Check all VMs and hypervisor status
+baremetal_libvirt_health_monitor.py
+
+# Check specific VM
+baremetal_libvirt_health_monitor.py --vm webserver01
+
+# JSON output for monitoring systems
+baremetal_libvirt_health_monitor.py --format json
+
+# Warn if running VMs lack autostart
+baremetal_libvirt_health_monitor.py --check-autostart
+
+# Verbose output with storage pools and networks
+baremetal_libvirt_health_monitor.py -v
+
+# Only show problematic VMs
+baremetal_libvirt_health_monitor.py --warn-only
+
+# Table format for quick overview
+baremetal_libvirt_health_monitor.py --format table
+```
+
+Use Case: KVM/libvirt is commonly used for virtualization on baremetal servers. This script monitors hypervisor connectivity, VM states (detecting crashed or paused VMs), autostart configuration (ensuring VMs restart after host reboot), storage pool availability, and virtual network status. Integrates with monitoring systems via JSON output. Essential for environments running mixed workloads on baremetal with some VMs for legacy applications or testing.
 
 ### system_inventory.py
 ```
