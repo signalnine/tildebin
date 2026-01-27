@@ -163,6 +163,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_pod_resource_audit.py`: Audit pod resource usage and identify resource issues
 - `k8s_extended_resources_audit.py`: Audit extended resources (GPUs, FPGAs, custom device plugins) allocation and utilization across heterogeneous baremetal clusters
 - `k8s_pv_health_check.py`: Check persistent volume health and storage status
+- `k8s_backup_health_monitor.py`: Monitor backup health including Velero backups, VolumeSnapshots, and backup CronJobs for disaster recovery compliance
 - `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
 - `k8s_statefulset_health.py`: Monitor StatefulSet health with detailed pod and PVC status checking
 - `k8s_job_monitor.py`: Monitor Kubernetes Jobs and CronJobs health, detecting failed jobs, stuck jobs, and CronJob scheduling issues
@@ -3839,6 +3840,67 @@ k8s_pv_health_check.py --format json
 
 # Combine options: only problematic volumes in JSON format
 k8s_pv_health_check.py -w -f json
+```
+
+### k8s_backup_health_monitor.py
+```
+python k8s_backup_health_monitor.py [--namespace NAMESPACE] [--max-age HOURS] [--format format] [--warn-only] [--verbose]
+  --namespace, -n: Namespace to check (default: all namespaces)
+  --max-age, -a: Maximum age in hours for backups before warning (default: 24)
+  --format, -f: Output format, either 'plain' or 'json' (default: plain)
+  --warn-only, -w: Only show items with warnings or issues
+  --verbose, -v: Show detailed information
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+  - Optional: Velero installed for Velero backup monitoring
+  - Optional: VolumeSnapshot CRDs for snapshot monitoring
+
+Exit codes:
+  - 0: All backups healthy (recent successful backups exist)
+  - 1: Backup issues detected (stale, failed, or missing backups)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Monitors Velero backup schedules and recent backup completion status
+  - Checks VolumeSnapshot health and readiness
+  - Monitors backup-related CronJobs (etcd backups, database dumps, etc.)
+  - Detects stale backups exceeding configurable age threshold
+  - Identifies failed or partially failed backups
+  - Essential for disaster recovery compliance tracking
+  - Supports plain text and JSON output formats
+
+Use cases:
+  - **DR Compliance**: Verify backups exist and are recent for compliance requirements
+  - **Backup Monitoring**: Detect failed backups before they become critical
+  - **Snapshot Health**: Track VolumeSnapshot readiness and errors
+  - **CronJob Auditing**: Ensure backup CronJobs are executing successfully
+  - **Multi-System Coverage**: Single tool monitors Velero, VolumeSnapshots, and CronJobs
+
+Examples:
+```bash
+# Check all backup systems with plain output
+k8s_backup_health_monitor.py
+
+# Show only items with issues
+k8s_backup_health_monitor.py --warn-only
+
+# Alert if backups older than 48 hours
+k8s_backup_health_monitor.py --max-age 48
+
+# Check backups in velero namespace
+k8s_backup_health_monitor.py -n velero
+
+# Get JSON output for monitoring integration
+k8s_backup_health_monitor.py --format json
+
+# Verbose output with all backup details
+k8s_backup_health_monitor.py -v
+
+# Combine options: issues only, JSON format, 48h threshold
+k8s_backup_health_monitor.py -w -f json -a 48
 ```
 
 ### k8s_deployment_status.py
