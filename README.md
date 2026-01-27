@@ -55,6 +55,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `iosched_audit.py`: Audit I/O scheduler configuration across block devices and detect misconfigurations (NVMe using complex schedulers, HDDs using 'none', etc.)
 - `check_raid.py`: Check status of hardware and software RAID arrays
 - `baremetal_lvm_health_monitor.py`: Monitor LVM logical volumes, volume groups, and physical volumes for health issues including thin pool exhaustion, snapshot aging, and VG capacity warnings
+- `baremetal_zfs_pool_health.py`: Monitor ZFS pool health including pool state (online/degraded/faulted), capacity, fragmentation, scrub age, device errors, and data integrity - essential for ZFS-based storage infrastructure
 - `baremetal_mce_monitor.py`: Monitor Machine Check Exceptions (MCE) for hardware fault detection including CPU cache errors, memory bus errors, system bus errors, and thermal events - critical for detecting failing hardware before data corruption
 - `baremetal_multipath_health_monitor.py`: Monitor dm-multipath device health, detecting failed or degraded paths, path flapping, and configuration issues for SAN/NAS storage
 - `baremetal_iscsi_health.py`: Monitor iSCSI session health including target connectivity, session state, error counts, and multipath status for SAN storage environments
@@ -928,6 +929,61 @@ baremetal_lvm_health_monitor.py --warn-only
 
 # Warn about snapshots older than 14 days
 baremetal_lvm_health_monitor.py --snap-age 14
+```
+
+### baremetal_zfs_pool_health.py
+```
+python baremetal_zfs_pool_health.py [--format format] [-v] [-w] [--capacity-warn PCT] [--capacity-crit PCT] [--frag-warn PCT] [--scrub-warn DAYS] [--error-threshold COUNT]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed pool and device information
+  -w, --warn-only: Only show warnings and errors
+  --capacity-warn: Warning threshold for pool capacity (default: 80%)
+  --capacity-crit: Critical threshold for pool capacity (default: 90%)
+  --frag-warn: Warning threshold for fragmentation (default: 50%)
+  --scrub-warn: Days since last scrub warning threshold (default: 14)
+  --error-threshold: Device error count threshold (default: 1)
+```
+
+Requirements:
+  - ZFS utilities (zpool, zfs commands)
+  - Install with: `sudo apt-get install zfsutils-linux`
+
+Exit codes:
+  - 0: All ZFS pools healthy
+  - 1: Warnings or critical issues detected
+  - 2: Usage error or ZFS tools not available
+
+Features:
+  - Monitor pool health state (ONLINE, DEGRADED, FAULTED, OFFLINE)
+  - Track pool capacity with configurable thresholds
+  - Monitor fragmentation levels (important for ZFS performance)
+  - Check scrub age and warn when pools haven't been scrubbed recently
+  - Detect device errors (read, write, checksum) before data loss
+  - Identify degraded or faulted devices in mirror/raidz vdevs
+  - Report data integrity errors
+
+Examples:
+```bash
+# Check all ZFS pools with default thresholds
+baremetal_zfs_pool_health.py
+
+# Custom capacity thresholds for high-utilization pools
+baremetal_zfs_pool_health.py --capacity-warn 70 --capacity-crit 85
+
+# Show detailed pool and device information
+baremetal_zfs_pool_health.py --verbose
+
+# JSON output for monitoring integration
+baremetal_zfs_pool_health.py --format json
+
+# Only show warnings and errors
+baremetal_zfs_pool_health.py --warn-only
+
+# Strict scrub requirement (warn after 7 days)
+baremetal_zfs_pool_health.py --scrub-warn 7
+
+# Strict error checking (warn on any errors)
+baremetal_zfs_pool_health.py --error-threshold 1
 ```
 
 ### baremetal_mce_monitor.py
