@@ -207,6 +207,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_endpointslice_health_monitor.py`: Monitor EndpointSlice health for service discovery issues including no-ready endpoints, high not-ready ratios, missing EndpointSlices, and slice fragmentation
 - `k8s_service_health_monitor.py`: Monitor Kubernetes Service health by checking endpoint availability, identifying services with zero endpoints or partially ready endpoints, and correlating service configuration with endpoint status
 - `k8s_rbac_auditor.py`: Audit Kubernetes RBAC roles and bindings for security issues including cluster-admin access, wildcard permissions, dangerous verbs, anonymous user access, and overly permissive service account bindings
+- `k8s_serviceaccount_auditor.py`: Audit Kubernetes ServiceAccounts for security issues including automountServiceAccountToken settings, default ServiceAccount usage, unused accounts, and high-privilege role bindings
 - `k8s_pod_security_audit.py`: Audit pod security contexts and Linux capabilities for security risks including privileged containers, root user execution, dangerous capabilities, host namespace sharing, and missing security profiles
 - `k8s_probe_config_audit.py`: Audit Kubernetes pod health probe configurations to identify reliability issues including missing liveness/readiness/startup probes, misconfigured timeouts and thresholds, and probe anti-patterns that can lead to service outages
 - `k8s_control_plane_health.py`: Monitor Kubernetes control plane health including API server availability and latency, etcd cluster status, controller-manager and scheduler leader election, and control plane pod health
@@ -5916,6 +5917,55 @@ Security Use Cases:
   - **Cluster Health Checks**: Ensure all critical services have available endpoints
   - **Automated Monitoring**: JSON output for integration with monitoring systems
   - **Large-Scale Clusters**: Filter by namespace for focused troubleshooting
+
+### k8s_serviceaccount_auditor.py
+```
+k8s_serviceaccount_auditor.py [-n namespace] [--format {plain,json,table}] [-v] [-w] [--skip-unused]
+  -n, --namespace: Namespace to audit (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information for each issue
+  -w, --warn-only: Only show warnings and issues
+  --skip-unused: Skip checking for unused ServiceAccounts
+```
+
+Audit Kubernetes ServiceAccounts for security issues. Identifies:
+- automountServiceAccountToken enabled when not needed (MEDIUM) - unnecessary token exposure
+- Default ServiceAccount usage by application pods (LOW) - security anti-pattern
+- ServiceAccounts bound to cluster-admin role (HIGH) - excessive privileges
+- ServiceAccounts bound to admin roles (MEDIUM) - elevated privileges
+- Unused ServiceAccounts (LOW) - potential stale accounts
+- Non-standard kube-system ServiceAccounts with ClusterRoleBindings (MEDIUM)
+
+```bash
+# Audit all ServiceAccounts in the cluster
+k8s_serviceaccount_auditor.py
+
+# Audit specific namespace
+k8s_serviceaccount_auditor.py -n production
+
+# Detailed output with full issue descriptions
+k8s_serviceaccount_auditor.py -v
+
+# JSON output for automation/alerting
+k8s_serviceaccount_auditor.py --format json
+
+# Table format for better readability
+k8s_serviceaccount_auditor.py --format table
+
+# Skip unused ServiceAccount detection (faster)
+k8s_serviceaccount_auditor.py --skip-unused
+
+# Combine options: specific namespace, table format, verbose
+k8s_serviceaccount_auditor.py -n kube-system --format table -v
+```
+
+Use Cases:
+  - **Security Hardening**: Identify ServiceAccounts with unnecessary token automounting
+  - **Privilege Auditing**: Find ServiceAccounts with cluster-admin or admin bindings
+  - **Compliance Checks**: Ensure pods use dedicated ServiceAccounts, not default
+  - **Cleanup**: Identify unused ServiceAccounts for removal
+  - **Pre-deployment Review**: Validate ServiceAccount configurations before production
+  - **Incident Response**: Quickly identify overly privileged accounts during security events
 
 ### k8s_pod_security_audit.py
 ```
