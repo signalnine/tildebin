@@ -146,6 +146,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_cron_job_monitor.py`: Monitor cron job health including syntax errors, invalid commands, orphaned user crontabs, and permission issues across system crontabs and user crontabs
 - `baremetal_systemd_restart_loop_detector.py`: Detect systemd services stuck in restart loops by monitoring restart counts within configurable time windows, identifying services that are repeatedly crashing and restarting
 - `baremetal_systemd_unit_drift_detector.py`: Detect systemd unit files with local overrides, drop-in configurations, or masked states that differ from package defaults - useful for security auditing, configuration management, and fleet consistency
+- `baremetal_systemd_dependency_analyzer.py`: Analyze systemd unit dependencies to detect broken or problematic configurations including failed dependencies, masked dependencies, missing units, circular dependency risks, and deep dependency chains that slow boot times
 - `baremetal_watchdog_monitor.py`: Monitor hardware and software watchdog timer status to ensure automatic system recovery from hangs, checking watchdog device availability, daemon status, timeout settings, and systemd watchdog configuration
 - `baremetal_ssl_cert_scanner.py`: Scan filesystem for SSL/TLS certificates and check expiration status to prevent outages from expired certificates in web servers, databases, and other services
 - `baremetal_disk_queue_monitor.py`: Monitor disk I/O queue depths to detect storage bottlenecks and saturation before they cause latency spikes, with configurable thresholds and IOPS tracking
@@ -3349,6 +3350,68 @@ baremetal_systemd_unit_drift_detector.py --format table --type service
 ```
 
 Use Case: In large baremetal fleets, configuration drift is a significant source of inconsistency and security risk. This script detects when systemd units have been locally modified, overridden with drop-in files, or masked. Useful for security auditing (detecting tampering), configuration management (tracking customizations), troubleshooting (finding non-standard configurations), and ensuring fleet consistency. Integrates with monitoring systems via JSON output.
+
+### baremetal_systemd_dependency_analyzer.py
+```
+python baremetal_systemd_dependency_analyzer.py [--format format] [--warn-only] [--verbose] [--unit unit] [--type type] [--all] [--check-depth] [--max-depth-warn N]
+  -f, --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -w, --warn-only: Only show units with dependency issues
+  -v, --verbose: Show detailed dependency information
+  -u, --unit: Analyze a specific unit
+  -t, --type: Analyze units of specific type (service, timer, socket, etc.)
+  -a, --all: Analyze all loaded units (can be slow)
+  --check-depth: Include dependency chain depth analysis
+  --max-depth-warn N: Warn if dependency depth exceeds N (default: 8)
+```
+
+Requirements:
+  - systemctl (systemd package, standard on modern Linux systems)
+
+Exit codes:
+  - 0: No dependency issues detected
+  - 1: Dependency issues found (failed, masked, or missing dependencies)
+  - 2: systemctl not available or usage error
+
+Features:
+  - Detects failed dependencies (Requires/BindsTo/Requisite targets in failed state)
+  - Identifies masked dependencies (dependencies linked to /dev/null)
+  - Finds missing dependencies (units that don't exist)
+  - Detects inactive strong dependencies while unit is active
+  - Flags conflicting units that are both running
+  - Analyzes dependency chain depth (optional)
+  - Detects potential circular dependencies
+
+Issue types detected:
+  - `failed_dependency`: Strong dependency (Requires/BindsTo/Requisite) is in failed state
+  - `masked_dependency`: Strong dependency is masked
+  - `missing_dependency`: Dependency unit not found
+  - `inactive_dependency`: Strong dependency inactive while unit is active
+  - `missing_wants`: Soft dependency (Wants) not found
+  - `conflict_running`: Unit and its declared conflict are both active
+  - `deep_dependency_chain`: Dependency chain exceeds threshold (with --check-depth)
+
+Examples:
+```bash
+# Analyze failed units and common services
+baremetal_systemd_dependency_analyzer.py
+
+# Analyze a specific unit
+baremetal_systemd_dependency_analyzer.py --unit docker.service --verbose
+
+# Analyze all services with dependency depth checking
+baremetal_systemd_dependency_analyzer.py --type service --check-depth
+
+# Show only units with issues
+baremetal_systemd_dependency_analyzer.py --warn-only
+
+# JSON output for automation
+baremetal_systemd_dependency_analyzer.py --format json
+
+# Full analysis of all units (slow but thorough)
+baremetal_systemd_dependency_analyzer.py --all --check-depth --warn-only
+```
+
+Use Case: Service startup failures in large baremetal environments often stem from broken dependencies. This script helps diagnose why services fail to start by examining the dependency graph for issues like failed dependencies, masked units, missing units, and circular or overly deep dependency chains that slow boot times. Essential for troubleshooting systemd startup problems and optimizing boot performance.
 
 ### filesystem_usage_tracker.py
 ```
