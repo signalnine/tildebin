@@ -205,6 +205,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_webhook_health_monitor.py`: Monitor admission webhook health including certificate expiration, endpoint availability, failure policies, and recent webhook rejections
 - `k8s_storageclass_health_monitor.py`: Monitor StorageClass provisioners and CSI driver health including provisioner status, PVC failures, and stuck volume attachments
 - `k8s_volume_snapshot_monitor.py`: Monitor VolumeSnapshot health and backup operations including failed or stuck snapshots, old snapshots exceeding retention, orphaned VolumeSnapshotContent, and missing VolumeSnapshotClass configuration
+- `k8s_volume_attachment_analyzer.py`: Analyze VolumeAttachment resources for health issues including stale attachments, orphaned node references, multi-attach violations on RWO volumes, and stuck terminating attachments that can cause pod scheduling failures
 - `k8s_hpa_health_monitor.py`: Monitor HorizontalPodAutoscaler health and effectiveness including metrics server availability, scaling issues, and HPA misconfigurations
 - `k8s_service_endpoint_monitor.py`: Monitor Service endpoint health to detect services without healthy endpoints, selector mismatches, LoadBalancer IP issues, and endpoint readiness problems
 - `k8s_endpointslice_health_monitor.py`: Monitor EndpointSlice health for service discovery issues including no-ready endpoints, high not-ready ratios, missing EndpointSlices, and slice fragmentation
