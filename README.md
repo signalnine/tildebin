@@ -215,6 +215,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_lease_monitor.py`: Monitor Kubernetes Lease objects for leader election health, detecting stale leases, orphaned holders, leadership instability, and missed renewals
 - `k8s_priority_class_analyzer.py`: Analyze PriorityClass configuration and usage including pod scheduling priorities, preemption policies, global defaults, and identify pods without explicit priority assignment
 - `k8s_operator_health_monitor.py`: Monitor Kubernetes operator health (Prometheus, Cert-Manager, ArgoCD, Flux, Istio, etc.) including controller pod status, CRD availability, and deployment readiness
+- `k8s_api_deprecation_checker.py`: Check for deprecated Kubernetes API versions in cluster resources to prepare for upgrades, identifying resources using removed or deprecated APIs with replacement suggestions and removal version information
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
