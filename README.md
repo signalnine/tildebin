@@ -214,6 +214,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_secret_expiry_monitor.py`: Monitor Kubernetes Secret age and TLS certificate expiration to detect expired certificates, approaching expirations, and stale secrets
 - `k8s_lease_monitor.py`: Monitor Kubernetes Lease objects for leader election health, detecting stale leases, orphaned holders, leadership instability, and missed renewals
 - `k8s_priority_class_analyzer.py`: Analyze PriorityClass configuration and usage including pod scheduling priorities, preemption policies, global defaults, and identify pods without explicit priority assignment
+- `k8s_operator_health_monitor.py`: Monitor Kubernetes operator health (Prometheus, Cert-Manager, ArgoCD, Flux, Istio, etc.) including controller pod status, CRD availability, and deployment readiness
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
@@ -6275,3 +6276,65 @@ Operational Use Cases:
   - **Operator Health**: Ensure operator leader election is stable
   - **Cluster Upgrades**: Verify control plane components maintain leadership during rolling updates
   - **Service Mesh Health**: Monitor Istio/Linkerd controller leader election
+
+### k8s_operator_health_monitor.py
+```
+k8s_operator_health_monitor.py [--format {plain,json}] [-v] [-w] [--list-known]
+  --format, -f: Output format - 'plain' or 'json' (default: plain)
+  -v, --verbose: Show detailed pod-level information
+  -w, --warn-only: Only show operators with issues or warnings
+  --list-known: List all known operators this tool can detect
+```
+
+Monitor Kubernetes operator health and status. Automatically detects installed operators by scanning for known namespaces and CRDs. For each detected operator, it checks:
+- Controller deployment health (ready replicas, availability)
+- Pod status and restart counts
+- CRD availability and completeness
+- Recent error events in operator namespaces
+
+Supported operators:
+- **prometheus-operator**: Prometheus Operator for Kubernetes-native monitoring
+- **cert-manager**: Certificate management controller
+- **argocd**: GitOps continuous delivery tool (server, repo-server, application-controller)
+- **flux**: GitOps toolkit (source-controller, kustomize-controller, helm-controller)
+- **istio**: Service mesh (istiod, ingressgateway, egressgateway)
+- **nginx-ingress**: NGINX Ingress Controller
+- **traefik**: Traefik Ingress Controller
+- **external-dns**: Automatic DNS record management
+- **sealed-secrets**: Sealed Secrets for Kubernetes
+- **metallb**: Bare metal load balancer
+- **keda**: Kubernetes Event-driven Autoscaling
+- **crossplane**: Cloud infrastructure provisioning
+
+Exit codes:
+  - 0: All detected operators healthy
+  - 1: One or more operators unhealthy or have warnings
+  - 2: Usage error or kubectl not available
+
+Examples:
+```bash
+# Check all detected operators
+k8s_operator_health_monitor.py
+
+# Show only unhealthy operators
+k8s_operator_health_monitor.py --warn-only
+
+# JSON output for monitoring integration
+k8s_operator_health_monitor.py --format json
+
+# Verbose output with pod details
+k8s_operator_health_monitor.py -v
+
+# List all operators this tool can detect
+k8s_operator_health_monitor.py --list-known
+
+# Combine options: JSON format, issues only, verbose
+k8s_operator_health_monitor.py -f json -w -v
+```
+
+Operational Use Cases:
+  - **Production Monitoring**: Integrate with alerting to detect operator failures
+  - **Cluster Health Checks**: Verify all operators are healthy before deployments
+  - **Troubleshooting**: Quickly identify which operators have issues
+  - **Capacity Planning**: Monitor operator pod resource usage and restarts
+  - **Post-Upgrade Validation**: Verify operators survived cluster upgrades
