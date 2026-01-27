@@ -111,6 +111,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_swap_monitor.py`: Monitor swap usage and memory pressure indicators to detect insufficient RAM, excessive swap activity, and systems at risk of OOM killer activation
 - `baremetal_memory_reclaim_monitor.py`: Monitor kernel memory reclamation activity (kswapd, direct reclaim, compaction) to detect memory pressure before it impacts application performance or triggers OOM kills - tracks page scan rates, reclaim efficiency, and allocation stalls
 - `baremetal_sysv_ipc_monitor.py`: Monitor System V IPC resource usage (semaphores, shared memory, message queues) to detect exhaustion before "No space left on device" errors impact databases (PostgreSQL, Oracle, SAP), middleware, and HPC applications
+- `baremetal_etcd_health_monitor.py`: Monitor standalone etcd cluster health including member connectivity, leader election, database size, latency, and alarm conditions - essential for distributed systems using etcd for coordination
 - `baremetal_entropy_monitor.py`: Monitor system entropy pool levels for cryptographic operations, detecting low entropy that causes /dev/random blocking, TLS handshake delays, and key generation issues on high-traffic servers or VMs
 - `baremetal_hugepage_monitor.py`: Monitor hugepage allocation and usage including static hugepages, THP status, per-NUMA distribution, and fragmentation issues for database and VM workloads
 - `baremetal_oom_risk_analyzer.py`: Analyze processes at risk of being killed by the Linux OOM killer by examining OOM scores and memory usage to identify candidates for termination before a memory crisis
@@ -3030,6 +3031,72 @@ baremetal_ephemeral_port_monitor.py --warn-only --format json
 # Table format for quick overview
 baremetal_ephemeral_port_monitor.py --format table
 ```
+
+### baremetal_etcd_health_monitor.py
+```
+python baremetal_etcd_health_monitor.py [--endpoints ENDPOINTS] [--cacert PATH] [--cert PATH] [--key PATH] [--format format] [-v] [-w] [--db-warn-mb MB] [--db-crit-mb MB]
+  -e, --endpoints: Comma-separated etcd endpoints (default: http://127.0.0.1:2379)
+  --cacert: Path to CA certificate for TLS
+  --cert: Path to client certificate for TLS
+  --key: Path to client key for TLS
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including member list and endpoint health
+  -w, --warn-only: Only output if issues are detected
+  --db-warn-mb: Database size warning threshold in MB (default: 2048)
+  --db-crit-mb: Database size critical threshold in MB (default: 6144)
+  --latency-warn-ms: Latency warning threshold in ms (default: 100)
+  --latency-crit-ms: Latency critical threshold in ms (default: 500)
+```
+
+Requirements:
+  - etcdctl (etcd package: https://etcd.io/docs/latest/install/)
+
+Monitors standalone etcd cluster health for distributed systems using etcd for coordination (outside of Kubernetes). Essential for pre-Kubernetes infrastructure, Consul, CoreDNS, or custom applications.
+
+**Checks performed:**
+- Cluster health and member connectivity
+- Leader election status
+- Database size and fragmentation risk
+- Active alarms (NOSPACE, CORRUPT, etc.)
+- Quorum availability
+- Latency measurements
+
+**Environment variables supported:**
+- `ETCDCTL_ENDPOINTS`: Default endpoints
+- `ETCDCTL_CACERT`: Default CA certificate path
+- `ETCDCTL_CERT`: Default client certificate path
+- `ETCDCTL_KEY`: Default client key path
+
+Exit codes: 0=cluster healthy, 1=issues detected (degraded, alarms, high latency), 2=etcdctl not found or connection failed
+
+Examples:
+```bash
+# Check local etcd instance
+baremetal_etcd_health_monitor.py
+
+# Check remote cluster with multiple endpoints
+baremetal_etcd_health_monitor.py --endpoints https://etcd1:2379,https://etcd2:2379,https://etcd3:2379
+
+# With TLS certificates
+baremetal_etcd_health_monitor.py --cacert /etc/etcd/ca.crt --cert /etc/etcd/client.crt --key /etc/etcd/client.key
+
+# JSON output for monitoring systems
+baremetal_etcd_health_monitor.py --format json
+
+# Only alert on problems
+baremetal_etcd_health_monitor.py --warn-only
+
+# Verbose output showing all members
+baremetal_etcd_health_monitor.py -v
+
+# Custom database size thresholds
+baremetal_etcd_health_monitor.py --db-warn-mb 1024 --db-crit-mb 4096
+
+# Table format for quick overview
+baremetal_etcd_health_monitor.py --format table
+```
+
+Use Case: etcd is the backbone of many distributed systems including Kubernetes. For standalone etcd clusters used in pre-Kubernetes infrastructure, service discovery, or configuration management, monitoring cluster health is critical. This script detects leader election issues, quorum loss, database size problems (which can cause write failures), and active alarms before they cause outages. Integrates with monitoring systems via JSON output.
 
 ### system_inventory.py
 ```
