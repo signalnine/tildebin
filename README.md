@@ -188,6 +188,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_finalizer_analyzer.py`: Find resources stuck in Terminating state due to finalizers blocking deletion
 - `k8s_container_restart_analyzer.py`: Analyze container restart patterns and identify root causes with remediation suggestions
 - `k8s_workload_restart_age_analyzer.py`: Analyze workload age and restart patterns to detect stale deployments and track deployment freshness
+- `k8s_workload_generation_analyzer.py`: Analyze Kubernetes workload ownership chains to trace pod origins through controllers, operators, and Helm/ArgoCD deployments for compliance auditing and troubleshooting
 - `k8s_pod_startup_latency_analyzer.py`: Analyze pod startup latency to identify slow-starting pods, breaking down scheduling, init container, and container startup phases
 - `k8s_configmap_audit.py`: Audit ConfigMaps for size limits, unused ConfigMaps, missing keys referenced by pods, and configuration best practices
 - `k8s_network_policy_audit.py`: Audit network policies and identify security gaps, unprotected pods, and configuration issues
@@ -5210,6 +5211,62 @@ Use Cases:
   - **Change Management**: Track deployment cadence across namespaces
   - **Incident Response**: Identify long-running pods that may need attention
   - **Baremetal Operations**: Critical for large-scale clusters where stale workloads can accumulate
+
+### k8s_workload_generation_analyzer.py
+```
+python3 k8s_workload_generation_analyzer.py [--namespace NAMESPACE] [--format FORMAT] [options]
+  --namespace, -n: Analyze pods in specific namespace (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --verbose, -v: Show detailed information for all workloads
+  --warn-only, -w: Only show workloads with issues (orphaned or standalone)
+  --show-chain: Include full ownership chain in output
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: Analysis complete, no issues found
+  - 1: Issues found (orphaned workloads or standalone pods without controllers)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Traces pod ownership chains (Pod -> ReplicaSet -> Deployment -> etc.)
+  - Identifies generator type (Helm, ArgoCD, Flux, direct creation)
+  - Detects orphaned workloads with missing owner references
+  - Detects standalone pods created without controllers
+  - Groups workloads by generator type and root controller kind
+  - Reports operator-managed resources with specific operator labels
+
+Examples:
+```bash
+# Analyze all workloads in cluster
+k8s_workload_generation_analyzer.py
+
+# Analyze specific namespace
+k8s_workload_generation_analyzer.py -n production
+
+# Only show workloads with issues
+k8s_workload_generation_analyzer.py --warn-only
+
+# JSON output for automation
+k8s_workload_generation_analyzer.py --format json
+
+# Verbose with full ownership chains
+k8s_workload_generation_analyzer.py -v --show-chain
+
+# Table format
+k8s_workload_generation_analyzer.py --format table
+```
+
+Use Cases:
+  - **Compliance Auditing**: Track workload origins for security and governance
+  - **Troubleshooting**: Understand what created unexpected pods in the cluster
+  - **Operator Debugging**: Identify which operator manages specific workloads
+  - **Orphan Detection**: Find pods with missing or deleted owner controllers
+  - **Helm/ArgoCD Tracking**: Identify Helm chart and GitOps-deployed resources
+  - **Baremetal Operations**: Critical for large multi-tenant clusters with complex ownership
 
 ### k8s_pod_startup_latency_analyzer.py
 ```
