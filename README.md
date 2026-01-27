@@ -47,6 +47,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_trim_status_monitor.py`: Monitor TRIM/discard status for SSDs and NVMe drives to identify misconfigured devices where TRIM is not enabled, causing performance degradation over time
 - `baremetal_disk_space_forecaster.py`: Forecast disk space exhaustion by sampling filesystem usage and predicting days until full based on growth rate estimation
 - `nvme_health_monitor.py`: Monitor NVMe SSD health metrics including wear level, power cycles, unsafe shutdowns, media errors, and thermal throttling
+- `baremetal_ssd_wear_monitor.py`: Monitor SSD wear levels and endurance metrics for both NVMe and SATA SSDs, tracking percentage used, available spare capacity, total data written, and media errors with configurable warning thresholds
 - `disk_io_monitor.py`: Monitor disk I/O performance and identify bottlenecks
 - `baremetal_block_error_monitor.py`: Monitor block device error statistics from /sys/block/*/stat to detect I/O errors, high queue times, and early signs of disk problems
 - `baremetal_scsi_error_monitor.py`: Monitor SCSI/SAS device error counters (ioerr_cnt, iotmo_cnt) from sysfs to detect failing disks, SAS cable issues, or HBA problems before complete failure
@@ -613,6 +614,36 @@ python disk_health_check.py [-d disk] [-v] [--format format] [--warn-only]
   -v, --verbose: Show detailed SMART attributes
   --format: Output format, either 'plain' or 'json' (default: plain)
   --warn-only: Only show disks with warnings or failures
+```
+
+Requirements:
+  - smartmontools package (smartctl command)
+  - Ubuntu/Debian: `sudo apt-get install smartmontools`
+  - RHEL/CentOS: `sudo yum install smartmontools`
+
+### baremetal_ssd_wear_monitor.py
+```
+python baremetal_ssd_wear_monitor.py [-d disk] [-v] [--format format] [--warn-only] [--warn N] [--critical N]
+  -d, --disk: Specific disk to check (e.g., /dev/nvme0n1, /dev/sda)
+  -v, --verbose: Show detailed wear metrics (data written, power on hours)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only: Only show SSDs with warnings or critical status
+  --warn N: Warning threshold for remaining life percentage (default: 20)
+  --critical N: Critical threshold for remaining life percentage (default: 10)
+```
+
+Metrics monitored:
+  - Wear level / percentage used (life remaining)
+  - Available spare capacity
+  - Total data written (TB)
+  - Media/data integrity errors
+  - Power on hours
+
+Example output:
+```
+[OK] /dev/nvme0n1 (500G Samsung SSD 980 PRO) - 95% life remaining
+[WARN] /dev/sda (256G INTEL SSDSC2KB256G8) - 15% life remaining
+  ! Wear level low: 15% remaining
 ```
 
 Requirements:
