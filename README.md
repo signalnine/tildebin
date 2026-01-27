@@ -165,6 +165,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_pv_health_check.py`: Check persistent volume health and storage status
 - `k8s_backup_health_monitor.py`: Monitor backup health including Velero backups, VolumeSnapshots, and backup CronJobs for disaster recovery compliance
 - `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
+- `k8s_helm_release_monitor.py`: Monitor Helm release health and deployment status including release state, chart versions, and detection of failed or stalled releases
 - `k8s_statefulset_health.py`: Monitor StatefulSet health with detailed pod and PVC status checking
 - `k8s_job_monitor.py`: Monitor Kubernetes Jobs and CronJobs health, detecting failed jobs, stuck jobs, and CronJob scheduling issues
 - `k8s_daemonset_health_monitor.py`: Monitor DaemonSet health with node coverage verification, pod status on each node, and detection of scheduling issues
