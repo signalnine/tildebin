@@ -193,6 +193,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_memory_pressure_analyzer.py`: Detect memory pressure on nodes and analyze pod memory usage patterns
 - `k8s_pdb_health_monitor.py`: Monitor PodDisruptionBudget health to detect PDBs blocking maintenance or protecting unhealthy workloads
 - `k8s_pod_eviction_risk_analyzer.py`: Identify pods at risk of eviction due to resource pressure or QoS class
+- `k8s_qos_class_auditor.py`: Audit pod QoS classes (Guaranteed/Burstable/BestEffort) to identify eviction risks and critical workloads without proper QoS configuration
 - `k8s_pending_pod_analyzer.py`: Analyze pods stuck in Pending state and diagnose scheduling failures (resources, taints, affinity, PVC issues)
 - `k8s_pod_topology_analyzer.py`: Analyze pod topology spread constraints and affinity rules to ensure high availability
 - `k8s_node_restart_monitor.py`: Monitor node restart activity and detect nodes with excessive restarts
@@ -4830,6 +4831,74 @@ Use Cases:
   - **SLA Compliance**: Ensure production workloads have Guaranteed QoS and proper resource limits
   - **Capacity Planning**: Identify when nodes are approaching resource exhaustion
   - **Monitoring Integration**: Export eviction risk via JSON for alerting systems
+
+### k8s_qos_class_auditor.py
+```
+python3 k8s_qos_class_auditor.py [options]
+  -n, --namespace: Analyze specific namespace (default: all namespaces)
+  -f, --format: Output format - 'plain', 'table', or 'json' (default: plain)
+  -w, --warn-only: Only show pods with QoS issues
+  -v, --verbose: Show detailed recommendations and upgradeable pods
+  --critical-only: Only analyze pods marked as critical
+  --exclude-namespace: Exclude specific namespace (can repeat)
+  -h, --help: Show help message
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No QoS issues detected
+  - 1: Issues found (BestEffort pods or critical workloads without Guaranteed QoS)
+  - 2: Usage error or kubectl not available
+
+QoS Classes Explained:
+  - **Guaranteed**: All containers have CPU/memory requests equal to limits - protected from eviction
+  - **Burstable**: At least one container has CPU or memory request - may be evicted under pressure
+  - **BestEffort**: No resource requests or limits set - first to be evicted
+
+Output includes:
+  - Pod QoS class distribution summary
+  - Critical pods without Guaranteed QoS (high risk)
+  - BestEffort pods with high eviction risk
+  - Namespace-level QoS distribution statistics
+  - Upgrade recommendations for Burstable pods
+
+Examples:
+```bash
+# Audit all pods in the cluster
+k8s_qos_class_auditor.py
+
+# Audit specific namespace
+k8s_qos_class_auditor.py -n production
+
+# Only show pods with QoS issues
+k8s_qos_class_auditor.py --warn-only
+
+# Focus on critical workloads only
+k8s_qos_class_auditor.py --critical-only
+
+# Show upgrade recommendations
+k8s_qos_class_auditor.py --verbose
+
+# JSON output for automation
+k8s_qos_class_auditor.py --format json
+
+# Table output for human review
+k8s_qos_class_auditor.py --format table
+
+# Exclude system namespaces
+k8s_qos_class_auditor.py --exclude-namespace kube-system --exclude-namespace kube-public
+```
+
+Use Cases:
+  - **Eviction Prevention**: Identify BestEffort pods that will be evicted first under memory pressure
+  - **Critical Workload Protection**: Ensure system-critical pods have Guaranteed QoS
+  - **Capacity Planning**: Understand QoS distribution for cluster capacity decisions
+  - **Resource Governance**: Audit namespace compliance with QoS policies
+  - **Cluster Stability**: Find pods vulnerable to eviction during high-load periods
+  - **Baremetal Clusters**: Essential for on-premises deployments where evictions are costly
 
 ### k8s_pending_pod_analyzer.py
 ```
