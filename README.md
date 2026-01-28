@@ -83,6 +83,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `network_interface_health.py`: Monitor network interface health and error statistics
 - `baremetal_nic_firmware_audit.py`: Audit NIC driver and firmware versions across physical interfaces to detect version inconsistencies that cause subtle packet loss, latency issues, or performance degradation in large-scale baremetal environments
 - `baremetal_nic_link_speed_audit.py`: Audit NIC link speeds to detect interfaces negotiating at suboptimal speeds due to cable issues, switch misconfigurations, or auto-negotiation failures
+- `baremetal_ethtool_audit.py`: Audit network interface driver settings, offloads (TSO, GSO, GRO, checksums), and ring buffer configurations using ethtool to detect performance issues from disabled offloads, suboptimal ring buffer sizes, driver version inconsistencies, and MTU mismatches in bonded interfaces
 - `baremetal_vlan_config_audit.py`: Audit VLAN configuration and health to detect orphaned VLANs, MTU mismatches, parent interface issues, and VLAN ID conflicts in datacenter environments
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `baremetal_bond_health_monitor.py`: Monitor network bond health with detailed diagnostics including slave status, failover readiness, link failures, and speed/duplex mismatch detection
