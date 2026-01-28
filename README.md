@@ -202,6 +202,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_orphaned_resources_finder.py`: Find orphaned and unused resources (ConfigMaps, Secrets, PVCs, Services, ServiceAccounts)
 - `k8s_configmap_secret_size_analyzer.py`: Analyze ConfigMap and Secret sizes to find oversized objects that stress etcd and degrade cluster performance
 - `k8s_finalizer_analyzer.py`: Find resources stuck in Terminating state due to finalizers blocking deletion
+- `k8s_gitops_sync_monitor.py`: Monitor GitOps controller sync status for Flux CD (Kustomizations, HelmReleases, GitRepositories) and ArgoCD (Applications, ApplicationSets), detecting failed reconciliations, stalled syncs, and suspended resources
 - `k8s_container_restart_analyzer.py`: Analyze container restart patterns and identify root causes with remediation suggestions
 - `k8s_job_failure_analyzer.py`: Analyze Kubernetes Job and CronJob failures to identify patterns, root causes, and provide remediation suggestions for batch workloads
 - `k8s_init_container_analyzer.py`: Analyze init container failures and startup issues including image pull errors, crash loops, config errors, slow/stuck init containers, and OOMKills with remediation suggestions
