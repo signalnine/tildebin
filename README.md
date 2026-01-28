@@ -191,6 +191,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_ingress_cert_checker.py`: Check Ingress certificates for expiration and health status
 - `k8s_node_drain_readiness.py`: Analyze node drainability and orchestrate graceful node maintenance
 - `k8s_memory_pressure_analyzer.py`: Detect memory pressure on nodes and analyze pod memory usage patterns
+- `k8s_node_pressure_monitor.py`: Monitor all node pressure conditions (MemoryPressure, DiskPressure, PIDPressure, NetworkUnavailable) for proactive capacity management
 - `k8s_pdb_health_monitor.py`: Monitor PodDisruptionBudget health to detect PDBs blocking maintenance or protecting unhealthy workloads
 - `k8s_pod_eviction_risk_analyzer.py`: Identify pods at risk of eviction due to resource pressure or QoS class
 - `k8s_qos_class_auditor.py`: Audit pod QoS classes (Guaranteed/Burstable/BestEffort) to identify eviction risks and critical workloads without proper QoS configuration
@@ -4703,6 +4704,63 @@ Use Cases:
   - **Baremetal Optimization**: Critical for on-premises clusters where memory is limited and evictions are expensive
   - **Proactive Scaling**: Identify when clusters need memory upgrades or node additions
   - **Compliance**: Ensure all pods have proper memory limits for SLA adherence
+
+### k8s_node_pressure_monitor.py
+```
+python3 k8s_node_pressure_monitor.py [options]
+  --format, -f: Output format - 'plain' or 'json' (default: plain)
+  --warn-only, -w: Only show nodes with pressure conditions or warnings
+  --reserved-warn PCT: Warn if system-reserved resources exceed PCT% (default: 30)
+  -h, --help: Show help message
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No pressure conditions detected
+  - 1: Pressure conditions or warnings found
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Monitors all node pressure conditions (MemoryPressure, DiskPressure, PIDPressure)
+  - Detects NetworkUnavailable status
+  - Analyzes allocatable vs capacity for memory, CPU, storage, pods, PIDs
+  - Warns when system-reserved resources are unusually high
+  - Reports Ready/NotReady status
+
+Pressure Conditions Monitored:
+  - **MemoryPressure**: Node is running low on memory, may trigger pod evictions
+  - **DiskPressure**: Node is running low on disk space, may trigger evictions
+  - **PIDPressure**: Node is running low on process IDs
+  - **NetworkUnavailable**: Node network is not properly configured
+
+Examples:
+```bash
+# Check all nodes for pressure conditions
+k8s_node_pressure_monitor.py
+
+# Show only nodes with issues or warnings
+k8s_node_pressure_monitor.py --warn-only
+
+# JSON output for monitoring integration
+k8s_node_pressure_monitor.py --format json
+
+# Warn if system reserves more than 40% of resources
+k8s_node_pressure_monitor.py --reserved-warn 40
+
+# Combine options for automation
+k8s_node_pressure_monitor.py -w -f json
+```
+
+Use Cases:
+  - **Proactive Capacity Management**: Detect pressure conditions before pod evictions occur
+  - **Baremetal Monitoring**: Critical for on-premises clusters where node resources are fixed
+  - **Alerting Integration**: JSON output enables integration with Prometheus/Alertmanager
+  - **Maintenance Planning**: Identify nodes under pressure before scheduling maintenance
+  - **Resource Forecasting**: Track allocatable vs capacity trends across nodes
+  - **Incident Response**: Quickly identify which nodes are experiencing resource exhaustion
 
 ### k8s_pdb_health_monitor.py
 ```
