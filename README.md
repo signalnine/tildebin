@@ -199,6 +199,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_configmap_secret_size_analyzer.py`: Analyze ConfigMap and Secret sizes to find oversized objects that stress etcd and degrade cluster performance
 - `k8s_finalizer_analyzer.py`: Find resources stuck in Terminating state due to finalizers blocking deletion
 - `k8s_container_restart_analyzer.py`: Analyze container restart patterns and identify root causes with remediation suggestions
+- `k8s_job_failure_analyzer.py`: Analyze Kubernetes Job and CronJob failures to identify patterns, root causes, and provide remediation suggestions for batch workloads
 - `k8s_init_container_analyzer.py`: Analyze init container failures and startup issues including image pull errors, crash loops, config errors, slow/stuck init containers, and OOMKills with remediation suggestions
 - `k8s_workload_restart_age_analyzer.py`: Analyze workload age and restart patterns to detect stale deployments and track deployment freshness
 - `k8s_workload_generation_analyzer.py`: Analyze Kubernetes workload ownership chains to trace pod origins through controllers, operators, and Helm/ArgoCD deployments for compliance auditing and troubleshooting
@@ -5286,6 +5287,77 @@ Use Cases:
   - **Health Probe Tuning**: Detect probe failures and tune liveness/readiness probe configurations
   - **Baremetal Operations**: Critical for large-scale environments where restart patterns indicate hardware or network issues
   - **Production Stability**: Regular analysis prevents cascading failures from unstable containers
+
+### k8s_job_failure_analyzer.py
+```
+python3 k8s_job_failure_analyzer.py [--namespace NAMESPACE] [--timeframe HOURS] [options]
+  --namespace, -n: Analyze failures in specific namespace (default: all namespaces)
+  --timeframe HOURS: Only analyze failures within last N hours
+  --verbose, -v: Show detailed analysis with remediation suggestions
+  --warn-only: Only show warnings (skip summary sections)
+  --include-cronjobs: Include CronJob health analysis
+  --format: Output format - 'plain' or 'json' (default: plain)
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No job failures or CronJob issues detected
+  - 1: Job failures or CronJob issues detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Categorizes job failures by root cause (OOMKilled, DeadlineExceeded, BackoffLimitExceeded, ImagePullFailure, ConfigError, ApplicationError)
+  - Analyzes pod statuses to determine actual failure reasons
+  - Tracks failures by namespace for targeted troubleshooting
+  - Optionally analyzes CronJob health (suspended, stale schedules, high failure rates)
+  - Provides specific remediation suggestions for each failure type
+  - Identifies owner CronJobs for failed jobs
+  - Multiple output formats for monitoring integration
+
+Examples:
+```bash
+# Analyze all job failures
+k8s_job_failure_analyzer.py
+
+# Analyze failures in specific namespace
+k8s_job_failure_analyzer.py -n batch-jobs
+
+# Show verbose output with remediation suggestions
+k8s_job_failure_analyzer.py --verbose
+
+# Only show summary sections (skip detailed job list)
+k8s_job_failure_analyzer.py --warn-only
+
+# Analyze failures in last 24 hours
+k8s_job_failure_analyzer.py --timeframe 24
+
+# Include CronJob health analysis
+k8s_job_failure_analyzer.py --include-cronjobs
+
+# Output as JSON for monitoring integration
+k8s_job_failure_analyzer.py --format json
+
+# Combine filters: specific namespace, verbose, with CronJob analysis
+k8s_job_failure_analyzer.py -n production --verbose --include-cronjobs
+
+# Recent failures in JSON for alerting
+k8s_job_failure_analyzer.py --timeframe 6 --format json
+```
+
+Use Cases:
+  - **Batch Workload Troubleshooting**: Identify why Jobs and CronJobs are failing
+  - **Resource Planning**: Detect OOMKilled jobs that need increased memory limits
+  - **Deadline Tuning**: Find jobs exceeding activeDeadlineSeconds
+  - **Image Management**: Identify image pull failures affecting batch workloads
+  - **CronJob Health**: Monitor suspended CronJobs and high failure rates
+  - **Incident Response**: Quickly triage batch processing failures
+  - **Configuration Validation**: Detect ConfigMap/Secret reference errors
+  - **SLA Monitoring**: Track job success rates for batch processing SLAs
+  - **Capacity Planning**: Identify resource constraints affecting batch jobs
+  - **ETL Pipeline Health**: Monitor data processing job health in large-scale environments
 
 ### k8s_workload_restart_age_analyzer.py
 ```
