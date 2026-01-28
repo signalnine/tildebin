@@ -197,6 +197,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_configmap_secret_size_analyzer.py`: Analyze ConfigMap and Secret sizes to find oversized objects that stress etcd and degrade cluster performance
 - `k8s_finalizer_analyzer.py`: Find resources stuck in Terminating state due to finalizers blocking deletion
 - `k8s_container_restart_analyzer.py`: Analyze container restart patterns and identify root causes with remediation suggestions
+- `k8s_init_container_analyzer.py`: Analyze init container failures and startup issues including image pull errors, crash loops, config errors, slow/stuck init containers, and OOMKills with remediation suggestions
 - `k8s_workload_restart_age_analyzer.py`: Analyze workload age and restart patterns to detect stale deployments and track deployment freshness
 - `k8s_workload_generation_analyzer.py`: Analyze Kubernetes workload ownership chains to trace pod origins through controllers, operators, and Helm/ArgoCD deployments for compliance auditing and troubleshooting
 - `k8s_pod_startup_latency_analyzer.py`: Analyze pod startup latency to identify slow-starting pods, breaking down scheduling, init container, and container startup phases
