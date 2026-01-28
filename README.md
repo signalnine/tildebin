@@ -63,6 +63,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_zfs_pool_health.py`: Monitor ZFS pool health including pool state (online/degraded/faulted), capacity, fragmentation, scrub age, device errors, and data integrity - essential for ZFS-based storage infrastructure
 - `baremetal_mce_monitor.py`: Monitor Machine Check Exceptions (MCE) for hardware fault detection including CPU cache errors, memory bus errors, system bus errors, and thermal events - critical for detecting failing hardware before data corruption
 - `baremetal_multipath_health_monitor.py`: Monitor dm-multipath device health, detecting failed or degraded paths, path flapping, and configuration issues for SAN/NAS storage
+- `baremetal_drbd_health_monitor.py`: Monitor DRBD (Distributed Replicated Block Device) replication health including synchronization state, split-brain detection, connection status, and resync progress for high-availability storage clusters
 - `baremetal_iscsi_health.py`: Monitor iSCSI session health including target connectivity, session state, error counts, and multipath status for SAN storage environments
 - `baremetal_nfs_mount_monitor.py`: Monitor NFS mount health including stale mount detection, server connectivity, mount latency, and configuration validation for large-scale environments with shared storage
 - `baremetal_mount_health_monitor.py`: Monitor all mounted filesystems for hung mounts (NFS/CIFS/FUSE that stop responding), stale NFS handles, read-only remounts, bind mount consistency, and mount option issues - critical for detecting storage problems before they cascade into system-wide failures
@@ -1110,6 +1111,58 @@ baremetal_multipath_health_monitor.py --warn-only
 
 # Table format with path details
 baremetal_multipath_health_monitor.py --format table --verbose
+```
+
+### baremetal_drbd_health_monitor.py
+```
+python baremetal_drbd_health_monitor.py [--format format] [-v] [-w] [--sync-warn PERCENT] [--sync-crit PERCENT]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed resource information
+  -w, --warn-only: Only show warnings and errors
+  --sync-warn: Warn if sync percent < PERCENT (default: 90)
+  --sync-crit: Critical if sync percent < PERCENT (default: 50)
+```
+
+Requirements:
+  - drbd-utils package (drbdadm command)
+  - Ubuntu/Debian: `sudo apt-get install drbd-utils`
+  - RHEL/CentOS: `sudo yum install drbd-utils` or `drbd90-utils`
+  - DRBD kernel module must be loaded
+
+Exit codes:
+  - 0: All DRBD resources healthy and synchronized
+  - 1: Issues found (out-of-sync, degraded, split-brain, etc.)
+  - 2: Usage error, DRBD not installed, or module not loaded
+
+Features:
+  - Monitor DRBD resource synchronization state
+  - Detect split-brain conditions (both nodes Primary)
+  - Track connection state (Connected, StandAlone, WFConnection, etc.)
+  - Monitor disk states (UpToDate, Inconsistent, Outdated, Failed)
+  - Track resync progress with configurable thresholds
+  - Report out-of-sync data amounts
+  - Support for DRBD 8.x (/proc/drbd) and DRBD 9+ (JSON API)
+  - Multiple output formats (plain, JSON, table)
+
+Examples:
+```bash
+# Check all DRBD resources
+baremetal_drbd_health_monitor.py
+
+# Show detailed resource information
+baremetal_drbd_health_monitor.py --verbose
+
+# JSON output for monitoring integration
+baremetal_drbd_health_monitor.py --format json
+
+# Only show warnings and errors
+baremetal_drbd_health_monitor.py --warn-only
+
+# Custom sync thresholds (warn if <80%, critical if <30%)
+baremetal_drbd_health_monitor.py --sync-warn 80 --sync-crit 30
+
+# Table format with details
+baremetal_drbd_health_monitor.py --format table --verbose
 ```
 
 ### baremetal_iscsi_health.py
