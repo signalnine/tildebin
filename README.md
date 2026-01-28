@@ -234,6 +234,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_kubeconfig_health_check.py`: Validate kubeconfig files and cluster connectivity including certificate expiration, API server reachability, authentication validation, and multi-kubeconfig support for CI/CD and multi-cluster environments
 - `k8s_api_latency_analyzer.py`: Analyze Kubernetes API server response times to detect performance degradation, measure latencies for various API operations (LIST, GET), and identify slow operations before they cause cluster issues
 - `k8s_secret_expiry_monitor.py`: Monitor Kubernetes Secret age and TLS certificate expiration to detect expired certificates, approaching expirations, and stale secrets
+- `k8s_csr_health_monitor.py`: Monitor Kubernetes CertificateSigningRequest (CSR) health and approval status including pending requests, denied/failed CSRs, approval latency tracking, and certificate rotation health for kubelet bootstrap and cert-manager workflows
 - `k8s_lease_monitor.py`: Monitor Kubernetes Lease objects for leader election health, detecting stale leases, orphaned holders, leadership instability, and missed renewals
 - `k8s_priority_class_analyzer.py`: Analyze PriorityClass configuration and usage including pod scheduling priorities, preemption policies, global defaults, and identify pods without explicit priority assignment
 - `k8s_operator_health_monitor.py`: Monitor Kubernetes operator health (Prometheus, Cert-Manager, ArgoCD, Flux, Istio, etc.) including controller pod status, CRD availability, and deployment readiness
@@ -6708,6 +6709,63 @@ Operational Use Cases:
   - **Compliance Auditing**: Ensure secrets are rotated within policy timeframes
   - **Ingress/Service Mesh**: Monitor TLS secrets used by ingress controllers
   - **Cert-Manager Integration**: Validate cert-manager is renewing certificates properly
+
+### k8s_csr_health_monitor.py
+```
+k8s_csr_health_monitor.py [--format {plain,json,table}] [-v] [-w] [--pending-warn MINUTES] [--pending-critical MINUTES]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed CSR information
+  -w, --warn-only: Only show CSRs with issues
+  --pending-warn MINUTES: Minutes pending before warning (default: 10)
+  --pending-critical MINUTES: Minutes pending before critical (default: 60)
+```
+
+Monitor Kubernetes CertificateSigningRequest (CSR) health and approval status. CSRs are the mechanism for requesting certificates from the cluster's certificate authority. This script monitors:
+- Pending CSRs that haven't been approved/denied (potential stuck requests)
+- Denied CSRs that may indicate configuration issues
+- Failed CSRs that need investigation
+- CSR approval latency (time from creation to approval)
+- Approved CSRs without issued certificates
+
+CSRs are critical for:
+- **Node Bootstrap**: kubelet certificate requests during node registration
+- **cert-manager**: Certificate issuance and renewal workflows
+- **Service Mesh**: mTLS certificate rotation for sidecars
+- **Custom Workflows**: Application-specific certificate management
+
+Exit codes:
+  - 0: All CSRs healthy, no pending beyond threshold
+  - 1: Issues detected (long-pending, denied, or failed CSRs)
+  - 2: Usage error or kubectl not available
+
+Examples:
+```bash
+# Check all CSRs in the cluster
+k8s_csr_health_monitor.py
+
+# Show only CSRs with issues
+k8s_csr_health_monitor.py --warn-only
+
+# Custom pending thresholds (5 min warn, 30 min critical)
+k8s_csr_health_monitor.py --pending-warn 5 --pending-critical 30
+
+# JSON output for monitoring systems
+k8s_csr_health_monitor.py --format json
+
+# Table output with details
+k8s_csr_health_monitor.py --format table --verbose
+
+# Combine options for alerting
+k8s_csr_health_monitor.py -w --format json --pending-critical 15
+```
+
+Operational Use Cases:
+  - **Node Bootstrap Monitoring**: Detect stuck kubelet CSRs during node addition
+  - **cert-manager Health**: Verify cert-manager CSR workflow is functioning
+  - **Certificate Rotation**: Monitor CSR approval during certificate renewals
+  - **Security Auditing**: Track CSR approval patterns and denied requests
+  - **Capacity Planning**: Analyze CSR approval latency trends
+  - **Troubleshooting**: Identify why nodes aren't joining (CSR not approved)
 
 ### k8s_lease_monitor.py
 ```
