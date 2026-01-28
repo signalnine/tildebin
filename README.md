@@ -183,6 +183,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_metrics_server_health_monitor.py`: Monitor Metrics Server health critical for HPA/VPA functionality, including deployment status, API availability, and metrics freshness
 - `k8s_event_monitor.py`: Monitor Kubernetes events to track cluster issues and anomalies
 - `k8s_node_capacity_planner.py`: Analyze cluster capacity and forecast resource allocation
+- `k8s_node_resource_fragmentation_analyzer.py`: Analyze resource fragmentation across nodes, detect phantom capacity where free resources can't schedule pods, identify limiting factors
 - `k8s_crd_health_analyzer.py`: Analyze Custom Resource Definition (CRD) health including establishment status, version compatibility, conversion webhooks, and unused CRD detection for operators like Prometheus, Cert-Manager, etc.
 - `k8s_cpu_throttling_detector.py`: Detect pods experiencing or at risk of CPU throttling
 - `k8s_ingress_cert_checker.py`: Check Ingress certificates for expiration and health status
@@ -4376,6 +4377,68 @@ Use Cases:
   - **Cost Optimization**: Identify opportunities to consolidate workloads
   - **Monitoring Integration**: Export metrics via JSON for dashboards and alerting
   - **Baremetal Deployments**: Critical for on-premises K8s where adding hardware is expensive
+
+### k8s_node_resource_fragmentation_analyzer.py
+```
+python k8s_node_resource_fragmentation_analyzer.py [--namespace NAMESPACE] [--format format] [--warn-only] [--verbose] [--cpu CPU] [--memory MEMORY]
+  --namespace, -n: Namespace to analyze (default: all namespaces)
+  --format, -f: Output format: 'plain', 'table', or 'json' (default: table)
+  --warn-only, -w: Only show nodes with fragmentation issues
+  --verbose, -v: Show cluster summary and additional details
+  --cpu: Reference pod CPU request (default: 500m)
+  --memory: Reference pod memory request (default: 512Mi)
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No significant fragmentation detected
+  - 1: Fragmentation issues found (phantom capacity or high fragmentation)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - **Fragmentation Detection**: Identifies nodes where free resources can't fit typical pods
+  - **Phantom Capacity**: Detects "phantom capacity" where aggregate free resources exist but can't schedule pods
+  - **Limiting Factor Analysis**: Shows whether CPU, memory, or pod count limits schedulability
+  - **Reference Pod Sizing**: Customizable reference pod size for realistic capacity estimates
+  - **Cluster Summary**: Compares actual schedulable capacity vs theoretical capacity
+  - **Unschedulable Node Marking**: Identifies cordoned or tainted nodes
+
+Status Values:
+  - **OK**: Node can schedule reference pods with available resources
+  - **PHANTOM_CAPACITY**: Free resources exist but can't fit even one reference pod
+  - **MODERATE_FRAGMENTATION**: 25-50% of free resources unusable for reference pods
+  - **HIGH_FRAGMENTATION**: >50% of free resources unusable for reference pods
+
+Examples:
+```bash
+# Analyze with default reference pod (500m CPU, 512Mi memory)
+k8s_node_resource_fragmentation_analyzer.py
+
+# Analyze with custom reference pod size (for larger workloads)
+k8s_node_resource_fragmentation_analyzer.py --cpu 1000m --memory 1Gi
+
+# Show only problematic nodes
+k8s_node_resource_fragmentation_analyzer.py --warn-only
+
+# Include cluster-wide summary
+k8s_node_resource_fragmentation_analyzer.py -v
+
+# JSON output for monitoring integration
+k8s_node_resource_fragmentation_analyzer.py --format json
+
+# Combine options: problematic nodes with cluster summary
+k8s_node_resource_fragmentation_analyzer.py -w -v
+```
+
+Use Cases:
+  - **Scheduling Troubleshooting**: Answer "Why can't my pod schedule when cluster shows free capacity?"
+  - **Capacity Planning**: Understand real vs theoretical capacity for workload planning
+  - **Right-sizing**: Determine optimal pod sizes for cluster efficiency
+  - **Defragmentation Planning**: Identify candidates for pod rescheduling
+  - **Cost Optimization**: Find wasted capacity due to fragmentation
 
 ### k8s_cpu_throttling_detector.py
 ```
