@@ -117,6 +117,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `filesystem_usage_tracker.py`: Track filesystem usage and identify large directories
 - `baremetal_filesystem_readonly_monitor.py`: Monitor filesystems for read-only status and detect storage issues that cause filesystems to remount readonly
 - `sysctl_audit.py`: Audit kernel parameters (sysctl) against a baseline configuration
+- `baremetal_sysctl_security_audit.py`: Audit kernel sysctl parameters against built-in security best practices (CIS benchmarks, STIG guidelines) covering network security, kernel memory protections, filesystem security, and user namespace controls without requiring a baseline file
 - `process_resource_monitor.py`: Monitor process resource consumption and detect zombie/resource-hungry processes
 - `baremetal_socket_state_monitor.py`: Monitor TCP/UDP socket state distribution to detect connection anomalies like excessive TIME_WAIT sockets (port exhaustion), CLOSE_WAIT accumulation (file descriptor leaks), and SYN flood attacks
 - `baremetal_socket_buffer_monitor.py`: Monitor socket buffer memory usage and pressure to detect network bottlenecks from undersized or exhausted buffers (tcp_mem, udp_mem, rmem/wmem) that cause packet drops and connection throttling
@@ -3707,6 +3708,57 @@ sysctl_audit.py -b baseline.conf --verbose
 ```
 
 Use Case: In large baremetal deployments, ensuring consistent kernel settings across all hosts is critical. Create a baseline on a reference system, then use this script in your provisioning or monitoring pipeline to verify all nodes have the correct sysctl configuration.
+
+### baremetal_sysctl_security_audit.py
+```
+python baremetal_sysctl_security_audit.py [-c category] [-s severity] [--format format] [-v] [-w] [-l]
+  -c, --category: Category to audit - 'network', 'kernel', 'filesystem', or 'all' (default: all)
+  -s, --severity: Minimum severity to check - 'critical', 'high', 'medium', 'low', or 'all' (default: all)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show all checks including passed ones
+  -w, --warn-only: Only show failed checks
+  -l, --list-checks: List all checks without running them
+```
+
+Requirements:
+  - sysctl command-line tool (procps-ng package on Linux)
+  - Read access to /proc/sys or appropriate permissions for sysctl
+
+Exit codes:
+  - 0: All security checks pass
+  - 1: One or more security checks failed
+  - 2: Usage error or sysctl command not found
+
+Categories checked:
+  - network_ipv4: IPv4 network security (forwarding, ICMP, spoofing protection)
+  - network_ipv6: IPv6 network security
+  - kernel_memory: ASLR, ptrace restrictions, kernel pointer exposure
+  - kernel_modules: Module loading and kexec controls
+  - filesystem: Symlink/hardlink protections, core dump settings
+  - user_namespaces: Unprivileged namespace and BPF restrictions
+
+Examples:
+```bash
+# Run all security checks
+baremetal_sysctl_security_audit.py
+
+# Check only network settings
+baremetal_sysctl_security_audit.py --category network
+
+# Only check high/critical severity issues
+baremetal_sysctl_security_audit.py --severity high
+
+# JSON output for automation
+baremetal_sysctl_security_audit.py --format json
+
+# Only show failures
+baremetal_sysctl_security_audit.py --warn-only
+
+# List all checks without running them
+baremetal_sysctl_security_audit.py --list-checks
+```
+
+Use Case: Unlike sysctl_audit.py which compares against a user-provided baseline, this script has built-in security recommendations based on CIS benchmarks and STIG guidelines. Use it for quick security assessments on new systems, compliance audits, or as part of security hardening workflows without needing to maintain baseline files.
 
 ### process_resource_monitor.py
 ```
