@@ -118,6 +118,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `sysctl_audit.py`: Audit kernel parameters (sysctl) against a baseline configuration
 - `process_resource_monitor.py`: Monitor process resource consumption and detect zombie/resource-hungry processes
 - `baremetal_socket_state_monitor.py`: Monitor TCP/UDP socket state distribution to detect connection anomalies like excessive TIME_WAIT sockets (port exhaustion), CLOSE_WAIT accumulation (file descriptor leaks), and SYN flood attacks
+- `baremetal_socket_buffer_monitor.py`: Monitor socket buffer memory usage and pressure to detect network bottlenecks from undersized or exhausted buffers (tcp_mem, udp_mem, rmem/wmem) that cause packet drops and connection throttling
 - `baremetal_listening_port_monitor.py`: Monitor listening ports and detect unexpected services by analyzing /proc/net files to identify all listening TCP/UDP ports with their associated processes, supporting expected/unexpected port validation and security auditing
 - `baremetal_ephemeral_port_monitor.py`: Monitor ephemeral (dynamic) port usage against the kernel-configured range to detect exhaustion risk before services fail with "Cannot assign requested address" errors, tracking TIME_WAIT accumulation and per-destination port consumption
 - `baremetal_swap_monitor.py`: Monitor swap usage and memory pressure indicators to detect insufficient RAM, excessive swap activity, and systems at risk of OOM killer activation
@@ -3098,6 +3099,56 @@ baremetal_socket_state_monitor.py -v
 
 # Table format for quick overview
 baremetal_socket_state_monitor.py --format table
+```
+
+### baremetal_socket_buffer_monitor.py
+```
+python baremetal_socket_buffer_monitor.py [--format format] [-v] [-w] [--warn PCT] [--crit PCT]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed buffer configuration and statistics
+  -w, --warn-only: Only output if issues or warnings detected
+  --warn PCT: Warning threshold percentage (default: 70)
+  --crit PCT: Critical threshold percentage (default: 85)
+```
+
+Features:
+  - Monitor socket buffer memory usage (tcp_mem, udp_mem) vs configured limits
+  - Detect when socket memory is near kernel pressure thresholds
+  - Identify protocols with high buffer utilization
+  - Show per-protocol socket counts and memory usage
+  - Report high orphan socket counts (connection leaks)
+  - Report high TIME_WAIT counts (port exhaustion risk)
+  - Configurable warning and critical thresholds
+  - Useful for tuning tcp_rmem/tcp_wmem/tcp_mem sysctl settings
+
+Requirements:
+  - Linux /proc/net/sockstat, /proc/sys/net/* files
+  - No external dependencies required
+
+Exit codes:
+  - 0: No socket buffer pressure detected
+  - 1: Socket buffer pressure or warnings detected
+  - 2: Missing /proc files or usage error
+
+Examples:
+```bash
+# Check socket buffer status
+baremetal_socket_buffer_monitor.py
+
+# Output in JSON format for monitoring integration
+baremetal_socket_buffer_monitor.py --format json
+
+# Custom thresholds for high-traffic servers
+baremetal_socket_buffer_monitor.py --warn 60 --crit 80
+
+# Only alert if issues detected (monitoring mode)
+baremetal_socket_buffer_monitor.py --warn-only --format json
+
+# Verbose output with buffer configuration details
+baremetal_socket_buffer_monitor.py -v
+
+# Table format for quick protocol overview
+baremetal_socket_buffer_monitor.py --format table
 ```
 
 ### baremetal_listening_port_monitor.py
