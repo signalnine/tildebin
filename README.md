@@ -121,6 +121,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `process_resource_monitor.py`: Monitor process resource consumption and detect zombie/resource-hungry processes
 - `baremetal_socket_state_monitor.py`: Monitor TCP/UDP socket state distribution to detect connection anomalies like excessive TIME_WAIT sockets (port exhaustion), CLOSE_WAIT accumulation (file descriptor leaks), and SYN flood attacks
 - `baremetal_socket_buffer_monitor.py`: Monitor socket buffer memory usage and pressure to detect network bottlenecks from undersized or exhausted buffers (tcp_mem, udp_mem, rmem/wmem) that cause packet drops and connection throttling
+- `baremetal_socket_queue_monitor.py`: Monitor socket receive and send queue depths to identify slow consumers, network congestion, and listen backlog issues by analyzing per-socket buffer usage via ss and /proc/net with configurable thresholds
 - `baremetal_listening_port_monitor.py`: Monitor listening ports and detect unexpected services by analyzing /proc/net files to identify all listening TCP/UDP ports with their associated processes, supporting expected/unexpected port validation and security auditing
 - `baremetal_process_connection_audit.py`: Audit active network connections per process by analyzing non-LISTEN TCP sockets to identify which processes have established connections, detect excessive connection counts, find unexpected outbound connections for security auditing, and troubleshoot connectivity issues
 - `baremetal_process_capabilities_auditor.py`: Audit Linux process capabilities for security monitoring, identifying non-root processes with elevated capabilities (CAP_SYS_ADMIN, CAP_NET_RAW, CAP_DAC_OVERRIDE, etc.) that may indicate privilege escalation risks or misconfigured services
@@ -3155,6 +3156,64 @@ baremetal_socket_buffer_monitor.py -v
 
 # Table format for quick protocol overview
 baremetal_socket_buffer_monitor.py --format table
+```
+
+### baremetal_socket_queue_monitor.py
+```
+python baremetal_socket_queue_monitor.py [--format format] [-v] [-w] [--protocol PROTO] [--recv-warn N] [--recv-crit N] [--send-warn N] [--send-crit N] [--listen-warn N] [--listen-crit N] [--min-queue N]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including per-process statistics
+  -w, --warn-only: Only output if queue issues detected
+  --protocol: Protocol to monitor - tcp, udp, or all (default: tcp)
+  --recv-warn N: Receive queue warning threshold in bytes (default: 1MB)
+  --recv-crit N: Receive queue critical threshold in bytes (default: 10MB)
+  --send-warn N: Send queue warning threshold in bytes (default: 1MB)
+  --send-crit N: Send queue critical threshold in bytes (default: 10MB)
+  --listen-warn N: Listen backlog warning threshold (default: 128 connections)
+  --listen-crit N: Listen backlog critical threshold (default: 1024 connections)
+  --min-queue N: Minimum queue depth to analyze (default: 1KB)
+```
+
+Features:
+  - Monitor per-socket receive and send queue depths
+  - Detect slow consumers with large receive queue backlogs
+  - Identify network congestion via send queue accumulation
+  - Monitor listen socket accept queue backlog
+  - Per-process socket queue statistics aggregation
+  - Process identification via ss command or /proc lookup
+  - Configurable thresholds for different workload types
+
+Requirements:
+  - Linux ss command (iproute2 package) or /proc/net access
+  - No external dependencies required
+
+Exit codes:
+  - 0: All socket queues within thresholds
+  - 1: Warning or critical queue depths detected
+  - 2: Missing data sources or usage error
+
+Examples:
+```bash
+# Check TCP socket queues with defaults
+baremetal_socket_queue_monitor.py
+
+# Output in JSON format for monitoring integration
+baremetal_socket_queue_monitor.py --format json
+
+# Monitor both TCP and UDP
+baremetal_socket_queue_monitor.py --protocol all
+
+# Custom thresholds for high-throughput servers
+baremetal_socket_queue_monitor.py --recv-warn 5242880 --recv-crit 52428800
+
+# Alert on listen backlog issues (accept queue full)
+baremetal_socket_queue_monitor.py --listen-warn 64 --listen-crit 256
+
+# Only show sockets with issues (monitoring mode)
+baremetal_socket_queue_monitor.py --warn-only --format json
+
+# Verbose output with per-process stats
+baremetal_socket_queue_monitor.py -v
 ```
 
 ### baremetal_listening_port_monitor.py
