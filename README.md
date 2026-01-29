@@ -203,6 +203,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_memory_pressure_analyzer.py`: Detect memory pressure on nodes and analyze pod memory usage patterns
 - `k8s_node_pressure_monitor.py`: Monitor all node pressure conditions (MemoryPressure, DiskPressure, PIDPressure, NetworkUnavailable) for proactive capacity management
 - `k8s_pdb_health_monitor.py`: Monitor PodDisruptionBudget health to detect PDBs blocking maintenance or protecting unhealthy workloads
+- `k8s_pdb_coverage_analyzer.py`: Analyze PDB coverage across Deployments, StatefulSets, and ReplicaSets to identify workloads vulnerable to unexpected disruptions
 - `k8s_pod_eviction_risk_analyzer.py`: Identify pods at risk of eviction due to resource pressure or QoS class
 - `k8s_qos_class_auditor.py`: Audit pod QoS classes (Guaranteed/Burstable/BestEffort) to identify eviction risks and critical workloads without proper QoS configuration
 - `k8s_pending_pod_analyzer.py`: Analyze pods stuck in Pending state and diagnose scheduling failures (resources, taints, affinity, PVC issues)
@@ -4999,6 +5000,57 @@ Use Cases:
   - **Upgrade Readiness**: Verify PDBs allow sufficient disruptions for rolling upgrades
   - **Baremetal Clusters**: Critical for on-premises environments where maintenance windows are planned
   - **SLA Compliance**: Ensure PDBs are configured correctly to maintain availability guarantees
+
+### k8s_pdb_coverage_analyzer.py
+```
+python3 k8s_pdb_coverage_analyzer.py [options]
+  -n, --namespace: Check specific namespace (default: all namespaces)
+  -f, --format: Output format - 'plain', 'table', or 'json' (default: table)
+  -w, --warn-only: Only show workloads with issues (exclude OK severity)
+  -v, --verbose: Show detailed information including suggestions
+  --suggest: Include PDB configuration suggestions
+  --kind: Workload kind to analyze - 'all', 'deployment', 'statefulset', 'replicaset' (default: all)
+  -h, --help: Show help message
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Severity Levels:
+  - **CRITICAL**: Critical namespace workload without PDB (kube-system, monitoring, etc.)
+  - **HIGH**: Multi-replica workload without PDB coverage
+  - **WARNING**: Has PDB but policy may be too restrictive
+  - **LOW**: Single replica workload (PDB would not help)
+  - **OK**: Adequate PDB coverage
+
+Examples:
+```bash
+# Check all workloads for PDB coverage
+k8s_pdb_coverage_analyzer.py
+
+# Check only production namespace
+k8s_pdb_coverage_analyzer.py -n production
+
+# Show only workloads missing PDB coverage
+k8s_pdb_coverage_analyzer.py --warn-only
+
+# Get suggestions for PDB configurations
+k8s_pdb_coverage_analyzer.py --suggest
+
+# Analyze only Deployments
+k8s_pdb_coverage_analyzer.py --kind deployment
+
+# Get JSON output for CI/CD integration
+k8s_pdb_coverage_analyzer.py --format json
+```
+
+Use Cases:
+  - **Pre-Maintenance Validation**: Ensure all critical workloads have PDB protection before node drains
+  - **Cluster Hardening**: Identify workloads vulnerable to unexpected disruptions during upgrades
+  - **SLA Compliance**: Verify production workloads meet availability requirements with proper PDBs
+  - **Security Auditing**: Find critical system components (kube-system) lacking disruption protection
+  - **Onboarding Review**: Audit new deployments for PDB coverage before production rollout
 
 ### k8s_pod_eviction_risk_analyzer.py
 ```
