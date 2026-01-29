@@ -140,6 +140,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_package_security_audit.py`: Audit system packages for pending security updates on apt/dnf/yum-based systems, categorizing by severity (critical/important/moderate/low) for compliance and vulnerability management
 - `baremetal_security_policy_monitor.py`: Monitor Linux Security Module (LSM) status including SELinux and AppArmor, detecting disabled/permissive modes, policy violations, recent denials, and configuration drift for enterprise security compliance
 - `baremetal_auditd_health_monitor.py`: Monitor Linux audit daemon (auditd) health and configuration including service status, audit rule verification, log file status, lost event detection, and backlog monitoring for security compliance in enterprise baremetal environments
+- `baremetal_usb_device_monitor.py`: Monitor USB devices connected to servers for security compliance, detecting mass storage devices (potential data exfiltration) and checking against device whitelists for data center security auditing
 - `baremetal_numa_balance_monitor.py`: Monitor NUMA topology and memory balance on multi-socket systems to detect cross-node memory imbalances, high NUMA miss ratios, and per-node memory pressure
 - `baremetal_numa_latency_monitor.py`: Analyze NUMA distance matrix and memory access latency on multi-socket systems to identify high-latency inter-node paths, asymmetric topologies, and page migration issues that impact performance of memory-intensive workloads
 - `baremetal_memory_fragmentation_analyzer.py`: Analyze memory fragmentation using buddy allocator statistics to detect external fragmentation causing allocation failures despite available free memory, monitor hugepage availability, and identify need for memory compaction
@@ -3030,6 +3031,72 @@ Use Cases:
   - Incident response: Find recent security policy denials
   - Configuration drift: Alert when security mode changes unexpectedly
   - Enterprise standards: Enforce consistent security policy across servers
+
+### baremetal_usb_device_monitor.py
+```
+python baremetal_usb_device_monitor.py [--format format] [-v] [-w] [--whitelist FILE] [--no-flag-storage]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed device information including interfaces
+  -w, --warn-only: Only show output if flagged devices are detected
+  --whitelist FILE: Path to device whitelist file (vendor_id:product_id per line)
+  --no-flag-storage: Do not flag mass storage devices as issues
+```
+
+Features:
+  - Enumerate all connected USB devices from /sys/bus/usb/devices
+  - Classify devices by USB class (storage, HID, hub, network, etc.)
+  - Detect mass storage devices (potential data exfiltration risk)
+  - Support device whitelists for authorized devices
+  - Report device manufacturer, product, serial number, and speed
+
+Requirements:
+  - Linux /sys/bus/usb filesystem
+  - Read access to sysfs (no root required)
+
+Exit codes:
+  - 0: No flagged devices detected (or no storage devices if default check)
+  - 1: Unauthorized or flagged devices detected
+  - 2: Usage error or /sys/bus/usb not available
+
+Whitelist file format:
+```
+# Device whitelist - one per line
+# Format: vendor_id:product_id  # optional comment
+046d:c52b  # Logitech Unifying Receiver
+8087:0024  # Intel USB Hub
+0424:2514  # Standard Hub
+```
+
+Examples:
+```bash
+# List all USB devices
+baremetal_usb_device_monitor.py
+
+# Show detailed device information
+baremetal_usb_device_monitor.py --verbose
+
+# JSON output for monitoring integration
+baremetal_usb_device_monitor.py --format json
+
+# Only alert if unauthorized devices found
+baremetal_usb_device_monitor.py --warn-only
+
+# Check against whitelist (flag anything not listed)
+baremetal_usb_device_monitor.py --whitelist /etc/usb-allowed-devices.txt
+
+# Don't flag storage devices (for workstations)
+baremetal_usb_device_monitor.py --no-flag-storage
+
+# Table format for review
+baremetal_usb_device_monitor.py --format table
+```
+
+Use Cases:
+  - Data center security: Detect unauthorized USB storage devices
+  - Compliance auditing: Verify only approved USB devices are connected
+  - Change detection: Monitor for newly connected devices
+  - Inventory management: List all USB peripherals across server fleet
+  - Incident response: Identify potential data exfiltration devices
 
 ### baremetal_process_limits_monitor.py
 ```
