@@ -109,6 +109,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_service_port_monitor.py`: Monitor service port availability and responsiveness with support for common service presets (redis, mysql, postgres, http, https, ssh, etc.) and custom port definitions, useful for verifying critical services are listening and responding without requiring service-specific clients
 - `ntp_drift_monitor.py`: Monitor NTP/Chrony time synchronization and detect clock drift
 - `baremetal_hwclock_drift_monitor.py`: Monitor hardware clock (RTC) drift against system time to detect failing CMOS batteries, clock crystal issues, or RTC misconfiguration that causes time jumps on reboot
+- `baremetal_clocksource_monitor.py`: Monitor kernel clock source configuration and stability (TSC, HPET, ACPI_PM) to ensure optimal timekeeping for high-frequency trading, distributed systems, and virtualization workloads - checks TSC stability flags (constant_tsc, nonstop_tsc) and detects suboptimal clock source configurations
 - `pcie_health_monitor.py`: Monitor PCIe device health, link status, and error counters
 - `baremetal_pcie_topology_analyzer.py`: Analyze PCIe topology including IOMMU groups, device-to-NUMA node mapping, PCIe link speed/width validation, and identification of suboptimal device placement for GPU clusters and high-performance workloads
 - `power_consumption_monitor.py`: Monitor server power consumption using IPMI, turbostat, and RAPL sensors
