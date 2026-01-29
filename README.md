@@ -71,6 +71,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_mount_health_monitor.py`: Monitor all mounted filesystems for hung mounts (NFS/CIFS/FUSE that stop responding), stale NFS handles, read-only remounts, bind mount consistency, and mount option issues - critical for detecting storage problems before they cascade into system-wide failures
 - `cpu_frequency_monitor.py`: Monitor CPU frequency scaling and governor settings
 - `baremetal_cpu_time_analyzer.py`: Analyze CPU time distribution (user, system, iowait, steal, softirq) for performance diagnosis
+- `baremetal_cpu_steal_monitor.py`: Monitor CPU steal time for virtualized environments to detect hypervisor resource contention, noisy neighbors on shared hosts, and VM CPU starvation before application performance is impacted
 - `baremetal_context_switch_monitor.py`: Monitor context switch rates to detect CPU contention, scheduling overhead, and run queue depth issues
 - `firmware_version_audit.py`: Audit firmware versions for BIOS, BMC/IPMI, network interfaces, and RAID controllers to detect version drift across server fleets
 - `load_average_monitor.py`: Monitor system load averages and process queue depth to identify overloaded systems
