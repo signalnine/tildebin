@@ -120,6 +120,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_socket_state_monitor.py`: Monitor TCP/UDP socket state distribution to detect connection anomalies like excessive TIME_WAIT sockets (port exhaustion), CLOSE_WAIT accumulation (file descriptor leaks), and SYN flood attacks
 - `baremetal_socket_buffer_monitor.py`: Monitor socket buffer memory usage and pressure to detect network bottlenecks from undersized or exhausted buffers (tcp_mem, udp_mem, rmem/wmem) that cause packet drops and connection throttling
 - `baremetal_listening_port_monitor.py`: Monitor listening ports and detect unexpected services by analyzing /proc/net files to identify all listening TCP/UDP ports with their associated processes, supporting expected/unexpected port validation and security auditing
+- `baremetal_process_connection_audit.py`: Audit active network connections per process by analyzing non-LISTEN TCP sockets to identify which processes have established connections, detect excessive connection counts, find unexpected outbound connections for security auditing, and troubleshoot connectivity issues
 - `baremetal_ephemeral_port_monitor.py`: Monitor ephemeral (dynamic) port usage against the kernel-configured range to detect exhaustion risk before services fail with "Cannot assign requested address" errors, tracking TIME_WAIT accumulation and per-destination port consumption
 - `baremetal_swap_monitor.py`: Monitor swap usage and memory pressure indicators to detect insufficient RAM, excessive swap activity, and systems at risk of OOM killer activation
 - `baremetal_memory_reclaim_monitor.py`: Monitor kernel memory reclamation activity (kswapd, direct reclaim, compaction) to detect memory pressure before it impacts application performance or triggers OOM kills - tracks page scan rates, reclaim efficiency, and allocation stalls
@@ -3209,6 +3210,68 @@ baremetal_listening_port_monitor.py --expected 22,80 --unexpected 23 --warn-only
 
 # Table format for quick overview
 baremetal_listening_port_monitor.py --format table
+```
+
+### baremetal_process_connection_audit.py
+```
+python baremetal_process_connection_audit.py [--format format] [-v] [-w] [--max-per-process N] [--max-to-single-host N] [--process NAME] [--pid PID] [--remote-port PORT] [--remote-ip IP] [--state STATE] [--exclude-loopback]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show individual connections instead of summary
+  -w, --warn-only: Only output if issues are detected
+  --max-per-process N: Alert if a process has more than N connections (default: 1000)
+  --max-to-single-host N: Alert if process has >N connections to single host (default: 100)
+  --process NAME: Filter to connections owned by specific process name
+  --pid PID: Filter to connections owned by specific PID
+  --remote-port PORT: Filter to connections to specific remote port
+  --remote-ip IP: Filter to connections to specific remote IP
+  --state STATE: Filter to specific TCP state (ESTABLISHED, TIME_WAIT, etc.)
+  --exclude-loopback: Exclude connections to localhost/127.0.0.1/::1
+```
+
+Audits active (non-LISTEN) network connections with per-process mapping. Unlike listening port monitors that show inbound services, this script shows what your processes are actively communicating with.
+
+**Use cases:**
+- Security auditing: Identify unexpected outbound connections
+- Troubleshooting: Map connections to owning processes
+- Capacity planning: Understand connection patterns
+- Leak detection: Find processes with excessive connections
+
+**Metrics tracked:**
+- Per-process connection counts
+- Unique remote hosts per process
+- TCP state breakdown (ESTABLISHED, TIME_WAIT, CLOSE_WAIT, etc.)
+- Top remote destinations by connection count
+
+Exit codes: 0=healthy, 1=processes exceed thresholds, 2=missing /proc files or usage error
+
+Examples:
+```bash
+# Show process connection summary
+baremetal_process_connection_audit.py
+
+# Output in JSON format for monitoring integration
+baremetal_process_connection_audit.py --format json
+
+# Show individual connections (verbose mode)
+baremetal_process_connection_audit.py -v
+
+# Alert if any process has >500 connections
+baremetal_process_connection_audit.py --max-per-process 500
+
+# Filter to specific process (e.g., nginx)
+baremetal_process_connection_audit.py --process nginx
+
+# Find all connections to port 443 (HTTPS)
+baremetal_process_connection_audit.py --remote-port 443
+
+# Show only ESTABLISHED connections
+baremetal_process_connection_audit.py --state ESTABLISHED
+
+# Exclude local connections
+baremetal_process_connection_audit.py --exclude-loopback
+
+# Monitoring mode: alert only when thresholds exceeded
+baremetal_process_connection_audit.py --max-per-process 1000 --warn-only --format json
 ```
 
 ### baremetal_ephemeral_port_monitor.py
