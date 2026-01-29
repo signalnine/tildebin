@@ -61,6 +61,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_scsi_error_monitor.py`: Monitor SCSI/SAS device error counters (ioerr_cnt, iotmo_cnt) from sysfs to detect failing disks, SAS cable issues, or HBA problems before complete failure
 - `iosched_audit.py`: Audit I/O scheduler configuration across block devices and detect misconfigurations (NVMe using complex schedulers, HDDs using 'none', etc.)
 - `check_raid.py`: Check status of hardware and software RAID arrays
+- `baremetal_raid_rebuild_monitor.py`: Monitor RAID array rebuild/resync progress with ETA estimation - tracks recovery, resync, reshape, and check operations on mdadm arrays, providing progress percentage, speed, and estimated completion time for maintenance window planning
 - `baremetal_lvm_health_monitor.py`: Monitor LVM logical volumes, volume groups, and physical volumes for health issues including thin pool exhaustion, snapshot aging, and VG capacity warnings
 - `baremetal_zfs_pool_health.py`: Monitor ZFS pool health including pool state (online/degraded/faulted), capacity, fragmentation, scrub age, device errors, and data integrity - essential for ZFS-based storage infrastructure
 - `baremetal_mce_monitor.py`: Monitor Machine Check Exceptions (MCE) for hardware fault detection including CPU cache errors, memory bus errors, system bus errors, and thermal events - critical for detecting failing hardware before data corruption
@@ -922,6 +923,32 @@ Requirements:
   - LSI/Broadcom hardware RAID: MegaCli
   - HP hardware RAID: hpacucli/ssacli
   - Requires root privileges for hardware RAID detection
+
+### baremetal_raid_rebuild_monitor.py
+```
+python baremetal_raid_rebuild_monitor.py [-a array] [--format format] [-v] [--rebuilding-only]
+  -a, --array: Monitor specific array (e.g., md0)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including block counts and device list
+  --rebuilding-only: Only show arrays with active rebuild/resync operations
+```
+
+Requirements:
+  - Linux software RAID with /proc/mdstat
+
+Example output during rebuild:
+```
+RAID Rebuild Status
+======================================================================
+
+[*] md0 (raid1) - RECOVERY IN PROGRESS
+    Progress: 45.2%
+    Speed:    125.3 MB/s
+    ETA:      2h 15m
+    Finish:   2025-01-29 18:30:00
+```
+
+Use Case: During hardware failures and maintenance windows, knowing the estimated completion time of RAID rebuilds is critical for planning. This script provides real-time progress tracking with ETA for mdadm software RAID operations (recovery, resync, reshape, check). Use it to monitor rebuilds after disk replacement, estimate maintenance window duration, or integrate with alerting systems to track long-running operations. Exit code 1 indicates rebuild in progress, useful for scripting.
 
 ### baremetal_lvm_health_monitor.py
 ```
