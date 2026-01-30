@@ -122,6 +122,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `systemd_service_monitor.py`: Monitor systemd service health and identify failed or degraded units
 - `filesystem_usage_tracker.py`: Track filesystem usage and identify large directories
 - `baremetal_filesystem_readonly_monitor.py`: Monitor filesystems for read-only status and detect storage issues that cause filesystems to remount readonly
+- `baremetal_ext4_journal_health.py`: Monitor ext4 filesystem journal health including journal size, error counts, filesystem state, and recent recovery events to detect potential data corruption issues before they become catastrophic
 - `sysctl_audit.py`: Audit kernel parameters (sysctl) against a baseline configuration
 - `baremetal_sysctl_security_audit.py`: Audit kernel sysctl parameters against built-in security best practices (CIS benchmarks, STIG guidelines) covering network security, kernel memory protections, filesystem security, and user namespace controls without requiring a baseline file
 - `process_resource_monitor.py`: Monitor process resource consumption and detect zombie/resource-hungry processes
