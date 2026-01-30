@@ -236,6 +236,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_resource_right_sizer.py`: Analyze resource requests/limits against actual usage to identify over-provisioned and under-provisioned workloads for cost optimization
 - `k8s_image_pull_analyzer.py`: Analyze image pull issues including ImagePullBackOff errors, slow pulls, registry connectivity, and authentication failures
 - `k8s_image_policy_auditor.py`: Audit container images for security best practices including digest pinning, mutable tags (latest/dev), and untrusted registries for supply chain security
+- `k8s_pod_image_registry_audit.py`: Audit running pod container image registries for compliance, detecting unapproved registries, public Docker Hub usage in production, and implicit docker.io references
 - `k8s_job_health_monitor.py`: Monitor Job and CronJob health including completion status, scheduling patterns, stuck jobs, and resource consumption
 - `k8s_webhook_health_monitor.py`: Monitor admission webhook health including certificate expiration, endpoint availability, failure policies, and recent webhook rejections
 - `k8s_storageclass_health_monitor.py`: Monitor StorageClass provisioners and CSI driver health including provisioner status, PVC failures, and stuck volume attachments
