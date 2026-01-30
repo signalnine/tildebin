@@ -193,6 +193,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_pod_resource_audit.py`: Audit pod resource usage and identify resource issues
 - `k8s_extended_resources_audit.py`: Audit extended resources (GPUs, FPGAs, custom device plugins) allocation and utilization across heterogeneous baremetal clusters
 - `k8s_pv_health_check.py`: Check persistent volume health and storage status
+- `k8s_pvc_stuck_detector.py`: Detect PersistentVolumeClaims stuck in Pending state with diagnostic information about provisioning issues
 - `k8s_backup_health_monitor.py`: Monitor backup health including Velero backups, VolumeSnapshots, and backup CronJobs for disaster recovery compliance
 - `k8s_deployment_status.py`: Monitor Deployment and StatefulSet rollout status and replica availability
 - `k8s_helm_release_monitor.py`: Monitor Helm release health and deployment status including release state, chart versions, and detection of failed or stalled releases
@@ -4249,6 +4250,60 @@ k8s_pv_health_check.py --format json
 
 # Combine options: only problematic volumes in JSON format
 k8s_pv_health_check.py -w -f json
+```
+
+### k8s_pvc_stuck_detector.py
+```
+python k8s_pvc_stuck_detector.py [--threshold MINUTES] [--namespace NAMESPACE] [--format format] [--verbose]
+  --threshold, -t: Minimum age in minutes to consider PVC stuck (default: 5)
+  --namespace, -n: Namespace to check (default: all namespaces)
+  --format, -f: Output format: 'plain', 'json', or 'table' (default: plain)
+  --verbose, -v: Show additional diagnostic details
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No stuck PVCs found
+  - 1: One or more PVCs stuck in Pending state
+  - 2: Usage error or kubectl unavailable
+
+Features:
+  - Identifies PVCs stuck in Pending state beyond a configurable threshold
+  - Provides diagnostic information about why PVCs may be stuck:
+    - Missing or misconfigured StorageClass
+    - No matching PersistentVolume available
+    - Provisioner using no-provisioner (requires manual binding)
+    - Selector constraints that can't be satisfied
+    - Recent provisioning failure events
+    - RWX access mode requiring shared storage support
+  - Supports multiple output formats (plain, JSON, table)
+  - Useful for monitoring storage provisioning health in baremetal clusters
+
+Examples:
+```bash
+# Find PVCs pending longer than 5 minutes (default threshold)
+k8s_pvc_stuck_detector.py
+
+# Find PVCs pending longer than 1 hour
+k8s_pvc_stuck_detector.py -t 60
+
+# Check only a specific namespace
+k8s_pvc_stuck_detector.py -n production
+
+# Get JSON output for scripting/monitoring
+k8s_pvc_stuck_detector.py --format json
+
+# Table format for quick overview
+k8s_pvc_stuck_detector.py --format table
+
+# Verbose output with all diagnostic details
+k8s_pvc_stuck_detector.py -v
+
+# Combine: JSON output for PVCs stuck over 2 hours in monitoring namespace
+k8s_pvc_stuck_detector.py -t 120 -n monitoring -f json
 ```
 
 ### k8s_backup_health_monitor.py
