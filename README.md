@@ -100,6 +100,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `baremetal_bond_health_monitor.py`: Monitor network bond health with detailed diagnostics including slave status, failover readiness, link failures, and speed/duplex mismatch detection
 - `baremetal_boot_performance_monitor.py`: Monitor system boot performance and systemd initialization times to identify slow-booting systems and problematic services that delay startup
+- `baremetal_boot_issues_analyzer.py`: Analyze boot issues from journald logs across recent system boots including kernel panics, OOM kills, emergency mode entries, failed units, and hardware errors - useful for identifying machines with problematic boots in large fleets
 - `baremetal_uptime_monitor.py`: Monitor system uptime and reboot history to detect flapping servers with frequent reboots, analyze reboot patterns, and identify unstable systems in large baremetal environments
 - `baremetal_load_average_monitor.py`: Monitor system load averages relative to CPU count, providing normalized load per CPU metrics, trend analysis (increasing/decreasing/stable), and configurable thresholds for capacity planning and overload detection
 - `baremetal_network_config_audit.py`: Audit network interface configuration for common misconfigurations (MTU mismatches, bonding inconsistencies, IPv6 configuration drift)
@@ -2408,6 +2409,65 @@ baremetal_boot_performance_monitor.py --warn-only --format json
 
 # Table format for quick overview
 baremetal_boot_performance_monitor.py --format table -v
+```
+
+### baremetal_boot_issues_analyzer.py
+```
+python baremetal_boot_issues_analyzer.py [--format format] [-v] [--warn-only] [--boots N] [--current-only] [--checks CHECKS]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed issue messages
+  --warn-only: Only show boots with issues
+  --boots N: Number of recent boots to analyze (default: 5)
+  --current-only: Only analyze current boot
+  --checks CHECKS: Comma-separated list of checks to run (default: kernel,oom,emergency,units,hardware,filesystem)
+```
+
+Available checks:
+  - `kernel`: Kernel panics, oopses, BUGs, general protection faults
+  - `oom`: Out of memory kills during boot
+  - `emergency`: Emergency/rescue mode entries
+  - `units`: Failed systemd units during boot
+  - `hardware`: Hardware errors (MCE, ACPI, PCIe AER, ECC, I/O errors)
+  - `critical`: Critical/alert/emergency level log messages
+  - `filesystem`: Filesystem errors (EXT4, XFS, journal recovery)
+
+Features:
+  - Analyze multiple recent boots for recurring issues
+  - Identify machines that experienced problematic boots
+  - Detect kernel panics, OOM kills, and emergency mode entries
+  - Find hardware errors detected during boot
+  - Track failed systemd units during boot sequence
+  - Useful for fleet-wide boot health monitoring
+  - Multiple output formats for integration with monitoring systems
+
+Requirements:
+  - systemd-based Linux system
+  - journalctl command available with persistent journal
+
+Exit codes:
+  - 0: No boot issues detected
+  - 1: Boot issues found
+  - 2: journalctl not available or usage error
+
+Examples:
+```bash
+# Analyze last 5 boots with default checks
+baremetal_boot_issues_analyzer.py
+
+# Analyze last 10 boots
+baremetal_boot_issues_analyzer.py --boots 10
+
+# Only analyze current boot with verbose output
+baremetal_boot_issues_analyzer.py --current-only -v
+
+# Only check for kernel issues and OOM kills
+baremetal_boot_issues_analyzer.py --checks kernel,oom
+
+# JSON output for monitoring systems, only show boots with issues
+baremetal_boot_issues_analyzer.py --format json --warn-only
+
+# Table format for quick overview
+baremetal_boot_issues_analyzer.py --format table
 ```
 
 ### baremetal_uptime_monitor.py
