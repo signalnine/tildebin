@@ -43,6 +43,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_fd_limit_monitor.py`: Monitor file descriptor usage across system and per-process to prevent resource exhaustion and identify processes approaching their limits
 - `baremetal_open_file_monitor.py`: Monitor open file handles across the system to identify processes with high FD counts, detect potential FD leaks, and find processes holding deleted files open (common disk space leak after log rotation)
 - `baremetal_process_fd_monitor.py`: Monitor per-process file descriptor usage to identify processes approaching their RLIMIT_NOFILE limits, show top fd consumers, and detect processes with dangerously low limits - essential for preventing service failures in database servers, web proxies, and high-connection services
+- `baremetal_process_memory_growth.py`: Monitor processes for memory growth over time to detect potential memory leaks by sampling RSS at intervals, calculating growth rates, and identifying top memory growers - critical for detecting memory leaks in long-running services before they exhaust system resources
 - `baremetal_process_io_monitor.py`: Monitor per-process I/O usage by reading /proc/[pid]/io to identify which processes are causing disk I/O bottlenecks - critical for troubleshooting database servers with unexpected I/O patterns, runaway backup jobs, log writers consuming bandwidth, and memory-mapped file thrashing
 - `baremetal_process_accounting_monitor.py`: Monitor process resource accounting from /proc to identify resource hogs by analyzing per-process I/O statistics, CPU time, and memory usage - useful for capacity planning, detecting runaway processes, and auditing resource consumption with configurable thresholds and filters by user/command
 - `baremetal_interrupt_balance_monitor.py`: Monitor hardware interrupt (IRQ) distribution across CPU cores to detect performance issues from poor interrupt balancing
@@ -3155,6 +3156,66 @@ Use Cases:
   - Change detection: Monitor for newly connected devices
   - Inventory management: List all USB peripherals across server fleet
   - Incident response: Identify potential data exfiltration devices
+
+### baremetal_process_memory_growth.py
+```
+python baremetal_process_memory_growth.py [--format format] [-v] [-w] [-s N] [-i SEC] [--min-growth KB] [--min-pct PCT] [--top N] [--user USERNAME] [--cmd PATTERN]
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including top growers
+  -w, --warn-only: Only show processes with warnings or critical growth
+  -s, --samples N: Number of samples to take (default: 3, min: 2)
+  -i, --interval SEC: Interval between samples in seconds (default: 5.0)
+  --min-growth KB: Minimum growth in KB to report (default: 512)
+  --min-pct PCT: Minimum growth percentage for warning (default: 10.0)
+  --top N: Show top N growers (default: 10 with --verbose)
+  --user USERNAME: Only monitor processes owned by this user
+  --cmd PATTERN: Only monitor processes matching command pattern (regex)
+```
+
+Features:
+  - Sample process RSS memory at configurable intervals
+  - Calculate growth rate per sample period (KB/min)
+  - Identify top memory growers by absolute and percentage growth
+  - Filter by minimum growth threshold to reduce noise
+  - Filter by user or command pattern for targeted monitoring
+  - Detect processes with >50% memory growth as critical
+  - Support multiple output formats for monitoring integration
+
+Requirements:
+  - Linux /proc filesystem
+  - Read access to /proc/[pid]/status directories
+
+Exit codes:
+  - 0: No significant memory growth detected
+  - 1: One or more processes showing concerning growth
+  - 2: Usage error or /proc filesystem not available
+
+Examples:
+```bash
+# Basic check with default 3 samples, 5 seconds apart
+baremetal_process_memory_growth.py
+
+# Extended monitoring: 5 samples, 5 seconds apart (25 sec total)
+baremetal_process_memory_growth.py -s 5 -i 5
+
+# Monitor only www-data user processes
+baremetal_process_memory_growth.py --user www-data
+
+# Monitor processes matching 'nginx' pattern
+baremetal_process_memory_growth.py --cmd nginx
+
+# Only report growth > 1MB
+baremetal_process_memory_growth.py --min-growth 1024
+
+# JSON output for monitoring systems
+baremetal_process_memory_growth.py --format json
+
+# Show top 10 memory growers with verbose output
+baremetal_process_memory_growth.py -v --top 10
+
+# Quick check with short intervals for testing
+baremetal_process_memory_growth.py -s 2 -i 1 --min-growth 256
+```
 
 ### baremetal_process_limits_monitor.py
 ```
