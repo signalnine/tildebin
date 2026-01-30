@@ -57,6 +57,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `disk_health_check.py`: Monitor disk health using SMART attributes
 - `baremetal_disk_life_predictor.py`: Predict disk failure risk using SMART attribute trend analysis with weighted risk scoring for both SATA/SAS and NVMe drives
 - `baremetal_trim_status_monitor.py`: Monitor TRIM/discard status for SSDs and NVMe drives to identify misconfigured devices where TRIM is not enabled, causing performance degradation over time
+- `baremetal_partition_alignment_checker.py`: Check disk partition alignment for optimal I/O performance - misaligned partitions cause read-modify-write cycles that significantly degrade SSD and Advanced Format HDD performance
 - `baremetal_disk_space_forecaster.py`: Forecast disk space exhaustion by sampling filesystem usage and predicting days until full based on growth rate estimation
 - `nvme_health_monitor.py`: Monitor NVMe SSD health metrics including wear level, power cycles, unsafe shutdowns, media errors, and thermal throttling
 - `baremetal_ssd_wear_monitor.py`: Monitor SSD wear levels and endurance metrics for both NVMe and SATA SSDs, tracking percentage used, available spare capacity, total data written, and media errors with configurable warning thresholds
@@ -790,6 +791,55 @@ baremetal_trim_status_monitor.py --warn-only
 
 # JSON output for automation
 baremetal_trim_status_monitor.py --format json
+```
+
+### baremetal_partition_alignment_checker.py
+```
+python baremetal_partition_alignment_checker.py [-d device] [-v] [-w] [--format format]
+  -d, --device: Specific device to check (e.g., sda, nvme0n1)
+  -v, --verbose: Show detailed information including sector sizes
+  -w, --warn-only: Only show misaligned partitions
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+```
+
+Partition alignment is critical for optimal I/O performance. Misaligned partitions cause read-modify-write cycles that significantly degrade performance on:
+  - SSDs (especially with 4K or larger physical sectors)
+  - Advanced Format HDDs (4K sector size)
+  - RAID arrays with specific stripe sizes
+  - NVMe drives with various LBA formats
+
+Checks performed:
+  - Partition start offset alignment to physical sector size
+  - Optimal alignment for modern configurations (1MiB boundary)
+  - Detection of legacy MBR-style misalignment (sector 63)
+  - Optimal I/O size alignment when applicable
+
+Alignment guidelines:
+  - Modern drives should have partitions aligned to 1MiB (2048 sectors)
+  - At minimum, partitions should be aligned to 4K (8 sectors for 512B logical)
+  - SSDs and Advanced Format HDDs are especially sensitive to misalignment
+
+Exit codes:
+  - 0: All partitions properly aligned
+  - 1: Misaligned partitions found
+  - 2: Usage error or missing tools
+
+Examples:
+```bash
+# Check all disk devices for partition alignment
+baremetal_partition_alignment_checker.py
+
+# Check specific device
+baremetal_partition_alignment_checker.py -d sda
+
+# Show only misaligned partitions
+baremetal_partition_alignment_checker.py --warn-only
+
+# Verbose output with sector size details
+baremetal_partition_alignment_checker.py -v
+
+# JSON output for automation
+baremetal_partition_alignment_checker.py --format json
 ```
 
 ### nvme_health_monitor.py
