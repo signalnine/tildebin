@@ -232,6 +232,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_network_policy_audit.py`: Audit network policies and identify security gaps, unprotected pods, and configuration issues
 - `k8s_node_taint_analyzer.py`: Analyze node taints and their impact on pod scheduling, identifying blocking taints, orphaned taints, and workload distribution
 - `k8s_node_label_auditor.py`: Audit node labels and annotations for consistency, compliance with naming conventions, missing topology/role labels, and deprecated labels
+- `k8s_node_kernel_config_audit.py`: Audit sysctl kernel parameters across Kubernetes nodes to detect inconsistencies and non-compliant configurations critical for baremetal clusters
 - `k8s_resource_quota_auditor.py`: Audit ResourceQuota and LimitRange policies across namespaces to ensure proper resource governance
 - `k8s_namespace_resource_analyzer.py`: Analyze namespace resource utilization for capacity planning, chargeback, and multi-tenant governance
 - `k8s_resource_right_sizer.py`: Analyze resource requests/limits against actual usage to identify over-provisioned and under-provisioned workloads for cost optimization
@@ -6289,6 +6290,64 @@ Use cases:
   - **Fleet Consistency**: Detect label drift across similar nodes (e.g., workers with different labels)
   - **Capacity Planning**: Verify node roles are properly labeled for resource planning
   - **Security Auditing**: Ensure nodes in production have required security labels
+
+### k8s_node_kernel_config_audit.py
+```
+python3 k8s_node_kernel_config_audit.py [--format FORMAT] [--verbose] [--warn-only] [--consistency-only] [--node-selector SELECTOR]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --verbose, -v: Show detailed kernel configuration for each node
+  --warn-only, -w: Only show warnings and critical issues
+  --consistency-only: Only check for consistency across nodes, skip compliance checks
+  --node-selector: Label selector to filter nodes (e.g., 'node-role.kubernetes.io/worker=')
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: All nodes have consistent and compliant kernel configuration
+  - 1: Inconsistencies or non-compliant settings detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Checks kernel parameter consistency across all cluster nodes
+  - Validates recommended settings for Kubernetes networking (bridge-nf-call-iptables, ip_forward)
+  - Audits security-related parameters (ASLR, dmesg_restrict, kptr_restrict)
+  - Monitors memory/VM settings affecting container workloads
+  - Checks conntrack settings critical for high-traffic clusters
+  - Supports node filtering via label selector
+
+Examples:
+```bash
+# Audit all nodes
+k8s_node_kernel_config_audit.py
+
+# Show detailed configuration for each node
+k8s_node_kernel_config_audit.py -v
+
+# Only show warnings and critical issues
+k8s_node_kernel_config_audit.py --warn-only
+
+# JSON output for monitoring integration
+k8s_node_kernel_config_audit.py --format json
+
+# Only check consistency, skip compliance
+k8s_node_kernel_config_audit.py --consistency-only
+
+# Audit only worker nodes
+k8s_node_kernel_config_audit.py --node-selector 'node-role.kubernetes.io/worker='
+
+# Combined options
+k8s_node_kernel_config_audit.py -w -v --format table
+```
+
+Use cases:
+  - **Cluster Consistency**: Ensure all nodes have identical kernel tuning for predictable behavior
+  - **Security Compliance**: Verify security-related kernel parameters across the fleet
+  - **Performance Tuning**: Audit network and memory parameters for high-performance workloads
+  - **Troubleshooting**: Identify nodes with misconfigured kernel parameters causing issues
+  - **Baremetal Operations**: Critical for baremetal Kubernetes where kernel config varies between hardware
 
 ### k8s_resource_quota_auditor.py
 ```
