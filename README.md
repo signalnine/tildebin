@@ -54,6 +54,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_kernel_config_audit.py`: Audit kernel runtime configuration (sysctl) against security and performance baselines with built-in profiles for security hardening, performance tuning, and balanced configurations
 - `baremetal_livepatch_monitor.py`: Monitor kernel live patching status (kpatch, livepatch, ksplice) for security compliance, detecting active patches, disabled patches, and systems missing security patches that can be applied without reboots
 - `baremetal_reboot_required_monitor.py`: Monitor system reboot requirements for fleet-wide maintenance planning - detects kernel version mismatches, Debian/Ubuntu reboot-required flags, RHEL needs-restarting status, and processes using deleted libraries
+- `baremetal_initramfs_health_monitor.py`: Monitor initramfs/initrd health for all installed kernels - detects missing, corrupted, or orphaned initramfs images, validates compression and permissions, and checks for regeneration tools availability - critical for preventing unbootable systems after kernel updates
 - `baremetal_kernel_log_rate_monitor.py`: Monitor kernel log message rates to detect anomalies that may indicate hardware problems, driver issues, or system instability with configurable thresholds and burst detection
 - `disk_health_check.py`: Monitor disk health using SMART attributes
 - `baremetal_disk_life_predictor.py`: Predict disk failure risk using SMART attribute trend analysis with weighted risk scoring for both SATA/SAS and NVMe drives
