@@ -117,6 +117,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_packet_drop_analyzer.py`: Analyze per-interface packet drops with detailed breakdown by cause (rx_dropped, rx_errors, rx_missed, rx_fifo, tx_dropped, tx_carrier, etc.) to help distinguish between driver bugs, misconfigurations, buffer exhaustion, and potential attacks
 - `baremetal_link_flap_detector.py`: Detect network interface link flapping by monitoring carrier state transitions over time to identify unstable cables, failing transceivers, bad switch ports, or auto-negotiation issues causing intermittent connectivity
 - `baremetal_route_health_monitor.py`: Monitor network routing health including default gateway reachability, routing table consistency, and interface status to detect routing issues causing connectivity problems
+- `baremetal_network_peer_latency_monitor.py`: Monitor network latency to peers and gateways using ICMP ping or TCP connect probes, with configurable warning/critical thresholds for detecting network degradation in large-scale environments
 - `baremetal_arp_table_monitor.py`: Monitor ARP table health to detect stale entries, duplicate MACs (potential IP conflicts or spoofing), table exhaustion, and gateway reachability issues for network troubleshooting
 - `baremetal_dns_resolver_monitor.py`: Monitor DNS resolver configuration and health including /etc/resolv.conf validation, nameserver reachability testing, DNS resolution verification, and systemd-resolved status for large-scale baremetal environments
 - `baremetal_service_port_monitor.py`: Monitor service port availability and responsiveness with support for common service presets (redis, mysql, postgres, http, https, ssh, etc.) and custom port definitions, useful for verifying critical services are listening and responding without requiring service-specific clients
@@ -2318,6 +2319,67 @@ baremetal_route_health_monitor.py --ping-count 10 --ping-timeout 5
 ```
 
 Use Case: In large-scale baremetal environments, silent routing failures can cause cascading connectivity issues. A failed default gateway, missing route, or downed interface can isolate servers from the network without obvious symptoms. This script proactively monitors routing health by checking gateway reachability and interface status, detecting issues before they cause service disruptions. Essential for environments with redundant gateways, policy-based routing, or complex network topologies.
+
+### baremetal_network_peer_latency_monitor.py
+```
+python baremetal_network_peer_latency_monitor.py [-t targets] [-c count] [--tcp] [-p port] [--warn-ms ms] [--crit-ms ms] [--max-loss pct] [-f format] [-v] [-w]
+  -t, --targets: Comma-separated list of targets (IP/hostname). Default: gateway
+  -c, --count: Number of probes per target (default: 5)
+  --timeout: Timeout per probe in seconds (default: 2)
+  --tcp: Use TCP connect probes instead of ICMP
+  -p, --port: TCP port for --tcp mode (default: 443)
+  --warn-ms: Warning threshold for avg latency in ms (default: 50)
+  --crit-ms: Critical threshold for avg latency in ms (default: 100)
+  --max-loss: Maximum acceptable packet loss % (default: 10)
+  -f, --format: Output format - plain, json, table (default: plain)
+  -v, --verbose: Show detailed information
+  -w, --warn-only: Only show targets with issues
+```
+
+Features:
+  - ICMP ping-based latency measurement with min/avg/max/stddev
+  - TCP connect probes as alternative for ICMP-blocked environments
+  - Multiple target monitoring with individual status tracking
+  - Configurable warning and critical thresholds
+  - Packet loss percentage monitoring
+  - Automatic default gateway detection when no targets specified
+  - Multiple output formats for monitoring integration
+
+Requirements:
+  - ping command (for ICMP mode)
+  - ip command (for gateway detection)
+  - Python socket library (for TCP mode)
+
+Exit codes:
+  - 0: All targets reachable with acceptable latency
+  - 1: Warnings or critical issues detected (high latency, packet loss, unreachable)
+  - 2: Usage error or missing dependencies
+
+Examples:
+```bash
+# Monitor latency to default gateway
+baremetal_network_peer_latency_monitor.py
+
+# Monitor specific targets
+baremetal_network_peer_latency_monitor.py --targets 8.8.8.8,1.1.1.1
+
+# Set custom latency thresholds
+baremetal_network_peer_latency_monitor.py --warn-ms 25 --crit-ms 50
+
+# Use TCP probes for HTTPS port (for ICMP-blocked environments)
+baremetal_network_peer_latency_monitor.py --tcp --port 443 --targets google.com
+
+# JSON output for monitoring systems
+baremetal_network_peer_latency_monitor.py --format json
+
+# More samples for accuracy
+baremetal_network_peer_latency_monitor.py --count 10
+
+# Table format with only problematic targets
+baremetal_network_peer_latency_monitor.py --format table --warn-only
+```
+
+Use Case: In large-scale baremetal environments, network latency is a critical performance indicator. High latency to peers, gateways, or external services can indicate network congestion, failing hardware, misconfigured routing, or noisy neighbor problems. This script provides continuous latency measurement with configurable thresholds, enabling proactive detection of network degradation before it impacts applications. Essential for environments with strict latency SLAs, database clusters, or distributed computing workloads.
 
 ### network_bond_status.sh
 ```
