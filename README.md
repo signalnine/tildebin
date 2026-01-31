@@ -206,6 +206,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `kubernetes_node_health.py`: Check Kubernetes node health and resource availability
 - `k8s_kubelet_health_monitor.py`: Monitor kubelet health on Kubernetes nodes including node conditions, heartbeat staleness, restart frequency, and version consistency across the cluster
 - `k8s_pod_resource_audit.py`: Audit pod resource usage and identify resource issues
+- `k8s_resource_request_efficiency_analyzer.py`: Analyze resource request efficiency by comparing actual CPU/memory usage to requests, identifying over-provisioned pods wasting cluster capacity
 - `k8s_extended_resources_audit.py`: Audit extended resources (GPUs, FPGAs, custom device plugins) allocation and utilization across heterogeneous baremetal clusters
 - `k8s_pv_health_check.py`: Check persistent volume health and storage status
 - `k8s_pvc_stuck_detector.py`: Detect PersistentVolumeClaims stuck in Pending state with diagnostic information about provisioning issues
@@ -4447,6 +4448,60 @@ k8s_pod_resource_audit.py --show-quotas
 
 # Combine options: only problematic pods in JSON format
 k8s_pod_resource_audit.py -w -f json -n kube-system
+```
+
+### k8s_resource_request_efficiency_analyzer.py
+```
+python k8s_resource_request_efficiency_analyzer.py [--namespace NAMESPACE] [--format format] [--warn-only] [--verbose] [--low-threshold PCT] [--high-threshold PCT]
+  --namespace, -n: Namespace to analyze (default: all namespaces)
+  --format, -f: Output format - 'plain' or 'json' (default: plain)
+  --warn-only, -w: Only show pods/workloads with efficiency issues
+  --verbose, -v: Show detailed per-pod breakdown
+  --low-threshold: Efficiency percentage below which pods are over-provisioned (default: 25%)
+  --high-threshold: Efficiency percentage above which pods are under-provisioned (default: 100%)
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+  - metrics-server installed in the cluster
+
+Exit codes:
+  - 0: No efficiency issues detected
+  - 1: Efficiency issues found (over/under-provisioned pods)
+  - 2: Usage error, kubectl unavailable, or metrics-server unavailable
+
+Features:
+  - Compares actual CPU/memory usage (from metrics-server) to resource requests
+  - Calculates efficiency ratios: actual_usage / requested_resources
+  - Identifies over-provisioned pods using <25% of requested resources
+  - Identifies under-provisioned pods using >100% of requests (risk of throttling)
+  - Aggregates statistics by workload (Deployment/StatefulSet) for trend analysis
+  - Provides rightsizing recommendations to reduce wasted cluster capacity
+  - Useful for cost optimization in large-scale Kubernetes deployments
+
+Examples:
+```bash
+# Analyze all pods across all namespaces
+k8s_resource_request_efficiency_analyzer.py
+
+# Analyze pods in production namespace only
+k8s_resource_request_efficiency_analyzer.py -n production
+
+# Show only workloads with efficiency issues
+k8s_resource_request_efficiency_analyzer.py --warn-only
+
+# Get detailed per-pod breakdown
+k8s_resource_request_efficiency_analyzer.py --verbose
+
+# JSON output for automation/monitoring
+k8s_resource_request_efficiency_analyzer.py --format json
+
+# Custom thresholds: flag pods using <30% or >90% of requests
+k8s_resource_request_efficiency_analyzer.py --low-threshold 30 --high-threshold 90
+
+# Combine options: verbose JSON output for problematic pods
+k8s_resource_request_efficiency_analyzer.py -w -v -f json -n kube-system
 ```
 
 ### k8s_extended_resources_audit.py
