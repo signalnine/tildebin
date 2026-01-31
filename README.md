@@ -276,6 +276,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_operator_health_monitor.py`: Monitor Kubernetes operator health (Prometheus, Cert-Manager, ArgoCD, Flux, Istio, etc.) including controller pod status, CRD availability, and deployment readiness
 - `k8s_api_deprecation_checker.py`: Check for deprecated Kubernetes API versions in cluster resources to prepare for upgrades, identifying resources using removed or deprecated APIs with replacement suggestions and removal version information
 - `k8s_runtimeclass_analyzer.py`: Analyze Kubernetes RuntimeClass usage across workloads to understand runtime distribution (runc, kata, gVisor), identify pods running with default runtime, detect references to non-existent RuntimeClasses, and provide isolation level summaries for security audits and compliance reporting
+- `k8s_workload_zone_balance.py`: Analyze workload distribution across topology zones (availability zones) to identify high-availability risks, single-zone vulnerabilities, and zone imbalance issues for pre-maintenance checks and capacity planning
 
 ### System Utilities
 - `generate_fstab.sh`: Generate an /etc/fstab file from current mounts using UUIDs
