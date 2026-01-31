@@ -65,6 +65,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_trim_status_monitor.py`: Monitor TRIM/discard status for SSDs and NVMe drives to identify misconfigured devices where TRIM is not enabled, causing performance degradation over time
 - `baremetal_partition_alignment_checker.py`: Check disk partition alignment for optimal I/O performance - misaligned partitions cause read-modify-write cycles that significantly degrade SSD and Advanced Format HDD performance
 - `baremetal_disk_space_forecaster.py`: Forecast disk space exhaustion by sampling filesystem usage and predicting days until full based on growth rate estimation
+- `baremetal_disk_write_cache_audit.py`: Audit disk write cache settings for data integrity compliance - checks hard disk and SSD write cache configuration (WCE) via hdparm, sdparm, and nvme-cli to ensure data integrity on systems without battery-backed write cache or UPS protection
 - `nvme_health_monitor.py`: Monitor NVMe SSD health metrics including wear level, power cycles, unsafe shutdowns, media errors, and thermal throttling
 - `baremetal_ssd_wear_monitor.py`: Monitor SSD wear levels and endurance metrics for both NVMe and SATA SSDs, tracking percentage used, available spare capacity, total data written, and media errors with configurable warning thresholds
 - `disk_io_monitor.py`: Monitor disk I/O performance and identify bottlenecks
