@@ -106,6 +106,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_boot_issues_analyzer.py`: Analyze boot issues from journald logs across recent system boots including kernel panics, OOM kills, emergency mode entries, failed units, and hardware errors - useful for identifying machines with problematic boots in large fleets
 - `baremetal_uptime_monitor.py`: Monitor system uptime and reboot history to detect flapping servers with frequent reboots, analyze reboot patterns, and identify unstable systems in large baremetal environments
 - `baremetal_load_average_monitor.py`: Monitor system load averages relative to CPU count, providing normalized load per CPU metrics, trend analysis (increasing/decreasing/stable), and configurable thresholds for capacity planning and overload detection
+- `baremetal_proc_pressure_monitor.py`: Monitor Linux Pressure Stall Information (PSI) metrics for CPU, memory, and I/O contention at the system level - provides early warning of resource pressure before visible performance degradation, useful for detecting oversubscription in large-scale baremetal fleets
 - `baremetal_network_config_audit.py`: Audit network interface configuration for common misconfigurations (MTU mismatches, bonding inconsistencies, IPv6 configuration drift)
 - `baremetal_netns_health_monitor.py`: Monitor network namespace health on container hosts, detecting orphaned namespaces, dangling veth pairs, and namespace interface issues
 - `baremetal_bandwidth_monitor.py`: Monitor network interface bandwidth utilization and throughput by sampling /proc/net/dev, calculating bytes/packets per second, utilization percentage, and detecting saturation with configurable thresholds
@@ -2684,6 +2685,59 @@ baremetal_load_average_monitor.py -v
 ```
 
 Use Case: In large-scale baremetal environments, raw load averages can be misleading - a load of 10 is healthy on a 256-core system but critical on a 4-core system. This script normalizes load by CPU count, making it easy to compare system health across heterogeneous hardware. The trend analysis helps identify runaway processes or gradually increasing load before it becomes critical. Essential for capacity planning and workload balancing in datacenter environments.
+
+### baremetal_proc_pressure_monitor.py
+```
+python baremetal_proc_pressure_monitor.py [--format format] [-v] [-w] [--warn-some PCT] [--crit-some PCT] [--warn-full PCT] [--crit-full PCT] [--resource RESOURCE]
+  --format, -f: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including total stall microseconds
+  -w, --warn-only: Only show output if issues or warnings detected
+  --warn-some PCT: Warning threshold for 'some' pressure percentage (default: 10.0)
+  --crit-some PCT: Critical threshold for 'some' pressure percentage (default: 25.0)
+  --warn-full PCT: Warning threshold for 'full' pressure percentage (default: 5.0)
+  --crit-full PCT: Critical threshold for 'full' pressure percentage (default: 10.0)
+  --resource, -r: Resource to monitor - 'cpu', 'memory', 'io', or 'all' (default: all)
+```
+
+Features:
+  - Monitor Linux PSI (Pressure Stall Information) metrics for CPU, memory, and I/O
+  - Detect resource contention before visible performance degradation
+  - Track 'some' pressure (at least one task stalled) and 'full' pressure (all tasks stalled)
+  - Report pressure over 10s, 60s, and 300s windows for trend analysis
+  - Configurable thresholds for different resource types
+  - Early warning system for oversubscription and resource exhaustion
+
+Requirements:
+  - Linux kernel 4.20+ with CONFIG_PSI=y
+  - Read access to /proc/pressure/{cpu,memory,io}
+
+Exit Codes:
+  - 0: All pressure metrics within acceptable thresholds
+  - 1: Pressure thresholds exceeded (resource contention detected)
+  - 2: Usage error or PSI not available
+
+Examples:
+```bash
+# Basic PSI check
+baremetal_proc_pressure_monitor.py
+
+# JSON output for monitoring integration
+baremetal_proc_pressure_monitor.py --format json
+
+# Monitor only memory pressure
+baremetal_proc_pressure_monitor.py --resource memory
+
+# Lower thresholds for sensitive environments
+baremetal_proc_pressure_monitor.py --warn-some 5 --crit-some 15
+
+# Only alert when pressure detected
+baremetal_proc_pressure_monitor.py --warn-only
+
+# Table format with verbose output
+baremetal_proc_pressure_monitor.py --format table -v
+```
+
+Use Case: PSI provides early warning of resource pressure before it manifests as visible performance problems. Unlike load averages which only measure CPU demand, PSI tracks actual stalls across CPU, memory, and I/O. A system with low load but high memory pressure may be swapping heavily; a system with normal CPU metrics but high I/O pressure may have storage bottlenecks. In large baremetal fleets, PSI monitoring helps identify oversubscribed systems, detect memory pressure before OOM kills, and find I/O-bound workloads before they impact neighboring processes.
 
 ### baremetal_conntrack_monitor.py
 ```
