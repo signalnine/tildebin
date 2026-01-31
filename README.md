@@ -100,6 +100,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_vlan_config_audit.py`: Audit VLAN configuration and health to detect orphaned VLANs, MTU mismatches, parent interface issues, and VLAN ID conflicts in datacenter environments
 - `network_bond_status.sh`: Check status of network bonded interfaces
 - `baremetal_bond_health_monitor.py`: Monitor network bond health with detailed diagnostics including slave status, failover readiness, link failures, and speed/duplex mismatch detection
+- `baremetal_bridge_health_monitor.py`: Monitor Linux bridge health for virtualization and container environments including bridge state, STP configuration, port forwarding states, MTU consistency, and connected interface health
 - `baremetal_boot_performance_monitor.py`: Monitor system boot performance and systemd initialization times to identify slow-booting systems and problematic services that delay startup
 - `baremetal_boot_issues_analyzer.py`: Analyze boot issues from journald logs across recent system boots including kernel panics, OOM kills, emergency mode entries, failed units, and hardware errors - useful for identifying machines with problematic boots in large fleets
 - `baremetal_uptime_monitor.py`: Monitor system uptime and reboot history to detect flapping servers with frequent reboots, analyze reboot patterns, and identify unstable systems in large baremetal environments
@@ -2367,6 +2368,53 @@ baremetal_bond_health_monitor.py --warn-only --format json
 
 # Table format for quick overview
 baremetal_bond_health_monitor.py --format table
+```
+
+### baremetal_bridge_health_monitor.py
+```
+python baremetal_bridge_health_monitor.py [-b BRIDGE] [-v] [--format format] [--warn-only] [--ignore-no-ports]
+  -b, --bridges: Specific bridge interface(s) to check (e.g., br0, vmbr0)
+  -v, --verbose: Show detailed bridge information including STP settings and port details
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  --warn-only: Only show warnings and issues
+  --ignore-no-ports: Don't warn about bridges with no connected ports
+```
+
+Features:
+  - Monitor Linux bridge interface health and configuration
+  - Check bridge state (up/down) and carrier status
+  - Detect STP configuration and root bridge status
+  - Monitor port forwarding states (forwarding, blocking, disabled)
+  - Detect MTU mismatches between bridge and connected ports
+  - Check VLAN filtering configuration
+  - Track connected interface health and link status
+  - Essential for KVM, libvirt, Proxmox, and container bridge networking
+
+Requirements:
+  - Linux with sysfs (/sys/class/net)
+  - Bridge interfaces configured via brctl, ip link, or libvirt
+
+Exit codes:
+  - 0: All bridges healthy
+  - 1: Bridge issues or warnings detected
+  - 2: No bridges found or usage error
+
+Examples:
+```bash
+# Check all bridges
+baremetal_bridge_health_monitor.py
+
+# Check specific bridge with verbose output
+baremetal_bridge_health_monitor.py -b vmbr0 -v
+
+# Only show problematic bridges in JSON format
+baremetal_bridge_health_monitor.py --warn-only --format json
+
+# Table format for quick overview
+baremetal_bridge_health_monitor.py --format table
+
+# Check multiple bridges
+baremetal_bridge_health_monitor.py -b br0 br1 virbr0
 ```
 
 ### baremetal_boot_performance_monitor.py
