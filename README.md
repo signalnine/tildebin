@@ -268,6 +268,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_rbac_auditor.py`: Audit Kubernetes RBAC roles and bindings for security issues including cluster-admin access, wildcard permissions, dangerous verbs, anonymous user access, and overly permissive service account bindings
 - `k8s_serviceaccount_auditor.py`: Audit Kubernetes ServiceAccounts for security issues including automountServiceAccountToken settings, default ServiceAccount usage, unused accounts, and high-privilege role bindings
 - `k8s_pod_security_audit.py`: Audit pod security contexts and Linux capabilities for security risks including privileged containers, root user execution, dangerous capabilities, host namespace sharing, and missing security profiles
+- `k8s_pod_annotation_auditor.py`: Audit pod annotations for compliance, checking for required annotations (owner, team, cost-center, prometheus scraping config) and validating values against regex patterns for organizational standards enforcement
 - `k8s_probe_config_audit.py`: Audit Kubernetes pod health probe configurations to identify reliability issues including missing liveness/readiness/startup probes, misconfigured timeouts and thresholds, and probe anti-patterns that can lead to service outages
 - `k8s_pod_lifecycle_hook_analyzer.py`: Analyze pod lifecycle hook configurations (preStop/postStart) to identify issues affecting graceful shutdown during node drains and rolling updates, including missing preStop hooks on stateful workloads, timeout mismatches with terminationGracePeriodSeconds, and hook failures from events
 - `k8s_control_plane_health.py`: Monitor Kubernetes control plane health including API server availability and latency, etcd cluster status, controller-manager and scheduler leader election, and control plane pod health
@@ -7205,6 +7206,72 @@ Security Use Cases:
   - **Security Posture**: Baseline and track security improvements over time
   - **Multi-tenant Clusters**: Ensure tenant workloads don't have dangerous privileges
   - **Baremetal Deployments**: Critical for on-prem clusters where container escapes are especially damaging
+
+### k8s_pod_annotation_auditor.py
+```
+k8s_pod_annotation_auditor.py --required ANNOTATIONS [-n namespace] [--format {plain,json,table}] [-v] [-w]
+  --required: Comma-separated list of required annotations (e.g., "owner,team,cost-center")
+              Use key=regex for value validation (e.g., "owner=team-.*")
+  --forbidden: Comma-separated list of forbidden annotations
+  -n, --namespace: Namespace to audit (default: all non-system namespaces)
+  --include-system: Include system namespaces (kube-system, etc.) in audit
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information
+  -w, --warn-only: Only output if there are non-compliant pods
+```
+
+Audit pod annotations for organizational compliance. Identifies:
+- Pods missing required annotations (owner, team, cost-center, etc.)
+- Annotations with values that don't match expected patterns
+- Forbidden/deprecated annotations that should be removed
+- Coverage statistics for required annotations across the cluster
+
+Exit codes:
+  - 0: All pods have required annotations with valid values
+  - 1: Some pods are missing required annotations or have invalid values
+  - 2: Usage error or kubectl not available
+
+Examples:
+```bash
+# Check for owner annotation on all pods
+k8s_pod_annotation_auditor.py --required app.kubernetes.io/owner
+
+# Check multiple required annotations
+k8s_pod_annotation_auditor.py --required "app.kubernetes.io/owner,prometheus.io/scrape"
+
+# Validate annotation values with regex patterns
+k8s_pod_annotation_auditor.py --required "app.kubernetes.io/owner=team-.*,prometheus.io/scrape=(true|false)"
+
+# Check specific namespace
+k8s_pod_annotation_auditor.py -n production --required "app.kubernetes.io/owner"
+
+# Include system namespaces in audit
+k8s_pod_annotation_auditor.py --include-system --required "app.kubernetes.io/owner"
+
+# Check for forbidden annotations
+k8s_pod_annotation_auditor.py --required "app.kubernetes.io/owner" --forbidden "deprecated.example.com/old-config"
+
+# JSON output for automation
+k8s_pod_annotation_auditor.py --format json --required "app.kubernetes.io/owner"
+
+# Only show non-compliant pods
+k8s_pod_annotation_auditor.py -w --required "app.kubernetes.io/owner,prometheus.io/scrape"
+```
+
+Common annotation keys:
+  - `app.kubernetes.io/owner` - Owner team/individual
+  - `app.kubernetes.io/team` - Team responsible for the workload
+  - `app.kubernetes.io/cost-center` - Cost allocation center
+  - `prometheus.io/scrape` - Enable Prometheus scraping
+  - `prometheus.io/port` - Prometheus metrics port
+  - `sidecar.istio.io/inject` - Istio sidecar injection
+
+Use Cases:
+  - **Cost Allocation**: Ensure all workloads have cost-center annotations for chargeback
+  - **Ownership Tracking**: Identify owners for incident response and maintenance
+  - **Monitoring Compliance**: Verify Prometheus scraping is configured consistently
+  - **Multi-tenant Governance**: Enforce annotation standards across teams
+  - **Deprecation Enforcement**: Find and remove deprecated annotations during migrations
 
 ### k8s_control_plane_health.py
 ```
