@@ -60,6 +60,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `disk_health_check.py`: Monitor disk health using SMART attributes
 - `baremetal_disk_encryption_status.py`: Monitor disk encryption status for LUKS/dm-crypt volumes to identify unencrypted data partitions for security compliance auditing
 - `baremetal_disk_life_predictor.py`: Predict disk failure risk using SMART attribute trend analysis with weighted risk scoring for both SATA/SAS and NVMe drives
+- `baremetal_disk_lifecycle_monitor.py`: Monitor disk power-on hours, age, and lifecycle status for hardware refresh planning - tracks HDD/SSD separately with configurable thresholds for fleet-wide hardware lifecycle management
 - `baremetal_trim_status_monitor.py`: Monitor TRIM/discard status for SSDs and NVMe drives to identify misconfigured devices where TRIM is not enabled, causing performance degradation over time
 - `baremetal_partition_alignment_checker.py`: Check disk partition alignment for optimal I/O performance - misaligned partitions cause read-modify-write cycles that significantly degrade SSD and Advanced Format HDD performance
 - `baremetal_disk_space_forecaster.py`: Forecast disk space exhaustion by sampling filesystem usage and predicting days until full based on growth rate estimation
