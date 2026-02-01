@@ -225,6 +225,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_daemonset_health_monitor.py`: Monitor DaemonSet health with node coverage verification, pod status on each node, and detection of scheduling issues
 - `k8s_cni_health_monitor.py`: Monitor CNI (Container Network Interface) health including plugin detection, DaemonSet status, node network conditions, and IPAM status
 - `k8s_dns_health_monitor.py`: Monitor DNS health including CoreDNS/kube-dns pod status and resolution testing
+- `k8s_service_latency_monitor.py`: Monitor service endpoint latency to detect network performance issues, unreachable services, and cross-node communication problems
 - `k8s_metrics_server_health_monitor.py`: Monitor Metrics Server health critical for HPA/VPA functionality, including deployment status, API availability, and metrics freshness
 - `k8s_event_monitor.py`: Monitor Kubernetes events to track cluster issues and anomalies
 - `k8s_node_capacity_planner.py`: Analyze cluster capacity and forecast resource allocation
@@ -5114,6 +5115,65 @@ k8s_dns_health_monitor.py --test-domain my-service.production.svc.cluster.local
 
 # Table format for easy reading
 k8s_dns_health_monitor.py --format table
+```
+
+### k8s_service_latency_monitor.py
+```
+python k8s_service_latency_monitor.py [-n NAMESPACE] [-l SELECTOR] [--format format] [--warn-only] [--warn-threshold MS] [--critical-threshold MS] [--include-system]
+  --namespace, -n: Namespace to check (default: all namespaces)
+  --selector, -l: Label selector to filter services (e.g., app=nginx)
+  --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show services with warnings or issues
+  --warn-threshold: Latency warning threshold in milliseconds (default: 200)
+  --critical-threshold: Latency critical threshold in milliseconds (default: 1000)
+  --include-system: Include system namespaces (kube-system, etc.)
+  --verbose, -v: Show verbose output including skipped services
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+  - Ability to create temporary pods for latency testing
+
+Exit codes:
+  - 0: All services responding within thresholds
+  - 1: Latency warnings or failures detected
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Measures TCP connectivity latency to service endpoints
+  - Detects unreachable services and endpoint issues
+  - Configurable warning and critical thresholds
+  - Filters by namespace and label selector
+  - Skips headless and ExternalName services automatically
+  - Reports endpoint count per service
+  - Supports plain text, JSON, and table output formats
+
+Examples:
+```bash
+# Check all services in default namespace
+k8s_service_latency_monitor.py -n default
+
+# Check services across all namespaces (excluding system)
+k8s_service_latency_monitor.py
+
+# Include system namespaces
+k8s_service_latency_monitor.py --include-system
+
+# JSON output for monitoring integration
+k8s_service_latency_monitor.py --format json
+
+# Only show services with issues
+k8s_service_latency_monitor.py --warn-only
+
+# Custom latency thresholds
+k8s_service_latency_monitor.py --warn-threshold 100 --critical-threshold 500
+
+# Check specific services by label
+k8s_service_latency_monitor.py -l app=nginx
+
+# Table format for easy reading
+k8s_service_latency_monitor.py --format table
 ```
 
 ### k8s_metrics_server_health_monitor.py
