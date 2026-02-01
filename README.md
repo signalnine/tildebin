@@ -81,6 +81,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_mce_monitor.py`: Monitor Machine Check Exceptions (MCE) for hardware fault detection including CPU cache errors, memory bus errors, system bus errors, and thermal events - critical for detecting failing hardware before data corruption
 - `baremetal_multipath_health_monitor.py`: Monitor dm-multipath device health, detecting failed or degraded paths, path flapping, and configuration issues for SAN/NAS storage
 - `baremetal_drbd_health_monitor.py`: Monitor DRBD (Distributed Replicated Block Device) replication health including synchronization state, split-brain detection, connection status, and resync progress for high-availability storage clusters
+- `baremetal_ceph_health_monitor.py`: Monitor Ceph distributed storage cluster health including overall cluster status (HEALTH_OK/WARN/ERR), OSD health and capacity, pool utilization, placement group states, and monitor quorum - essential for large-scale object, block, and file storage infrastructure
 - `baremetal_iscsi_health.py`: Monitor iSCSI session health including target connectivity, session state, error counts, and multipath status for SAN storage environments
 - `baremetal_nfs_mount_monitor.py`: Monitor NFS mount health including stale mount detection, server connectivity, mount latency, and configuration validation for large-scale environments with shared storage
 - `baremetal_mount_health_monitor.py`: Monitor all mounted filesystems for hung mounts (NFS/CIFS/FUSE that stop responding), stale NFS handles, read-only remounts, bind mount consistency, and mount option issues - critical for detecting storage problems before they cascade into system-wide failures
@@ -1292,6 +1293,51 @@ baremetal_drbd_health_monitor.py --sync-warn 80 --sync-crit 30
 
 # Table format with details
 baremetal_drbd_health_monitor.py --format table --verbose
+```
+
+### baremetal_ceph_health_monitor.py
+```
+python baremetal_ceph_health_monitor.py [--format format] [-v] [-w]
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed OSD and pool information
+  -w, --warn-only: Only show warnings and errors
+```
+
+Requirements:
+  - Ceph client tools (ceph command)
+  - Ubuntu/Debian: `sudo apt-get install ceph-common`
+  - RHEL/CentOS: `sudo yum install ceph-common`
+  - Valid ceph.conf and keyring for cluster access
+
+Exit codes:
+  - 0: Cluster healthy (HEALTH_OK)
+  - 1: Cluster has warnings or errors (HEALTH_WARN or HEALTH_ERR)
+  - 2: Usage error or ceph command not available
+
+Features:
+  - Overall cluster health status monitoring
+  - OSD (Object Storage Daemon) health and capacity tracking
+  - Pool utilization and object count monitoring
+  - Placement group state analysis (degraded, recovering, stale)
+  - Monitor quorum verification
+  - Detection of high utilization and capacity warnings
+
+Examples:
+```bash
+# Basic cluster health check
+baremetal_ceph_health_monitor.py
+
+# Detailed output with OSD and pool info
+baremetal_ceph_health_monitor.py --verbose
+
+# JSON output for monitoring integration
+baremetal_ceph_health_monitor.py --format json
+
+# Only show warnings and errors
+baremetal_ceph_health_monitor.py --warn-only
+
+# Table summary format
+baremetal_ceph_health_monitor.py --format table
 ```
 
 ### baremetal_iscsi_health.py
