@@ -2,11 +2,15 @@
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+# Add project root to path for script imports
+PROJECT_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
