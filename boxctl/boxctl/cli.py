@@ -1,7 +1,9 @@
 """Command-line interface for boxctl."""
 
 import argparse
+import shutil
 import sys
+from collections import defaultdict
 from pathlib import Path
 
 from boxctl import __version__
@@ -76,6 +78,17 @@ def create_parser() -> argparse.ArgumentParser:
     # search command
     search_parser = subparsers.add_parser("search", help="Search scripts")
     search_parser.add_argument("query", help="Search query")
+
+    # doctor command
+    subparsers.add_parser("doctor", help="Check system health and tool availability")
+
+    # lint command
+    lint_parser = subparsers.add_parser("lint", help="Validate script metadata headers")
+    lint_parser.add_argument(
+        "scripts",
+        nargs="*",
+        help="Specific scripts to lint (default: all)",
+    )
 
     return parser
 
@@ -204,6 +217,121 @@ def cmd_search(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_lint(args: argparse.Namespace) -> int:
+    """Validate script metadata headers."""
+    from boxctl.core.linter import lint_script, lint_all, LintResult
+
+    if args.scripts:
+        # Lint specific scripts
+        results = []
+        for script_name in args.scripts:
+            path = args.scripts_dir / script_name
+            if not path.suffix:
+                path = path.with_suffix(".py")
+            if path.exists():
+                results.append(lint_script(path))
+            else:
+                results.append(LintResult(path=path, errors=[f"File not found: {path}"]))
+    else:
+        # Lint all scripts
+        results = lint_all(args.scripts_dir)
+
+    total_errors = 0
+    total_warnings = 0
+
+    if args.format == "json":
+        import json
+        output = []
+        for result in results:
+            output.append({
+                "path": str(result.path),
+                "ok": result.ok,
+                "errors": result.errors,
+                "warnings": result.warnings,
+            })
+            total_errors += len(result.errors)
+            total_warnings += len(result.warnings)
+        print(json.dumps({"results": output, "errors": total_errors, "warnings": total_warnings}, indent=2))
+    else:
+        for result in results:
+            total_errors += len(result.errors)
+            total_warnings += len(result.warnings)
+
+            if result.errors or result.warnings:
+                print(f"\n{result.path}:")
+                for error in result.errors:
+                    print(f"  ✗ ERROR: {error}")
+                for warning in result.warnings:
+                    print(f"  ⚠ WARNING: {warning}")
+
+        print(f"\nLinted {len(results)} file(s): {total_errors} error(s), {total_warnings} warning(s)")
+
+    return 1 if total_errors > 0 else 0
+
+
+def cmd_doctor(args: argparse.Namespace) -> int:
+    """Check system health and tool availability."""
+    scripts = discover_scripts(args.scripts_dir)
+
+    # Collect all required tools
+    all_tools: set[str] = set()
+    tools_by_script: dict[str, list[str]] = {}
+    for script in scripts:
+        if script.requires:
+            all_tools.update(script.requires)
+            tools_by_script[script.name] = script.requires
+
+    # Check tool availability
+    tool_status = {}
+    for tool in sorted(all_tools):
+        tool_status[tool] = shutil.which(tool) is not None
+
+    # Count scripts by category
+    category_counts: dict[str, int] = defaultdict(int)
+    for script in scripts:
+        category_counts[script.category] += 1
+
+    # Count privileged scripts
+    privileged_count = sum(1 for s in scripts if s.privilege == "root")
+
+    # Check for missing tools
+    missing_tools = [t for t, available in tool_status.items() if not available]
+
+    if args.format == "json":
+        import json
+        print(json.dumps({
+            "scripts_total": len(scripts),
+            "scripts_by_category": dict(category_counts),
+            "privileged_scripts": privileged_count,
+            "tools": tool_status,
+            "missing_tools": missing_tools,
+        }, indent=2))
+    else:
+        print("=== boxctl doctor ===\n")
+
+        print(f"Scripts: {len(scripts)} total")
+        for category in sorted(category_counts.keys()):
+            print(f"  {category}: {category_counts[category]}")
+        print()
+
+        print(f"Privileged scripts (require root): {privileged_count}")
+        print()
+
+        if all_tools:
+            print("Required tools:")
+            for tool in sorted(all_tools):
+                status = "✓" if tool_status[tool] else "✗ MISSING"
+                print(f"  {tool}: {status}")
+            print()
+
+        if missing_tools:
+            print(f"⚠ {len(missing_tools)} missing tool(s): {', '.join(missing_tools)}")
+        else:
+            print("✓ All required tools available")
+
+    return 1 if missing_tools else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """Main entry point."""
     parser = create_parser()
@@ -218,6 +346,8 @@ def main(argv: list[str] | None = None) -> int:
         "run": cmd_run,
         "show": cmd_show,
         "search": cmd_search,
+        "doctor": cmd_doctor,
+        "lint": cmd_lint,
     }
 
     return commands[args.command](args)
