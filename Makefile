@@ -1,77 +1,58 @@
-# Makefile for tildebin utilities
-#
-# Common tasks for testing and development
+# boxctl Makefile
 
-.PHONY: test test-verbose test-ec2 test-baremetal test-k8s clean help
+.PHONY: all setup test test-cov test-verbose lint build clean install help
 
-# Default target
+PYTHON := python3
+PYTEST := $(PYTHON) -m pytest
+VERSION := $(shell grep -Po '(?<=version = ")[^"]+' pyproject.toml 2>/dev/null || echo "0.1.0")
+
+all: test
+
 help:
-	@echo "tildebin - Makefile targets"
+	@echo "boxctl development commands:"
 	@echo ""
-	@echo "Testing:"
-	@echo "  make test              - Run all tests"
-	@echo "  make test-verbose      - Run all tests with verbose output"
-	@echo "  make test-ec2          - Run only EC2-related tests"
-	@echo "  make test-baremetal    - Run only baremetal-related tests"
-	@echo "  make test-k8s          - Run only Kubernetes-related tests"
-	@echo "  make test-filter PATTERN=<pattern>"
-	@echo "                         - Run tests matching pattern"
+	@echo "  make setup        - Set up development environment"
+	@echo "  make test         - Run tests"
+	@echo "  make test-cov     - Run tests with coverage report"
+	@echo "  make test-verbose - Run tests with verbose output"
+	@echo "  make lint         - Run linter (TODO)"
+	@echo "  make build        - Build distribution"
+	@echo "  make clean        - Remove build artifacts"
+	@echo "  make install      - Install to /opt/boxctl"
 	@echo ""
-	@echo "Utilities:"
-	@echo "  make clean             - Remove __pycache__ and temporary files"
-	@echo "  make check-deps        - Check if required dependencies are installed"
-	@echo ""
-	@echo "Examples:"
-	@echo "  make test"
-	@echo "  make test-filter PATTERN=disk"
-	@echo "  make test-filter PATTERN='disk raid'"
 
-# Run all tests
+setup:
+	./scripts/setup-dev.sh
+
 test:
-	@python3 tests/run_tests.py
+	$(PYTEST) tests/ -v --ignore=tests/integration
 
-# Run tests with verbose output
+test-cov:
+	$(PYTEST) tests/ -v --ignore=tests/integration \
+		--cov=boxctl --cov-report=term-missing --cov-fail-under=80
+
 test-verbose:
-	@python3 tests/run_tests.py -v
+	$(PYTEST) tests/ -vv --ignore=tests/integration
 
-# Run only EC2-related tests
-test-ec2:
-	@python3 tests/run_tests.py -f ec2 listec2hosts emptysgs listvolumes terminate stop
+test-integration:
+	$(PYTEST) tests/integration/ -v
 
-# Run only baremetal-related tests
-test-baremetal:
-	@python3 tests/run_tests.py -f disk raid network system_inventory
+test-all: test test-integration
 
-# Run only Kubernetes-related tests
-test-k8s:
-	@python3 tests/run_tests.py -f k8s kubernetes
+lint:
+	@echo "Linting not yet implemented"
 
-# Run tests matching a pattern
-test-filter:
-	@python3 tests/run_tests.py -f $(PATTERN)
+build:
+	./scripts/build.sh
 
-# Run a specific test
-test-%:
-	@python3 tests/test_$*.py
-
-# Clean up temporary files
 clean:
-	@echo "Cleaning up temporary files..."
-	@find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-	@find . -type f -name '*.pyc' -delete 2>/dev/null || true
-	@find . -type f -name '*.pyo' -delete 2>/dev/null || true
-	@find . -type f -name '*~' -delete 2>/dev/null || true
-	@echo "Done."
+	rm -rf build/ dist/ *.egg-info .pytest_cache .coverage htmlcov/
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 
-# Check for required dependencies
-check-deps:
-	@echo "Checking Python dependencies..."
-	@python3 -c "import boto3" 2>/dev/null && echo "✓ boto3 installed" || echo "✗ boto3 missing (pip install boto3)"
-	@echo ""
-	@echo "Checking optional system tools..."
-	@which smartctl >/dev/null 2>&1 && echo "✓ smartctl installed" || echo "✗ smartctl missing (for disk_health_check.py)"
-	@which iostat >/dev/null 2>&1 && echo "✓ iostat installed" || echo "✗ iostat missing (for disk_io_monitor.py)"
-	@which mdadm >/dev/null 2>&1 && echo "✓ mdadm installed" || echo "✗ mdadm missing (for software RAID in check_raid.py)"
-	@which kubectl >/dev/null 2>&1 && echo "✓ kubectl installed" || echo "✗ kubectl missing (for kubernetes_node_health.py)"
-	@which lspci >/dev/null 2>&1 && echo "✓ lspci installed" || echo "✓ lspci installed"
-	@which dmidecode >/dev/null 2>&1 && echo "✓ dmidecode installed" || echo "✗ dmidecode missing (for system_inventory.py)"
+install: build
+	@echo "Installing boxctl to /opt/boxctl..."
+	sudo mkdir -p /opt/boxctl
+	sudo tar xzf dist/boxctl-$(VERSION)-linux-*.tar.gz -C /opt/boxctl --strip-components=0
+	sudo ln -sf /opt/boxctl/bin/boxctl /usr/local/bin/boxctl
+	@echo "Installed! Run 'boxctl --help' to verify."
