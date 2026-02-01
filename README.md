@@ -246,6 +246,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_node_restart_monitor.py`: Monitor node restart activity and detect nodes with excessive restarts
 - `k8s_pod_count_analyzer.py`: Audit pod counts, scaling configuration, and resource quota usage
 - `k8s_orphaned_resources_finder.py`: Find orphaned and unused resources (ConfigMaps, Secrets, PVCs, Services, ServiceAccounts)
+- `k8s_revision_history_analyzer.py`: Analyze Deployment revision history to find excessive ReplicaSets that bloat etcd and slow API responses
 - `k8s_configmap_secret_size_analyzer.py`: Analyze ConfigMap and Secret sizes to find oversized objects that stress etcd and degrade cluster performance
 - `k8s_finalizer_analyzer.py`: Find resources stuck in Terminating state due to finalizers blocking deletion
 - `k8s_gitops_sync_monitor.py`: Monitor GitOps controller sync status for Flux CD (Kustomizations, HelmReleases, GitRepositories) and ArgoCD (Applications, ApplicationSets), detecting failed reconciliations, stalled syncs, and suspended resources
@@ -6228,6 +6229,70 @@ Use Cases:
   - **Security Hardening**: Identify and remove unused ServiceAccounts
   - **Operational Efficiency**: Catch configuration mistakes before they accumulate
   - **Baremetal Operations**: Critical for on-premises clusters where resources are limited and expensive
+
+### k8s_revision_history_analyzer.py
+```
+python3 k8s_revision_history_analyzer.py [--namespace NAMESPACE] [--format FORMAT] [options]
+  --namespace, -n: Check specific namespace only (default: all namespaces)
+  --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  --warn-only, -w: Only show namespaces with issues
+  --verbose, -v: Show detailed per-deployment information
+  --threshold: ReplicaSet count threshold to flag as excessive (default: 10)
+```
+
+Requirements:
+  - kubectl command-line tool installed and configured
+  - Access to a Kubernetes cluster
+
+Exit codes:
+  - 0: No issues detected, revision counts within thresholds
+  - 1: Issues found (excessive revisions detected)
+  - 2: Usage error or kubectl not available
+
+Features:
+  - Identifies Deployments with excessive ReplicaSet revision history
+  - Calculates total ReplicaSets that could be cleaned up
+  - Estimates etcd storage impact of accumulated revisions
+  - Per-namespace statistics and breakdown
+  - Maps ReplicaSets to their owning Deployments via ownerReferences
+  - Counts old (scaled-to-zero) ReplicaSets separately
+  - Reports configured revisionHistoryLimit for each Deployment
+
+Examples:
+```bash
+# Check all namespaces for excessive revisions
+k8s_revision_history_analyzer.py
+
+# Check specific namespace
+k8s_revision_history_analyzer.py -n production
+
+# Stricter threshold (warn if >5 ReplicaSets per deployment)
+k8s_revision_history_analyzer.py --threshold 5
+
+# Show only deployments with issues
+k8s_revision_history_analyzer.py -w
+
+# Verbose output with per-deployment details
+k8s_revision_history_analyzer.py -v
+
+# JSON output for automation/monitoring
+k8s_revision_history_analyzer.py --format json
+
+# Table format for quick review
+k8s_revision_history_analyzer.py --format table
+
+# Combined options
+k8s_revision_history_analyzer.py -n production --threshold 5 -v
+```
+
+Use Cases:
+  - **etcd Storage**: ReplicaSets accumulate and consume etcd storage (each stores full pod spec)
+  - **API Server Performance**: More objects = slower list/watch operations and higher memory usage
+  - **Cluster Backup Size**: Accumulated revisions inflate backup sizes significantly
+  - **kubectl Performance**: Commands like 'kubectl get rs' become slow with thousands of objects
+  - **Compliance**: Identify deployments that need revisionHistoryLimit configured
+  - **Capacity Planning**: Estimate cleanup impact before performing maintenance
+  - **Baremetal Operations**: Critical for on-premises clusters with limited etcd resources
 
 ### k8s_configmap_secret_size_analyzer.py
 ```
