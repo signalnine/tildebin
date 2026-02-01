@@ -1,0 +1,48 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "coredns-abc123",
+        "namespace": "kube-system",
+        "labels": {
+          "k8s-app": "kube-dns"
+        }
+      },
+      "status": {
+        "phase": "Running",
+        "containerStatuses": [
+          {
+            "name": "coredns",
+            "ready": true,
+            "restartCount": 0
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "coredns-def456",
+        "namespace": "kube-system",
+        "labels": {
+          "k8s-app": "kube-dns"
+        }
+      },
+      "status": {
+        "phase": "Running",
+        "containerStatuses": [
+          {
+            "name": "coredns",
+            "ready": true,
+            "restartCount": 2
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+ERROR: Esys_SelfTest(0x101) - tpm:error(2.0): TPM was unable to start self test

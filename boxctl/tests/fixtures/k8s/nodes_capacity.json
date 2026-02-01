@@ -1,0 +1,70 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Node",
+      "metadata": {
+        "name": "high-util-node",
+        "labels": {
+          "kubernetes.io/hostname": "high-util-node",
+          "node-role.kubernetes.io/worker": ""
+        }
+      },
+      "spec": {},
+      "status": {
+        "conditions": [
+          {
+            "type": "Ready",
+            "status": "True",
+            "reason": "KubeletReady",
+            "message": "kubelet is posting ready status"
+          }
+        ],
+        "capacity": {
+          "cpu": "8",
+          "memory": "16000000Ki",
+          "pods": "110"
+        },
+        "allocatable": {
+          "cpu": "7500m",
+          "memory": "15000000Ki",
+          "pods": "110"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Node",
+      "metadata": {
+        "name": "low-util-node",
+        "labels": {
+          "kubernetes.io/hostname": "low-util-node",
+          "node-role.kubernetes.io/worker": ""
+        }
+      },
+      "spec": {},
+      "status": {
+        "conditions": [
+          {
+            "type": "Ready",
+            "status": "True",
+            "reason": "KubeletReady",
+            "message": "kubelet is posting ready status"
+          }
+        ],
+        "capacity": {
+          "cpu": "16",
+          "memory": "64000000Ki",
+          "pods": "110"
+        },
+        "allocatable": {
+          "cpu": "15500m",
+          "memory": "62000000Ki",
+          "pods": "110"
+        }
+      }
+    }
+  ]
+}

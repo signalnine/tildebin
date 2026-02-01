@@ -1,0 +1,5 @@
+BootCurrent: 0001
+BootOrder: 0001,0002,0005
+Timeout: 5 seconds
+Boot0001* ubuntu	HD(1,GPT,abc123-def456,0x800,0x100000)/File(\EFI\ubuntu\shimx64.efi)
+Boot0002* UEFI OS	HD(1,GPT,abc123-def456,0x800,0x100000)/File(\EFI\Boot\bootx64.efi)

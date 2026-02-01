@@ -1,0 +1,72 @@
+{
+  "apiVersion": "v1",
+  "kind": "NodeList",
+  "items": [
+    {
+      "metadata": {
+        "name": "node-1",
+        "labels": {"kubernetes.io/hostname": "node-1"}
+      },
+      "spec": {
+        "unschedulable": false
+      },
+      "status": {
+        "conditions": [
+          {"type": "Ready", "status": "True"},
+          {"type": "MemoryPressure", "status": "False"},
+          {"type": "DiskPressure", "status": "False"},
+          {"type": "PIDPressure", "status": "False"}
+        ],
+        "allocatable": {
+          "cpu": "8",
+          "memory": "32Gi",
+          "ephemeral-storage": "100Gi"
+        }
+      }
+    },
+    {
+      "metadata": {
+        "name": "node-2",
+        "labels": {"kubernetes.io/hostname": "node-2"}
+      },
+      "spec": {
+        "unschedulable": false
+      },
+      "status": {
+        "conditions": [
+          {"type": "Ready", "status": "True"},
+          {"type": "MemoryPressure", "status": "False"},
+          {"type": "DiskPressure", "status": "False"},
+          {"type": "PIDPressure", "status": "False"}
+        ],
+        "allocatable": {
+          "cpu": "8",
+          "memory": "32Gi",
+          "ephemeral-storage": "100Gi"
+        }
+      }
+    },
+    {
+      "metadata": {
+        "name": "node-3",
+        "labels": {"kubernetes.io/hostname": "node-3"}
+      },
+      "spec": {
+        "unschedulable": false
+      },
+      "status": {
+        "conditions": [
+          {"type": "Ready", "status": "True"},
+          {"type": "MemoryPressure", "status": "False"},
+          {"type": "DiskPressure", "status": "False"},
+          {"type": "PIDPressure", "status": "False"}
+        ],
+        "allocatable": {
+          "cpu": "8",
+          "memory": "32Gi",
+          "ephemeral-storage": "100Gi"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+sminfo: sm lid:1 sm guid:0x0002c9030027a000 priority:14 state:4 MASTER

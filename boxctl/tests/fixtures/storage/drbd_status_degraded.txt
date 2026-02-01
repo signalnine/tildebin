@@ -1,0 +1,4 @@
+r0 role:Primary
+  disk:Inconsistent
+  peer connection:Connected
+    peer-disk:UpToDate

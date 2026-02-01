@@ -1,0 +1,7 @@
+smartctl 7.2 2020-12-30 r5155 [x86_64-linux-5.15.0] (local build)
+Copyright (C) 2002-20, Bruce Allen, Christian Franke, www.smartmontools.org
+
+=== START OF INFORMATION SECTION ===
+Device Model:     Virtual disk
+Serial Number:    VBOX1234567890
+SMART support is: Unavailable - device lacks SMART capability.

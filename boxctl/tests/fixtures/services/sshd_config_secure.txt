@@ -1,0 +1,12 @@
+port 22
+addressfamily any
+listenaddress 0.0.0.0
+listenaddress ::
+permitrootlogin no
+passwordauthentication no
+permitemptypasswords no
+maxsessions 10
+maxstartups 10:30:100
+clientaliveinterval 300
+clientalivecountmax 3
+x11forwarding no

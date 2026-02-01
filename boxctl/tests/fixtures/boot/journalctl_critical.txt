@@ -1,0 +1,2 @@
+2024-01-15T10:00:01+0000 server kernel[0]: Critical: System temperature exceeded threshold
+2024-01-15T10:00:02+0000 server systemd[1]: Critical: Unable to initialize storage driver

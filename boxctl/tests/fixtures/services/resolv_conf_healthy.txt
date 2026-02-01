@@ -1,0 +1,8 @@
+# This is /etc/resolv.conf managed by systemd-resolved
+# Do not edit.
+
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+nameserver 1.1.1.1
+search example.com internal.example.com
+options timeout:2 attempts:3

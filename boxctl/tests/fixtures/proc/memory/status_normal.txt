@@ -1,0 +1,14 @@
+Name:	python3
+Umask:	0022
+State:	S (sleeping)
+Tgid:	1234
+Pid:	1234
+PPid:	1000
+Uid:	1000	1000	1000	1000
+Gid:	1000	1000	1000	1000
+VmPeak:	  131072 kB
+VmSize:	  131072 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	   65536 kB
+VmRSS:	   65536 kB

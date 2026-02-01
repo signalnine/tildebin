@@ -1,0 +1,19 @@
+Jan 15 10:00:01 server sshd[1234]: Accepted publickey for alice from 10.0.0.50 port 52341 ssh2
+Jan 15 10:01:01 server sshd[2001]: Failed password for invalid user admin from 192.168.1.100 port 44521 ssh2
+Jan 15 10:01:02 server sshd[2002]: Failed password for invalid user admin from 192.168.1.100 port 44522 ssh2
+Jan 15 10:01:03 server sshd[2003]: Failed password for invalid user admin from 192.168.1.100 port 44523 ssh2
+Jan 15 10:01:04 server sshd[2004]: Failed password for invalid user root from 192.168.1.100 port 44524 ssh2
+Jan 15 10:01:05 server sshd[2005]: Failed password for invalid user root from 192.168.1.100 port 44525 ssh2
+Jan 15 10:01:06 server sshd[2006]: Failed password for invalid user test from 192.168.1.100 port 44526 ssh2
+Jan 15 10:01:07 server sshd[2007]: Failed password for invalid user guest from 192.168.1.100 port 44527 ssh2
+Jan 15 10:01:08 server sshd[2008]: Failed password for invalid user user from 192.168.1.100 port 44528 ssh2
+Jan 15 10:01:09 server sshd[2009]: Failed password for invalid user oracle from 192.168.1.100 port 44529 ssh2
+Jan 15 10:01:10 server sshd[2010]: Failed password for invalid user postgres from 192.168.1.100 port 44530 ssh2
+Jan 15 10:01:11 server sshd[2011]: Failed password for invalid user mysql from 192.168.1.100 port 44531 ssh2
+Jan 15 10:02:01 server sshd[2101]: Failed password for bob from 10.10.10.5 port 45001 ssh2
+Jan 15 10:02:02 server sshd[2102]: Failed password for bob from 10.10.10.5 port 45002 ssh2
+Jan 15 10:02:03 server sshd[2103]: Failed password for bob from 10.10.10.5 port 45003 ssh2
+Jan 15 10:05:01 server sshd[2200]: Invalid user hacker from 203.0.113.50 port 55001
+Jan 15 10:05:02 server sshd[2201]: Invalid user scanner from 203.0.113.50 port 55002
+Jan 15 10:05:03 server sshd[2202]: Invalid user attacker from 203.0.113.50 port 55003
+Jan 15 12:00:01 server sshd[3001]: Disconnecting authenticating user root 198.51.100.25 port 60001: Too many authentication failures

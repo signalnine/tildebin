@@ -1,0 +1,46 @@
+{
+  "apiVersion": "snapshot.storage.k8s.io/v1",
+  "items": [
+    {
+      "apiVersion": "snapshot.storage.k8s.io/v1",
+      "kind": "VolumeSnapshot",
+      "metadata": {
+        "name": "snap-daily-001",
+        "namespace": "production",
+        "creationTimestamp": "2024-01-15T00:00:00Z"
+      },
+      "spec": {
+        "source": {
+          "persistentVolumeClaimName": "data-pvc"
+        },
+        "volumeSnapshotClassName": "csi-aws-snapclass"
+      },
+      "status": {
+        "readyToUse": true,
+        "boundVolumeSnapshotContentName": "snapcontent-abc123",
+        "restoreSize": "100Gi"
+      }
+    },
+    {
+      "apiVersion": "snapshot.storage.k8s.io/v1",
+      "kind": "VolumeSnapshot",
+      "metadata": {
+        "name": "snap-weekly-001",
+        "namespace": "production",
+        "creationTimestamp": "2024-01-08T00:00:00Z"
+      },
+      "spec": {
+        "source": {
+          "persistentVolumeClaimName": "data-pvc"
+        },
+        "volumeSnapshotClassName": "csi-aws-snapclass"
+      },
+      "status": {
+        "readyToUse": true,
+        "boundVolumeSnapshotContentName": "snapcontent-def456",
+        "restoreSize": "100Gi"
+      }
+    }
+  ],
+  "kind": "List"
+}

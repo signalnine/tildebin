@@ -1,0 +1,1 @@
+/mnt/data /dev/sda1 rw,relatime,ssd,space_cache=v2

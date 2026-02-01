@@ -1,0 +1,8 @@
+Device ID                 : 32
+Device Revision           : 1
+Firmware Revision         : 4.40
+IPMI Version              : 2.0
+Manufacturer ID           : 674
+Manufacturer Name         : Dell Inc.
+Product ID                : 256 (0x0100)
+Product Name              : Unknown (0x100)

@@ -1,0 +1,8 @@
+Type=simple
+LoadState=loaded
+ActiveState=active
+SubState=running
+Result=success
+NRestarts=5
+MainPID=5678
+Description=Flaky Service

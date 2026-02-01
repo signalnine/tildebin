@@ -1,0 +1,25 @@
+[Mon Jan 27 10:00:00 2025] ata1: SATA link up 6.0 Gbps (SStatus 133 SControl 300)
+[Mon Jan 27 10:00:00 2025] ata1.00: configured for UDMA/133
+[Mon Jan 27 10:00:00 2025] ata1.00: NCQ Send/Recv Log not supported
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#0 FAILED Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#0 Sense Key : Medium Error [current]
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#0 Add. Sense: Unrecovered read error
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#1 FAILED Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#1 Sense Key : Medium Error [current]
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#1 Add. Sense: Unrecovered read error
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#2 FAILED Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#2 Sense Key : Medium Error [current]
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#2 Add. Sense: Unrecovered read error
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#3 FAILED Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#3 Sense Key : Medium Error [current]
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#3 Add. Sense: Unrecovered read error
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#4 FAILED Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#4 Sense Key : Medium Error [current]
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#4 Add. Sense: Unrecovered read error
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#5 FAILED Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#5 Sense Key : Medium Error [current]
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#5 Add. Sense: Unrecovered read error
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#6 FAILED Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#6 Sense Key : Medium Error [current]
+[Mon Jan 27 10:00:00 2025] sd 0:0:0:0: [sda] tag#6 Add. Sense: Unrecovered read error
+[Mon Jan 27 10:00:01 2025] EXT4-fs warning (device sda1): ext4_end_bio:332: I/O error 10 writing to inode 1234

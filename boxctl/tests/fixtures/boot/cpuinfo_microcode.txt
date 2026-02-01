@@ -1,0 +1,9 @@
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 85
+model name	: Intel(R) Xeon(R) Gold 6248R CPU @ 3.00GHz
+stepping	: 7
+microcode	: 0x5003604
+cpu MHz		: 2999.998
+cache size	: 36608 KB

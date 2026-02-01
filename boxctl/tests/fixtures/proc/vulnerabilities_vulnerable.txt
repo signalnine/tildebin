@@ -1,0 +1,7 @@
+meltdown: Vulnerable
+spectre_v1: Vulnerable: __user pointer sanitization and usercopy barriers only; no swapgs barriers
+spectre_v2: Vulnerable: Retpoline without IBPB
+spec_store_bypass: Vulnerable
+l1tf: Mitigation: PTE Inversion; VMX: conditional cache flushes, SMT disabled
+mds: Vulnerable
+itlb_multihit: Not affected

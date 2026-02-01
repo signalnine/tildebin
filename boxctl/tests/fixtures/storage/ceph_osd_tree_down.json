@@ -1,0 +1,9 @@
+{
+  "nodes": [
+    {"id": -1, "name": "default", "type": "root"},
+    {"id": -2, "name": "host1", "type": "host"},
+    {"id": 0, "name": "osd.0", "type": "osd", "status": "up", "reweight": 1.0, "crush_weight": 1.0},
+    {"id": 1, "name": "osd.1", "type": "osd", "status": "down", "reweight": 1.0, "crush_weight": 1.0},
+    {"id": 2, "name": "osd.2", "type": "osd", "status": "up", "reweight": 1.0, "crush_weight": 1.0}
+  ]
+}

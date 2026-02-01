@@ -1,0 +1,10 @@
+{"_SYSTEMD_UNIT":"ssh.service","SYSLOG_IDENTIFIER":"sshd","PRIORITY":"6"}
+{"_SYSTEMD_UNIT":"ssh.service","SYSLOG_IDENTIFIER":"sshd","PRIORITY":"6"}
+{"_SYSTEMD_UNIT":"cron.service","SYSLOG_IDENTIFIER":"CRON","PRIORITY":"6"}
+{"_SYSTEMD_UNIT":"systemd-journald.service","SYSLOG_IDENTIFIER":"systemd-journald","PRIORITY":"5"}
+{"_SYSTEMD_UNIT":"nginx.service","SYSLOG_IDENTIFIER":"nginx","PRIORITY":"4"}
+{"_SYSTEMD_UNIT":"nginx.service","SYSLOG_IDENTIFIER":"nginx","PRIORITY":"3"}
+{"SYSLOG_IDENTIFIER":"kernel","PRIORITY":"6"}
+{"SYSLOG_IDENTIFIER":"kernel","PRIORITY":"4"}
+{"SYSLOG_IDENTIFIER":"kernel","PRIORITY":"3"}
+{"_SYSTEMD_UNIT":"docker.service","SYSLOG_IDENTIFIER":"dockerd","PRIORITY":"6"}

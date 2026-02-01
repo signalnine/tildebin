@@ -1,0 +1,16 @@
+Overall:
+    Device size:                 107374182400
+    Device allocated:            96636764160
+    Device unallocated:          10737418240
+    Device missing:                        0
+    Used:                        91700000000
+    Free (estimated):            15674182400   (min: 7837091200)
+    Free (statfs, currentd):     15674182400
+    Data ratio:                  1.00
+    Metadata ratio:              2.00
+    Global reserve:              536870912   (used: 0)
+    Multiple profiles:           no
+
+Data,single: Size:96100073472, Used:91700000000
+Metadata,DUP: Size:536870912, Used:400000000
+System,DUP: Size:33554432, Used:16384

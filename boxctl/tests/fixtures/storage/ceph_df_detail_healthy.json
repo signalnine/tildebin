@@ -1,0 +1,27 @@
+{
+  "stats": {
+    "total_bytes": 322122547200,
+    "total_used_bytes": 83418099712,
+    "total_avail_bytes": 238704447488
+  },
+  "pools": [
+    {
+      "name": "rbd",
+      "id": 1,
+      "stats": {
+        "stored": 42949672960,
+        "objects": 10240,
+        "percent_used": 0.25
+      }
+    },
+    {
+      "name": "cephfs_data",
+      "id": 2,
+      "stats": {
+        "stored": 21474836480,
+        "objects": 5120,
+        "percent_used": 0.12
+      }
+    }
+  ]
+}

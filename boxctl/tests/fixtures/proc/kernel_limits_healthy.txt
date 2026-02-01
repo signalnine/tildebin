@@ -1,0 +1,3 @@
+# /proc/sys values for a system with healthy limits
+pid_max = 32768
+threads-max = 63067

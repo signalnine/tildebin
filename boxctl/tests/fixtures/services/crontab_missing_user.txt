@@ -1,0 +1,5 @@
+# Crontab with non-existent user
+SHELL=/bin/sh
+
+0 5 * * * nonexistentuser /usr/bin/backup.sh
+0 6 * * * root /usr/bin/valid_command.sh

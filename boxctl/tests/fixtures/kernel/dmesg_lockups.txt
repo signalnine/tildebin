@@ -1,0 +1,9 @@
+[    0.000000] Linux version 5.15.0-generic (buildd@server) (gcc version 11.2.0)
+[12345.678901] watchdog: BUG: soft lockup - CPU#3 stuck for 23s! [kworker/3:1:4567]
+[12345.789012] CPU: 3 PID: 4567 Comm: kworker/3:1 Tainted: P           OE     5.15.0-generic #1
+[12345.890123] RIP: 0010:native_queued_spin_lock_slowpath+0x1e2/0x2c0
+[12346.901234] Call Trace:
+[12346.012345]  _raw_spin_lock+0x30/0x40
+[23456.123456] INFO: rcu_sched self-detected stall on CPU
+[23456.234567] rcu: INFO: rcu_sched detected stalls on CPUs/tasks:
+[34567.345678] INFO: task kswapd0:123 blocked for more than 120 seconds.

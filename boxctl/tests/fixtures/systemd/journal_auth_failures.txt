@@ -1,0 +1,3 @@
+2025-01-15T10:00:00+0000 sshd[1234]: pam_unix(sshd:auth): authentication failure; logname= uid=0
+2025-01-15T10:01:00+0000 sshd[1235]: Failed password for root from 192.168.1.100 port 54321 ssh2
+2025-01-15T10:02:00+0000 sshd[1236]: Connection closed by 192.168.1.100 port 54322 [preauth]

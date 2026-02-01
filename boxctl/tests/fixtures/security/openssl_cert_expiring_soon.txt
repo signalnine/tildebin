@@ -1,0 +1,5 @@
+subject=CN = staging.example.com, O = Example Corp, C = US
+issuer=CN = Let's Encrypt Authority X3, O = Let's Encrypt, C = US
+notBefore=Jan 15 00:00:00 2026 GMT
+notAfter=Feb 20 23:59:59 2026 GMT
+serial=ABCDEF1234567890

@@ -1,0 +1,7 @@
+{
+  "nodes": [
+    {"id": 0, "name": "osd.0", "utilization": 25.5, "kb_used": 26843545, "kb_avail": 78643200, "pgs": 85},
+    {"id": 1, "name": "osd.1", "utilization": 28.2, "kb_used": 29360128, "kb_avail": 75497472, "pgs": 86},
+    {"id": 2, "name": "osd.2", "utilization": 24.8, "kb_used": 26214400, "kb_avail": 79272345, "pgs": 85}
+  ]
+}

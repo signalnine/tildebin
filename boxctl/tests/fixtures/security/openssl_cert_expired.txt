@@ -1,0 +1,5 @@
+subject=CN = old.example.com, O = Example Corp, C = US
+issuer=CN = DigiCert Global Root CA, O = DigiCert Inc, C = US
+notBefore=Jan 1 00:00:00 2023 GMT
+notAfter=Jan 1 23:59:59 2024 GMT
+serial=DEADBEEF12345678

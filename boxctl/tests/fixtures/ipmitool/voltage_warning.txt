@@ -1,0 +1,4 @@
+PS1 Input Voltage| 70h | ok  |  10.1 | 240 Volts
+PS1 12V Output   | 71h | nc  |  10.1 | 11.2 Volts
+PS2 Input Voltage| 72h | ok  |  10.2 | 240 Volts
+PS2 12V Output   | 73h | ok  |  10.2 | 12.0 Volts

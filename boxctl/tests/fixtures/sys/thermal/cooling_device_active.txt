@@ -1,0 +1,4 @@
+# Cooling device: Processor (active, throttling)
+type: Processor
+cur_state: 5
+max_state: 10

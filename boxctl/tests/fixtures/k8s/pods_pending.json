@@ -1,0 +1,105 @@
+{
+  "apiVersion": "v1",
+  "kind": "PodList",
+  "items": [
+    {
+      "metadata": {
+        "name": "resource-hungry-pod",
+        "namespace": "production",
+        "creationTimestamp": "2024-01-15T10:00:00Z"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "resources": {
+              "requests": {"memory": "64Gi", "cpu": "32"}
+            }
+          }
+        ],
+        "nodeSelector": {},
+        "affinity": {},
+        "tolerations": []
+      },
+      "status": {
+        "phase": "Pending",
+        "conditions": [
+          {
+            "type": "PodScheduled",
+            "status": "False",
+            "reason": "Unschedulable",
+            "message": "0/3 nodes are available: 3 Insufficient cpu."
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "pvc-waiting-pod",
+        "namespace": "staging",
+        "creationTimestamp": "2024-01-15T09:00:00Z"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "resources": {
+              "requests": {"memory": "1Gi", "cpu": "500m"}
+            }
+          }
+        ],
+        "volumes": [
+          {
+            "name": "data",
+            "persistentVolumeClaim": {"claimName": "data-pvc"}
+          }
+        ],
+        "nodeSelector": {},
+        "affinity": {},
+        "tolerations": []
+      },
+      "status": {
+        "phase": "Pending",
+        "conditions": [
+          {
+            "type": "PodScheduled",
+            "status": "False",
+            "reason": "Unschedulable",
+            "message": "0/3 nodes are available: persistentvolumeclaim is not bound."
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "tainted-node-pod",
+        "namespace": "default",
+        "creationTimestamp": "2024-01-15T08:00:00Z"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "worker",
+            "resources": {
+              "requests": {"memory": "256Mi", "cpu": "100m"}
+            }
+          }
+        ],
+        "nodeSelector": {"node-type": "gpu"},
+        "affinity": {},
+        "tolerations": []
+      },
+      "status": {
+        "phase": "Pending",
+        "conditions": [
+          {
+            "type": "PodScheduled",
+            "status": "False",
+            "reason": "Unschedulable",
+            "message": "0/3 nodes are available: 3 node(s) didn't match node selector."
+          }
+        ]
+      }
+    }
+  ]
+}

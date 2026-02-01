@@ -1,0 +1,8 @@
+CPU model:           x86_64
+CPU(s):              8
+CPU frequency:       2400 MHz
+CPU socket(s):       1
+Core(s) per socket:  4
+Thread(s) per core:  2
+NUMA cell(s):        1
+Memory size:         16777216 KiB

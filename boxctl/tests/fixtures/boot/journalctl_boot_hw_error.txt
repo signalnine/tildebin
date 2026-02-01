@@ -1,0 +1,8 @@
+2024-01-15T10:00:01+0000 server kernel: Linux version 5.15.0-91-generic
+2024-01-15T10:00:02+0000 server kernel: ACPI BIOS Error (bug): Could not resolve symbol [\_SB.PCI0.LPCB.EC0]
+2024-01-15T10:00:03+0000 server kernel: Hardware Error: Machine check exception
+2024-01-15T10:00:03+0000 server kernel: MCE: CPU 0 BANK 4 STATUS 0xbc00000000100134
+2024-01-15T10:00:04+0000 server kernel: EDAC MC0: 1 CE memory read error
+2024-01-15T10:00:05+0000 server kernel: ata1.00: error: { UNCorrectable sector marked bad }
+2024-01-15T10:00:05+0000 server kernel: sd 0:0:0:0: Medium Error - recovered
+2024-01-15T10:00:06+0000 server systemd[1]: Reached target Multi-User System.

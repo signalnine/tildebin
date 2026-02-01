@@ -1,0 +1,31 @@
+# /etc/sudoers - Healthy configuration
+#
+# This file MUST be edited with the 'visudo' command as root.
+
+Defaults   env_reset
+Defaults   mail_badpass
+Defaults   secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Defaults   timestamp_timeout=5
+
+# Host alias specification
+Host_Alias SERVERS = server1, server2
+
+# User alias specification
+User_Alias ADMINS = alice, bob
+
+# Command alias specification
+Cmnd_Alias SERVICES = /usr/bin/systemctl start *, /usr/bin/systemctl stop *, /usr/bin/systemctl restart *
+
+# User privilege specification
+root    ALL=(ALL:ALL) ALL
+
+# Members of the admin group may gain root privileges
+%admin ALL=(ALL) ALL
+
+# Allow members of group sudo to execute any command
+%sudo   ALL=(ALL:ALL) ALL
+
+# Allow ADMINS to manage services
+ADMINS  SERVERS=(root) SERVICES
+
+#includedir /etc/sudoers.d

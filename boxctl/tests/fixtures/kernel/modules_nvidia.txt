@@ -1,0 +1,6 @@
+Module                  Size  Used by
+nvidia_drm             65536  1
+nvidia_modeset       1228800  1 nvidia_drm
+nvidia              35123456  2 nvidia_modeset
+drm_kms_helper        262144  1 nvidia_drm
+ext4                  815104  2

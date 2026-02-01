@@ -1,0 +1,30 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "app-pod-1",
+        "namespace": "production"
+      },
+      "spec": {
+        "serviceAccountName": "default",
+        "automountServiceAccountToken": true
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "app-pod-2",
+        "namespace": "production"
+      },
+      "spec": {
+        "serviceAccountName": "app-sa",
+        "automountServiceAccountToken": false
+      }
+    }
+  ]
+}

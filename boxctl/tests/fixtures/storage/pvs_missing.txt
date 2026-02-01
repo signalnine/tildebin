@@ -1,0 +1,2 @@
+  /dev/sda1|vg0|200.00g|60.00g|a--
+  unknown|vg0|200.00g|0|a-m

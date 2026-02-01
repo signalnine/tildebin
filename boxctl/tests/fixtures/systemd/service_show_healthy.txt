@@ -1,0 +1,8 @@
+Type=simple
+LoadState=loaded
+ActiveState=active
+SubState=running
+Result=success
+NRestarts=0
+MainPID=1234
+Description=Test Service

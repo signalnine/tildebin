@@ -1,0 +1,1 @@
+{"Endpoint":"http://127.0.0.1:2379","Status":{"header":{"cluster_id":1234567890,"member_id":9876543210,"revision":12345,"raft_term":5},"version":"3.5.0","dbSize":52428800,"leader":9876543210,"isLeader":true,"raftIndex":54321,"raftTerm":5}}

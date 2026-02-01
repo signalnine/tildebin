@@ -1,0 +1,14 @@
+Node 1 MemTotal:       16384000 kB
+Node 1 MemFree:         8000000 kB
+Node 1 MemUsed:         8384000 kB
+Node 1 Active:          5000000 kB
+Node 1 Inactive:        2000000 kB
+Node 1 Dirty:             20000 kB
+Node 1 Writeback:             0 kB
+Node 1 FilePages:       3000000 kB
+Node 1 Mapped:           500000 kB
+Node 1 AnonPages:       2000000 kB
+Node 1 Shmem:            100000 kB
+Node 1 KernelStack:       16384 kB
+Node 1 PageTables:        50000 kB
+Node 1 Slab:             400000 kB

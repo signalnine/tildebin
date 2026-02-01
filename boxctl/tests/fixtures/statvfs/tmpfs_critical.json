@@ -1,0 +1,10 @@
+{
+  "/dev/shm": {
+    "f_frsize": 4096,
+    "f_blocks": 512000,
+    "f_bfree": 25600,
+    "f_bavail": 25600,
+    "f_files": 512000,
+    "f_ffree": 511000
+  }
+}

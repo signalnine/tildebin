@@ -1,0 +1,9 @@
+2024-01-15T10:00:01+0000 server kernel: Linux version 5.15.0-91-generic (buildd@lcy02-amd64-012) (gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, GNU ld (GNU Binutils for Ubuntu) 2.38) #101-Ubuntu SMP Tue Nov 14 13:30:08 UTC 2023
+2024-01-15T10:00:02+0000 server kernel: Command line: BOOT_IMAGE=/vmlinuz-5.15.0-91-generic root=UUID=abc123 ro quiet splash
+2024-01-15T10:00:03+0000 server systemd[1]: Starting Load Kernel Modules...
+2024-01-15T10:00:04+0000 server systemd[1]: Started Load Kernel Modules.
+2024-01-15T10:00:05+0000 server kernel: ACPI: (supports S0 S3 S4 S5)
+2024-01-15T10:00:06+0000 server systemd[1]: Started Journal Service.
+2024-01-15T10:00:07+0000 server systemd[1]: Reached target Basic System.
+2024-01-15T10:00:08+0000 server systemd[1]: Started Network Service.
+2024-01-15T10:00:09+0000 server systemd[1]: Reached target Multi-User System.

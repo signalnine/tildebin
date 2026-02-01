@@ -1,0 +1,4 @@
+Filesystem     Target       1B-blocks         Used        Avail Use%
+/dev/sda1      /        214748364800  42949672960 171798691840  20%
+/dev/sda2      /home    107374182400  32212254720  75161927680  30%
+/dev/nvme0n1p1 /data    536870912000 107374182400 429496729600  20%

@@ -1,0 +1,14 @@
+# Process age test fixture - normal processes (started recently)
+# btime 1704067200 = 2024-01-01 00:00:00 UTC
+
+# starttime is in clock ticks since boot (100 Hz = 100 ticks/second)
+# starttime 100000 = 1000 seconds after boot = 16 minutes
+
+# /proc/100/stat - process started 1000 seconds after boot
+100 (nginx) S 1 100 100 0 -1 0 0 0 0 0 0 0 0 0 20 0 4 0 100000 0 0
+
+# /proc/200/stat - process started 200000 ticks = 2000 seconds after boot
+200 (redis) S 1 200 200 0 -1 0 0 0 0 0 0 0 0 0 20 0 1 0 200000 0 0
+
+# /proc/300/stat - process started 300000 ticks = 3000 seconds after boot
+300 (postgres) S 1 300 300 0 -1 0 0 0 0 0 0 0 0 0 20 0 8 0 300000 0 0

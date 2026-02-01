@@ -1,0 +1,69 @@
+{
+  "apiVersion": "storage.k8s.io/v1",
+  "items": [
+    {
+      "apiVersion": "storage.k8s.io/v1",
+      "kind": "VolumeAttachment",
+      "metadata": {
+        "name": "csi-healthy",
+        "creationTimestamp": "2024-01-15T10:30:00Z"
+      },
+      "spec": {
+        "attacher": "ebs.csi.aws.com",
+        "nodeName": "node-1",
+        "source": {
+          "persistentVolumeName": "pv-data-001"
+        }
+      },
+      "status": {
+        "attached": true
+      }
+    },
+    {
+      "apiVersion": "storage.k8s.io/v1",
+      "kind": "VolumeAttachment",
+      "metadata": {
+        "name": "csi-attach-error",
+        "creationTimestamp": "2024-01-14T08:00:00Z"
+      },
+      "spec": {
+        "attacher": "ebs.csi.aws.com",
+        "nodeName": "node-2",
+        "source": {
+          "persistentVolumeName": "pv-orphan"
+        }
+      },
+      "status": {
+        "attached": false,
+        "attachError": {
+          "message": "rpc error: code = Internal desc = Could not attach volume",
+          "time": "2024-01-14T08:01:00Z"
+        }
+      }
+    },
+    {
+      "apiVersion": "storage.k8s.io/v1",
+      "kind": "VolumeAttachment",
+      "metadata": {
+        "name": "csi-detach-error",
+        "creationTimestamp": "2024-01-13T12:00:00Z",
+        "deletionTimestamp": "2024-01-14T06:00:00Z"
+      },
+      "spec": {
+        "attacher": "ebs.csi.aws.com",
+        "nodeName": "node-missing",
+        "source": {
+          "persistentVolumeName": "pv-old"
+        }
+      },
+      "status": {
+        "attached": true,
+        "detachError": {
+          "message": "rpc error: code = Internal desc = Node not found",
+          "time": "2024-01-14T06:01:00Z"
+        }
+      }
+    }
+  ],
+  "kind": "List"
+}

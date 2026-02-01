@@ -1,0 +1,26 @@
+{
+  "/run": {
+    "f_frsize": 4096,
+    "f_blocks": 409576,
+    "f_bfree": 399576,
+    "f_bavail": 399576,
+    "f_files": 409576,
+    "f_ffree": 409000
+  },
+  "/dev/shm": {
+    "f_frsize": 4096,
+    "f_blocks": 512000,
+    "f_bfree": 510000,
+    "f_bavail": 510000,
+    "f_files": 512000,
+    "f_ffree": 511000
+  },
+  "/tmp": {
+    "f_frsize": 4096,
+    "f_blocks": 512000,
+    "f_bfree": 500000,
+    "f_bavail": 500000,
+    "f_files": 512000,
+    "f_ffree": 510000
+  }
+}

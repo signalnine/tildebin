@@ -1,0 +1,6 @@
+2024-01-15T10:00:01+0000 server kernel: Linux version 5.15.0-91-generic
+2024-01-15T10:00:02+0000 server systemd[1]: Starting Load Kernel Modules...
+2024-01-15T10:00:10+0000 server kernel: java invoked oom-killer: gfp_mask=0x100cca, order=0, oom_score_adj=0
+2024-01-15T10:00:10+0000 server kernel: Out of memory: Killed process 1234 (java) total-vm:8048680kB, anon-rss:4096000kB
+2024-01-15T10:00:10+0000 server kernel: Memory cgroup out of memory: Killed process 1234 (java)
+2024-01-15T10:00:11+0000 server systemd[1]: Started Network Service.

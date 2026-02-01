@@ -1,0 +1,5 @@
+21 1 8:1 / / rw,relatime shared:1 - ext4 /dev/sda1 rw,errors=remount-ro
+22 21 8:2 / /home rw,relatime shared:2 - ext4 /dev/sda2 rw
+23 21 0:5 / /run rw,nosuid,nodev shared:3 - tmpfs tmpfs rw,mode=755
+24 21 0:4 / /proc rw,nosuid,nodev,noexec,relatime shared:4 - proc proc rw
+25 21 0:17 / /sys rw,nosuid,nodev,noexec,relatime shared:5 - sysfs sysfs rw

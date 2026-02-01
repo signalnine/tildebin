@@ -1,0 +1,10 @@
+nr_free_pages 524288
+nr_zone_inactive_anon 0
+nr_zone_active_anon 2097152
+nr_zone_inactive_file 524288
+nr_zone_active_file 1048576
+nr_zone_unevictable 32768
+nr_running 2
+nr_iowait 0
+pgfault 10000000
+pgmajfault 1000

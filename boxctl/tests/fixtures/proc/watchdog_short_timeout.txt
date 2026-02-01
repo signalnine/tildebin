@@ -1,0 +1,5 @@
+/dev/watchdog
+timeout:5
+identity:iTCO_wdt
+state:active
+nowayout:0

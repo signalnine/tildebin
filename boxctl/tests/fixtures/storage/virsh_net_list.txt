@@ -1,0 +1,4 @@
+ Name      State    Autostart   Persistent
+---------------------------------------------
+ default   active   yes         yes
+ bridge0   active   yes         yes

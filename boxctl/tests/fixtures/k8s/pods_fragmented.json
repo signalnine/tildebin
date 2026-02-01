@@ -1,0 +1,63 @@
+{
+  "apiVersion": "v1",
+  "kind": "PodList",
+  "items": [
+    {
+      "metadata": {
+        "name": "large-pod-1",
+        "namespace": "production"
+      },
+      "spec": {
+        "nodeName": "node-1",
+        "containers": [
+          {
+            "name": "app",
+            "resources": {
+              "requests": {"cpu": "6000m", "memory": "28Gi"},
+              "limits": {"cpu": "6000m", "memory": "28Gi"}
+            }
+          }
+        ]
+      },
+      "status": {"phase": "Running"}
+    },
+    {
+      "metadata": {
+        "name": "large-pod-2",
+        "namespace": "production"
+      },
+      "spec": {
+        "nodeName": "node-2",
+        "containers": [
+          {
+            "name": "app",
+            "resources": {
+              "requests": {"cpu": "6000m", "memory": "28Gi"},
+              "limits": {"cpu": "6000m", "memory": "28Gi"}
+            }
+          }
+        ]
+      },
+      "status": {"phase": "Running"}
+    },
+    {
+      "metadata": {
+        "name": "small-pod-1",
+        "namespace": "staging"
+      },
+      "spec": {
+        "nodeName": "node-1",
+        "containers": [
+          {
+            "name": "app",
+            "resources": {
+              "requests": {"cpu": "100m", "memory": "128Mi"},
+              "limits": {"cpu": "200m", "memory": "256Mi"}
+            }
+          }
+        ]
+      },
+      "status": {"phase": "Running"}
+    }
+  ]
+}

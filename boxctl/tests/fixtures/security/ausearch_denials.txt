@@ -1,0 +1,6 @@
+----
+time->Sat Jan 15 10:23:45 2025
+type=AVC msg=audit(1736935425.123:456): avc:  denied  { read } for  pid=12345 comm="httpd" name="htpasswd" dev="sda1" ino=67890 scontext=system_u:system_r:httpd_t:s0 tcontext=unconfined_u:object_r:user_home_t:s0 tclass=file permissive=0
+----
+time->Sat Jan 15 10:24:12 2025
+type=AVC msg=audit(1736935452.456:457): avc:  denied  { write } for  pid=12346 comm="nginx" name="cache" dev="sda1" ino=67891 scontext=system_u:system_r:httpd_t:s0 tcontext=unconfined_u:object_r:user_home_t:s0 tclass=dir permissive=0

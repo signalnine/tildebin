@@ -1,0 +1,4 @@
+State      Recv-Q Send-Q Local Address:Port               Peer Address:Port
+ESTAB      0      0      10.0.0.1:22                    10.0.0.100:45678
+ESTAB      0      0      10.0.0.1:22                    10.0.0.101:45679
+ESTAB      0      0      10.0.0.1:22                    10.0.0.102:45680

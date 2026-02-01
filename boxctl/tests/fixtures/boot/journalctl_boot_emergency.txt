@@ -1,0 +1,5 @@
+2024-01-15T10:00:01+0000 server kernel: Linux version 5.15.0-91-generic
+2024-01-15T10:00:02+0000 server systemd[1]: Starting Load Kernel Modules...
+2024-01-15T10:00:05+0000 server systemd[1]: Entering emergency mode.
+2024-01-15T10:00:05+0000 server systemd[1]: You are in emergency mode. After logging in, type "journalctl -xb" to view system logs.
+2024-01-15T10:00:05+0000 server systemd[1]: Give root password for maintenance

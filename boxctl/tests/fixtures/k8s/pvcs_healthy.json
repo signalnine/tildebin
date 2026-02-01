@@ -1,0 +1,56 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolumeClaim",
+      "metadata": {
+        "name": "data-pvc",
+        "namespace": "production",
+        "creationTimestamp": "2024-01-15T10:30:00Z"
+      },
+      "spec": {
+        "accessModes": ["ReadWriteOnce"],
+        "resources": {
+          "requests": {
+            "storage": "100Gi"
+          }
+        },
+        "storageClassName": "standard"
+      },
+      "status": {
+        "phase": "Bound",
+        "accessModes": ["ReadWriteOnce"],
+        "capacity": {
+          "storage": "100Gi"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolumeClaim",
+      "metadata": {
+        "name": "logs-pvc",
+        "namespace": "monitoring",
+        "creationTimestamp": "2024-01-10T08:00:00Z"
+      },
+      "spec": {
+        "accessModes": ["ReadWriteOnce"],
+        "resources": {
+          "requests": {
+            "storage": "50Gi"
+          }
+        },
+        "storageClassName": "standard"
+      },
+      "status": {
+        "phase": "Bound",
+        "accessModes": ["ReadWriteOnce"],
+        "capacity": {
+          "storage": "50Gi"
+        }
+      }
+    }
+  ],
+  "kind": "List"
+}

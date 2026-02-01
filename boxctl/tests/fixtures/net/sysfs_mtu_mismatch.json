@@ -1,0 +1,17 @@
+{
+  "interfaces": {
+    "eth0": {
+      "mtu": "1500",
+      "operstate": "up",
+      "flags": "0x1003",
+      "disable_ipv6": "0"
+    },
+    "eth1": {
+      "mtu": "9000",
+      "operstate": "up",
+      "flags": "0x1003",
+      "disable_ipv6": "0"
+    }
+  },
+  "description": "MTU mismatch between interfaces (1500 vs 9000)"
+}

@@ -1,0 +1,5 @@
+# Thermal zone 1: acpitz at 35C (healthy)
+type: acpitz
+temp: 35000
+trip_point_0_type: critical
+trip_point_0_temp: 110000

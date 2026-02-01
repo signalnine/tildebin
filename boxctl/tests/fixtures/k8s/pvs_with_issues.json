@@ -1,0 +1,90 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolume",
+      "metadata": {
+        "name": "pv-healthy",
+        "creationTimestamp": "2024-01-15T10:30:00Z"
+      },
+      "spec": {
+        "capacity": {
+          "storage": "100Gi"
+        },
+        "accessModes": ["ReadWriteOnce"],
+        "persistentVolumeReclaimPolicy": "Retain",
+        "storageClassName": "standard",
+        "claimRef": {
+          "name": "data-pvc",
+          "namespace": "production"
+        }
+      },
+      "status": {
+        "phase": "Bound"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolume",
+      "metadata": {
+        "name": "pv-released",
+        "creationTimestamp": "2024-01-10T08:00:00Z"
+      },
+      "spec": {
+        "capacity": {
+          "storage": "50Gi"
+        },
+        "accessModes": ["ReadWriteOnce"],
+        "persistentVolumeReclaimPolicy": "Retain",
+        "storageClassName": "standard",
+        "claimRef": {
+          "name": "old-pvc",
+          "namespace": "default"
+        }
+      },
+      "status": {
+        "phase": "Released"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolume",
+      "metadata": {
+        "name": "pv-failed",
+        "creationTimestamp": "2024-01-12T12:00:00Z"
+      },
+      "spec": {
+        "capacity": {
+          "storage": "200Gi"
+        },
+        "accessModes": ["ReadWriteOnce"],
+        "persistentVolumeReclaimPolicy": "Delete",
+        "storageClassName": "fast"
+      },
+      "status": {
+        "phase": "Failed"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolume",
+      "metadata": {
+        "name": "pv-small",
+        "creationTimestamp": "2024-01-14T09:00:00Z"
+      },
+      "spec": {
+        "capacity": {
+          "storage": "512Mi"
+        },
+        "accessModes": ["ReadWriteOnce"],
+        "persistentVolumeReclaimPolicy": "Delete",
+        "storageClassName": "standard"
+      },
+      "status": {
+        "phase": "Available"
+      }
+    }
+  ],
+  "kind": "List"
+}

@@ -1,0 +1,15 @@
+{
+  "interfaces": {
+    "eth0": {
+      "mtu": "1500",
+      "operstate": "down",
+      "flags": "0x1002"
+    },
+    "eth0.100": {
+      "mtu": "1500",
+      "operstate": "down",
+      "flags": "0x1002"
+    }
+  },
+  "description": "VLAN with parent interface down"
+}

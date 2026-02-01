@@ -1,0 +1,10 @@
+driver: ixgbe
+version: 5.15.0-generic
+firmware-version: 0x800014e1
+expansion-rom-version:
+bus-info: 0000:03:00.1
+supports-statistics: yes
+supports-test: yes
+supports-eeprom-access: yes
+supports-register-dump: yes
+supports-priv-flags: yes

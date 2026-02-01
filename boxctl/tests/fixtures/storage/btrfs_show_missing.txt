@@ -1,0 +1,5 @@
+Label: 'data'  uuid: 12345678-1234-1234-1234-123456789abc
+	Total devices 2 FS bytes used 50.00GiB
+	devid    1 size 100.00GiB used 50.00GiB path /dev/sda1
+	*** Some devices missing
+

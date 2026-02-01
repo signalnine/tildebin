@@ -1,0 +1,4 @@
+# Cooling device: Processor (inactive)
+type: Processor
+cur_state: 0
+max_state: 10

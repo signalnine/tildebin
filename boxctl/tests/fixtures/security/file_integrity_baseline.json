@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "created": "2025-01-15T10:00:00+00:00",
+  "algorithm": "sha256",
+  "hostname": "testhost",
+  "files": {
+    "/etc/passwd": {
+      "path": "/etc/passwd",
+      "exists": true,
+      "readable": true,
+      "hash": "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
+      "metadata": {
+        "size": 2048,
+        "mode": "-rw-r--r--",
+        "mode_octal": "0644",
+        "uid": 0,
+        "gid": 0,
+        "mtime": "2025-01-10T10:00:00+00:00",
+        "ctime": "2025-01-10T10:00:00+00:00",
+        "inode": 12345,
+        "nlink": 1
+      },
+      "is_symlink": false
+    },
+    "/etc/shadow": {
+      "path": "/etc/shadow",
+      "exists": true,
+      "readable": true,
+      "hash": "b2c3d4e5f678901234567890123456789abcdef12345678901234567890abcde",
+      "metadata": {
+        "size": 1024,
+        "mode": "-rw-r-----",
+        "mode_octal": "0640",
+        "uid": 0,
+        "gid": 42,
+        "mtime": "2025-01-10T10:00:00+00:00",
+        "ctime": "2025-01-10T10:00:00+00:00",
+        "inode": 12346,
+        "nlink": 1
+      },
+      "is_symlink": false
+    },
+    "/etc/sudoers": {
+      "path": "/etc/sudoers",
+      "exists": true,
+      "readable": true,
+      "hash": "c3d4e5f67890123456789012345678901234567890abcdef1234567890abcdef",
+      "metadata": {
+        "size": 512,
+        "mode": "-r--r-----",
+        "mode_octal": "0440",
+        "uid": 0,
+        "gid": 0,
+        "mtime": "2025-01-10T10:00:00+00:00",
+        "ctime": "2025-01-10T10:00:00+00:00",
+        "inode": 12347,
+        "nlink": 1
+      },
+      "is_symlink": false
+    }
+  }
+}

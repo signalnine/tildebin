@@ -1,0 +1,5 @@
+Listing... Done
+libssl3/jammy-security 3.0.2-0ubuntu1.18 amd64 [upgradable from: 3.0.2-0ubuntu1.15]
+openssl/jammy-security 3.0.2-0ubuntu1.18 amd64 [upgradable from: 3.0.2-0ubuntu1.15]
+linux-image-generic/jammy-security 5.15.0.131.128 amd64 [upgradable from: 5.15.0.125.122]
+curl/jammy-security 7.81.0-1ubuntu1.18 amd64 [upgradable from: 7.81.0-1ubuntu1.15]

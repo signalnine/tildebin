@@ -1,0 +1,5 @@
+GRUB_DEFAULT=0
+GRUB_TIMEOUT=0
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash mitigations=off nokaslr"
+GRUB_CMDLINE_LINUX="selinux=0"
+GRUB_DISABLE_RECOVERY="true"

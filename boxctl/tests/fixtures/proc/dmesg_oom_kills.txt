@@ -1,0 +1,5 @@
+[Mon Jan 15 10:30:00 2024] Out of memory: Killed process 12345 (python3) total-vm:8388608kB, anon-rss:4194304kB, file-rss:2048kB
+[Mon Jan 15 11:45:00 2024] Out of memory: Killed process 12567 (java) total-vm:16777216kB, anon-rss:8388608kB, file-rss:4096kB
+[Mon Jan 15 14:20:00 2024] oom-kill: Killed process 13890 (nginx) total-vm:1048576kB, anon-rss:524288kB, file-rss:1024kB
+[Mon Jan 15 14:21:00 2024] Out of memory: Killed process 13892 (nginx) total-vm:1048576kB, anon-rss:524288kB, file-rss:1024kB
+[Mon Jan 15 16:00:00 2024] Out of memory: Killed process 15000 (python3) total-vm:4194304kB, anon-rss:2097152kB, file-rss:512kB

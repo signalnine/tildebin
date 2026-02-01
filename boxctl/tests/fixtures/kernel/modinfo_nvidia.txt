@@ -1,0 +1,7 @@
+filename:       /lib/modules/5.15.0/extra/nvidia.ko
+license:        NVIDIA
+description:    NVIDIA Linux graphics driver
+version:        535.104.05
+srcversion:     XYZ789ABC
+intree:         N
+vermagic:       5.15.0-generic SMP mod_unload

@@ -1,0 +1,19 @@
+# This file contains keys with security issues
+
+# DSA key - deprecated and weak
+ssh-dss AAAAB3NzaC1kc3MAAACBAJzY5MhFdMR9K5+XMBN8Z8Uy5RTHVZ3UiMQE8z5Z6YvXqU0MkQ4LpN0ABCDEFGHIJKLMNOP1234567890abcdefghijk old-dsa-key@legacy
+
+# Key without source restriction (no from=) for root - critical
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGsqP5+FFpB4sP0JaZ3EZVrFqXpQR8HfnLWLbYZlMxyz root-key@admin
+
+# Key with dangerous command option
+command="/bin/bash" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDangerousCmdKeyABCDEFGHIJKLMNOP1234567890xyz dangerous-shell@attacker
+
+# Key with agent forwarding enabled - security risk
+permit-agent-forwarding ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAgentForwardKeyABCDEFGHIJKLMNOP1234567890xyz forward@risky
+
+# Key with concerning comment
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAISharedKeyABCDEFGHIJKLMNOP1234567890xyshared shared-access-temp
+
+# Short RSA key - weak (simulated 1024 bit)
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC weak-rsa-1024@oldserver

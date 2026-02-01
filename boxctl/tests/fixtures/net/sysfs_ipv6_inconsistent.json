@@ -1,0 +1,17 @@
+{
+  "interfaces": {
+    "eth0": {
+      "mtu": "1500",
+      "operstate": "up",
+      "flags": "0x1003",
+      "disable_ipv6": "0"
+    },
+    "eth1": {
+      "mtu": "1500",
+      "operstate": "up",
+      "flags": "0x1003",
+      "disable_ipv6": "1"
+    }
+  },
+  "description": "IPv6 enabled on eth0 but disabled on eth1"
+}

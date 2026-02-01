@@ -1,0 +1,8 @@
+[Mon Jan 27 10:00:00 2025] Linux version 6.1.0-17-amd64 (debian-kernel@lists.debian.org) (gcc-12 (Debian 12.2.0-14) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #1 SMP PREEMPT_DYNAMIC Debian 6.1.69-1 (2023-12-30)
+[Mon Jan 27 10:00:01 2025] Command line: BOOT_IMAGE=/vmlinuz-6.1.0-17-amd64 root=/dev/sda1 ro quiet
+[Mon Jan 27 10:00:02 2025] ACPI: RSDP 0x00000000000F0490 000024 (v02 VBOX  )
+[Mon Jan 27 10:00:03 2025] ACPI: XSDT 0x000000003FFF0030 00004C (v01 VBOX   VBOXXSDT 00000001 ASL  00000061)
+[Mon Jan 27 10:00:04 2025] ACPI: FACP 0x000000003FFF00F0 0000F4 (v04 VBOX   VBOXFACP 00000001 ASL  00000061)
+[Mon Jan 27 10:05:00 2025] EXT4-fs (sda1): mounted filesystem with ordered data mode. Opts: (null)
+[Mon Jan 27 10:05:01 2025] systemd[1]: Starting systemd-journald.service...
+[Mon Jan 27 10:05:02 2025] systemd[1]: Started systemd-journald.service.

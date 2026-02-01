@@ -1,0 +1,47 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "ebs-csi-controller-5bfdf7c6d4-abcde",
+        "namespace": "kube-system"
+      },
+      "status": {
+        "phase": "Running",
+        "containerStatuses": [
+          {
+            "name": "ebs-plugin",
+            "ready": true,
+            "restartCount": 0
+          },
+          {
+            "name": "csi-provisioner",
+            "ready": false,
+            "restartCount": 15
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "local-path-provisioner-abcdef",
+        "namespace": "kube-system"
+      },
+      "status": {
+        "phase": "CrashLoopBackOff",
+        "containerStatuses": [
+          {
+            "name": "local-path-provisioner",
+            "ready": false,
+            "restartCount": 42
+          }
+        ]
+      }
+    }
+  ],
+  "kind": "List"
+}

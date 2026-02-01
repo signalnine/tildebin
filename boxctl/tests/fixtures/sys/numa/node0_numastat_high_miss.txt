@@ -1,0 +1,6 @@
+numa_hit 3000000
+numa_miss 1500000
+numa_foreign 1400000
+interleave_hit 1000
+local_node 2900000
+other_node 1600000

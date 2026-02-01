@@ -1,0 +1,76 @@
+{
+  "apiVersion": "v1",
+  "kind": "PodList",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "nginx-abc",
+        "namespace": "default"
+      },
+      "spec": {
+        "serviceAccountName": "default",
+        "automountServiceAccountToken": true,
+        "containers": [
+          {"name": "nginx"}
+        ]
+      },
+      "status": {
+        "phase": "Running"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "app-xyz",
+        "namespace": "production"
+      },
+      "spec": {
+        "serviceAccountName": "deploy-sa",
+        "containers": [
+          {"name": "app"}
+        ]
+      },
+      "status": {
+        "phase": "Running"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "worker-def",
+        "namespace": "production"
+      },
+      "spec": {
+        "serviceAccountName": "default",
+        "automountServiceAccountToken": false,
+        "containers": [
+          {"name": "worker"}
+        ]
+      },
+      "status": {
+        "phase": "Running"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "kube-dns-abc",
+        "namespace": "kube-system"
+      },
+      "spec": {
+        "serviceAccountName": "default",
+        "containers": [
+          {"name": "kube-dns"}
+        ]
+      },
+      "status": {
+        "phase": "Running"
+      }
+    }
+  ]
+}

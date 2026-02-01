@@ -1,0 +1,7 @@
+2024-01-15T10:00:01+0000 server kernel: Linux version 5.15.0-91-generic
+2024-01-15T10:00:02+0000 server systemd[1]: Starting Load Kernel Modules...
+2024-01-15T10:00:05+0000 server systemd[1]: Failed to start Docker Application Container Engine.
+2024-01-15T10:00:05+0000 server systemd[1]: docker.service: Service unit failed with result 'exit-code'.
+2024-01-15T10:00:06+0000 server systemd[1]: nginx.service entered failed state.
+2024-01-15T10:00:07+0000 server systemd[1]: Job nginx.service failed because the control process exited.
+2024-01-15T10:00:08+0000 server systemd[1]: Reached target Multi-User System.

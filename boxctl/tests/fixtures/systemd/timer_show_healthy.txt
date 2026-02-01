@@ -1,0 +1,6 @@
+ActiveState=active
+SubState=waiting
+Description=Daily logrotate timer
+LastTriggerUSec=1736931600000000
+NextElapseUSecRealtime=1737018000000000
+Result=success

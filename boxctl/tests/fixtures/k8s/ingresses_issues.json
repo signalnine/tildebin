@@ -1,0 +1,80 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress",
+      "metadata": {
+        "name": "broken-ingress",
+        "namespace": "staging"
+      },
+      "spec": {
+        "tls": [
+          {
+            "hosts": ["broken.example.com"],
+            "secretName": "missing-tls"
+          }
+        ],
+        "rules": [
+          {
+            "host": "broken.example.com",
+            "http": {
+              "paths": [
+                {
+                  "path": "/",
+                  "pathType": "Prefix",
+                  "backend": {
+                    "service": {
+                      "name": "broken-service",
+                      "port": {"number": 80}
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "status": {
+        "loadBalancer": {}
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress",
+      "metadata": {
+        "name": "no-tls-ingress",
+        "namespace": "staging"
+      },
+      "spec": {
+        "rules": [
+          {
+            "host": "insecure.example.com",
+            "http": {
+              "paths": [
+                {
+                  "path": "/",
+                  "pathType": "Prefix",
+                  "backend": {
+                    "service": {
+                      "name": "web-service",
+                      "port": {"number": 80}
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "status": {
+        "loadBalancer": {
+          "ingress": [
+            {"ip": "203.0.113.200"}
+          ]
+        }
+      }
+    }
+  ]
+}

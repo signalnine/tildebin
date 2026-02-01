@@ -1,0 +1,33 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "app-config",
+        "namespace": "production"
+      },
+      "data": {"config.yaml": "database:\n  host: localhost\n"}
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "orphaned-config",
+        "namespace": "production"
+      },
+      "data": {"settings.json": "{}"}
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "unused-config",
+        "namespace": "staging"
+      },
+      "data": {"data.txt": "test"}
+    }
+  ]
+}

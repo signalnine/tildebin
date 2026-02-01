@@ -1,0 +1,178 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Node",
+      "metadata": {
+        "name": "tainted-node-1",
+        "labels": {
+          "kubernetes.io/hostname": "tainted-node-1",
+          "node-role.kubernetes.io/worker": ""
+        }
+      },
+      "spec": {
+        "taints": [
+          {
+            "key": "node.kubernetes.io/maintenance",
+            "value": "true",
+            "effect": "NoSchedule"
+          }
+        ]
+      },
+      "status": {
+        "conditions": [
+          {
+            "type": "Ready",
+            "status": "True",
+            "reason": "KubeletReady",
+            "message": "kubelet is posting ready status"
+          },
+          {
+            "type": "MemoryPressure",
+            "status": "False",
+            "reason": "KubeletHasSufficientMemory",
+            "message": "kubelet has sufficient memory available"
+          },
+          {
+            "type": "DiskPressure",
+            "status": "False",
+            "reason": "KubeletHasNoDiskPressure",
+            "message": "kubelet has no disk pressure"
+          },
+          {
+            "type": "PIDPressure",
+            "status": "False",
+            "reason": "KubeletHasSufficientPID",
+            "message": "kubelet has sufficient PID available"
+          }
+        ],
+        "capacity": {
+          "cpu": "8",
+          "memory": "32000000Ki",
+          "pods": "110"
+        },
+        "allocatable": {
+          "cpu": "7800m",
+          "memory": "31000000Ki",
+          "pods": "110"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Node",
+      "metadata": {
+        "name": "gpu-node",
+        "labels": {
+          "kubernetes.io/hostname": "gpu-node",
+          "node-role.kubernetes.io/worker": "",
+          "accelerator": "nvidia-tesla-v100"
+        }
+      },
+      "spec": {
+        "taints": [
+          {
+            "key": "nvidia.com/gpu",
+            "value": "true",
+            "effect": "NoSchedule"
+          },
+          {
+            "key": "dedicated",
+            "value": "gpu-workloads",
+            "effect": "PreferNoSchedule"
+          }
+        ]
+      },
+      "status": {
+        "conditions": [
+          {
+            "type": "Ready",
+            "status": "True",
+            "reason": "KubeletReady",
+            "message": "kubelet is posting ready status"
+          },
+          {
+            "type": "MemoryPressure",
+            "status": "False",
+            "reason": "KubeletHasSufficientMemory",
+            "message": "kubelet has sufficient memory available"
+          },
+          {
+            "type": "DiskPressure",
+            "status": "False",
+            "reason": "KubeletHasNoDiskPressure",
+            "message": "kubelet has no disk pressure"
+          },
+          {
+            "type": "PIDPressure",
+            "status": "False",
+            "reason": "KubeletHasSufficientPID",
+            "message": "kubelet has sufficient PID available"
+          }
+        ],
+        "capacity": {
+          "cpu": "16",
+          "memory": "64000000Ki",
+          "pods": "110"
+        },
+        "allocatable": {
+          "cpu": "15500m",
+          "memory": "62000000Ki",
+          "pods": "110"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Node",
+      "metadata": {
+        "name": "untainted-node",
+        "labels": {
+          "kubernetes.io/hostname": "untainted-node",
+          "node-role.kubernetes.io/worker": ""
+        }
+      },
+      "spec": {},
+      "status": {
+        "conditions": [
+          {
+            "type": "Ready",
+            "status": "True",
+            "reason": "KubeletReady",
+            "message": "kubelet is posting ready status"
+          },
+          {
+            "type": "MemoryPressure",
+            "status": "False",
+            "reason": "KubeletHasSufficientMemory",
+            "message": "kubelet has sufficient memory available"
+          },
+          {
+            "type": "DiskPressure",
+            "status": "False",
+            "reason": "KubeletHasNoDiskPressure",
+            "message": "kubelet has no disk pressure"
+          },
+          {
+            "type": "PIDPressure",
+            "status": "False",
+            "reason": "KubeletHasSufficientPID",
+            "message": "kubelet has sufficient PID available"
+          }
+        ],
+        "capacity": {
+          "cpu": "8",
+          "memory": "32000000Ki",
+          "pods": "110"
+        },
+        "allocatable": {
+          "cpu": "7800m",
+          "memory": "31000000Ki",
+          "pods": "110"
+        }
+      }
+    }
+  ]
+}

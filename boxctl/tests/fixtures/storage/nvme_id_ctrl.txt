@@ -1,0 +1,11 @@
+NVME Identify Controller:
+vid     : 0x144d
+ssvid   : 0x144d
+sn      : S4EVNF0M123456
+mn      : Samsung SSD 980 PRO 1TB
+fr      : 5B2QGXA7
+rab     : 2
+ieee    : 002538
+cmic    : 0
+mdts    : 9
+cntlid  : 0x41

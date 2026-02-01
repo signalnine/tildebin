@@ -1,0 +1,10 @@
+{
+  "version": "2.13.3",
+  "profiles": {
+    "/usr/sbin/sshd": "enforce",
+    "/usr/sbin/ntpd": "enforce",
+    "/usr/lib/NetworkManager/nm-dhcp-helper": "enforce",
+    "/snap/snapd/21759/usr/lib/snapd/snap-confine": "complain"
+  },
+  "processes": {}
+}

@@ -1,0 +1,22 @@
+Target: iqn.2023-01.com.example:storage-array1 (non-flash)
+	Current Portal: 192.168.1.100:3260,1
+	Persistent Portal: 192.168.1.100:3260,1
+		**********
+		Interface:
+		**********
+		Iface Name: default
+		Iface Transport: tcp
+		SID: 1
+		iSCSI Connection State: TRANSPORT_WAIT
+		iSCSI Session State: FREE
+		Internal iscsid Session State: REOPEN
+		*********
+		Timeouts:
+		*********
+		Recovery Timeout: 120
+		************************
+		Attached SCSI devices:
+		************************
+		Host Number: 3	State: running
+		scsi3 Channel 00 Id 0 Lun: 0
+			Attached scsi disk sda		State: transport-offline

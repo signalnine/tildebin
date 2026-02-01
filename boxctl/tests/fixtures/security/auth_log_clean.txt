@@ -1,0 +1,5 @@
+Jan 15 10:00:01 server sshd[1234]: Accepted publickey for alice from 10.0.0.50 port 52341 ssh2
+Jan 15 10:05:22 server sshd[1235]: Accepted publickey for bob from 10.0.0.51 port 52342 ssh2
+Jan 15 10:10:33 server sshd[1236]: Accepted password for carol from 10.0.0.52 port 52343 ssh2
+Jan 15 11:00:01 server sudo:   alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/usr/bin/apt update
+Jan 15 12:00:01 server CRON[1237]: pam_unix(cron:session): session opened for user root by (uid=0)

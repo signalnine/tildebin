@@ -1,0 +1,5 @@
+subject=CN = example.com, O = Example Corp, C = US
+issuer=CN = DigiCert SHA2 Extended Validation Server CA, OU = www.digicert.com, O = DigiCert Inc, C = US
+notBefore=Jan 15 00:00:00 2025 GMT
+notAfter=Jan 15 23:59:59 2027 GMT
+serial=0A1B2C3D4E5F6789

@@ -1,0 +1,28 @@
+Name:	nginx
+Umask:	0022
+State:	S (sleeping)
+Tgid:	1234
+Ngid:	0
+Pid:	1234
+PPid:	1
+TracerPid:	0
+Uid:	33	33	33	33
+Gid:	33	33	33	33
+FDSize:	256
+Groups:	33
+VmPeak:	   102400 kB
+VmSize:	    98304 kB
+VmLck:	        0 kB
+VmPin:	        0 kB
+VmHWM:	    65536 kB
+VmRSS:	    61440 kB
+RssAnon:	    40960 kB
+RssFile:	    20480 kB
+RssShmem:	        0 kB
+VmData:	    32768 kB
+VmStk:	      132 kB
+VmExe:	      640 kB
+VmLib:	     8192 kB
+VmPTE:	      256 kB
+VmSwap:	        0 kB
+Threads:	4

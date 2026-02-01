@@ -1,0 +1,15 @@
+{
+  "interfaces": {
+    "eth0": {
+      "mtu": "1500",
+      "operstate": "up",
+      "flags": "0x1003"
+    },
+    "eth0.100": {
+      "mtu": "9000",
+      "operstate": "up",
+      "flags": "0x1003"
+    }
+  },
+  "description": "VLAN MTU exceeds parent MTU"
+}

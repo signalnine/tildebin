@@ -1,0 +1,7 @@
+# Thermal zone 0: x86_pkg_temp at 45C (healthy, well below critical)
+type: x86_pkg_temp
+temp: 45000
+trip_point_0_type: passive
+trip_point_0_temp: 80000
+trip_point_1_type: critical
+trip_point_1_temp: 100000

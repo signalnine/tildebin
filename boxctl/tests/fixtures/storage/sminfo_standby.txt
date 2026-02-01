@@ -1,0 +1,1 @@
+sminfo: sm lid:2 sm guid:0x0002c9030027a001 priority:8 state:3 STANDBY

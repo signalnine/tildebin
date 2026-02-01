@@ -1,0 +1,7 @@
+Module                  Size  Used by
+ext4                  815104  2
+mbcache                16384  1 ext4
+jbd2                  131072  1 ext4
+sd_mod                 61440  4
+ahci                   40960  3
+libahci                32768  1 ahci

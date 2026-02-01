@@ -1,0 +1,28 @@
+[
+  {
+    "name": "r0",
+    "role": "Primary",
+    "devices": [
+      {
+        "volume": 0,
+        "disk-state": "UpToDate",
+        "out-of-sync": 102400
+      }
+    ],
+    "connections": [
+      {
+        "name": "peer1",
+        "connection-state": "Connected",
+        "peer-role": "Secondary",
+        "peer_devices": [
+          {
+            "volume": 0,
+            "peer-disk-state": "Inconsistent",
+            "replication-state": "SyncSource",
+            "done": 75.5
+          }
+        ]
+      }
+    ]
+  }
+]

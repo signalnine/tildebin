@@ -1,0 +1,32 @@
+{
+  "health": {
+    "status": "HEALTH_ERR",
+    "checks": {
+      "OSD_DOWN": {
+        "severity": "HEALTH_ERR",
+        "summary": {
+          "message": "1 osds down"
+        }
+      },
+      "PG_DEGRADED": {
+        "severity": "HEALTH_ERR",
+        "summary": {
+          "message": "Degraded data redundancy"
+        }
+      }
+    }
+  },
+  "pgmap": {
+    "num_pgs": 256,
+    "pgs_by_state": [
+      {"state_name": "active+clean", "count": 200},
+      {"state_name": "active+degraded", "count": 50},
+      {"state_name": "stale+active+clean", "count": 6}
+    ]
+  },
+  "monmap": {
+    "num_mons": 3
+  },
+  "quorum": [0, 1],
+  "quorum_names": ["mon1", "mon2"]
+}

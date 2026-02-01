@@ -1,0 +1,46 @@
+{
+  "bridges": {
+    "br0": {
+      "operstate": "up",
+      "mtu": "1500",
+      "address": "52:54:00:12:34:56",
+      "bridge": {
+        "bridge_id": "8000.525400123456",
+        "stp_state": "1",
+        "forward_delay": "200",
+        "hello_time": "200",
+        "max_age": "2000",
+        "ageing_time": "30000",
+        "root_id": "8000.525400123456",
+        "root_port": "0",
+        "root_path_cost": "0",
+        "vlan_filtering": "0"
+      },
+      "ports": {
+        "veth0": {
+          "state": "3",
+          "path_cost": "100",
+          "priority": "128",
+          "hairpin_mode": "0",
+          "interface": {
+            "operstate": "up",
+            "mtu": "1500",
+            "address": "52:54:00:12:34:57"
+          }
+        },
+        "veth1": {
+          "state": "3",
+          "path_cost": "100",
+          "priority": "128",
+          "hairpin_mode": "0",
+          "interface": {
+            "operstate": "up",
+            "mtu": "1500",
+            "address": "52:54:00:12:34:58"
+          }
+        }
+      }
+    }
+  },
+  "description": "Healthy bridge with two ports forwarding"
+}

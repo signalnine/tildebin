@@ -1,0 +1,74 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolumeClaim",
+      "metadata": {
+        "name": "data-pvc",
+        "namespace": "production",
+        "creationTimestamp": "2024-01-15T10:30:00Z"
+      },
+      "spec": {
+        "accessModes": ["ReadWriteOnce"],
+        "resources": {
+          "requests": {
+            "storage": "100Gi"
+          }
+        },
+        "storageClassName": "standard"
+      },
+      "status": {
+        "phase": "Bound"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolumeClaim",
+      "metadata": {
+        "name": "stuck-pvc",
+        "namespace": "default",
+        "creationTimestamp": "2024-01-01T08:00:00Z"
+      },
+      "spec": {
+        "accessModes": ["ReadWriteMany"],
+        "resources": {
+          "requests": {
+            "storage": "500Gi"
+          }
+        },
+        "storageClassName": "nonexistent-class"
+      },
+      "status": {
+        "phase": "Pending"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolumeClaim",
+      "metadata": {
+        "name": "another-pending-pvc",
+        "namespace": "staging",
+        "creationTimestamp": "2024-01-10T12:00:00Z"
+      },
+      "spec": {
+        "accessModes": ["ReadWriteOnce"],
+        "resources": {
+          "requests": {
+            "storage": "200Gi"
+          }
+        },
+        "storageClassName": "local-path",
+        "selector": {
+          "matchLabels": {
+            "type": "ssd"
+          }
+        }
+      },
+      "status": {
+        "phase": "Pending"
+      }
+    }
+  ],
+  "kind": "List"
+}

@@ -1,0 +1,31 @@
+# /etc/sudoers - Configuration with security issues
+
+# Missing env_reset - environment not sanitized (issue)
+# Defaults   env_reset
+Defaults   mail_badpass
+
+# Missing secure_path - PATH not restricted (issue)
+# Defaults   secure_path=...
+
+# Negative timestamp means creds never expire (issue)
+Defaults   timestamp_timeout=-1
+
+# Allows non-interactive sudo (potential issue)
+Defaults   !requiretty
+
+# User privilege specification
+root    ALL=(ALL:ALL) ALL
+
+# NOPASSWD with ALL commands - critical security issue
+deploy  ALL=(ALL) NOPASSWD: ALL
+
+# NOPASSWD for specific user - warning
+backup  ALL=(root) NOPASSWD: /usr/bin/rsync, /usr/bin/tar
+
+# SETENV allows environment override - potential risk
+developer ALL=(ALL) SETENV: ALL
+
+# ALL commands without NOPASSWD - warning
+operator ALL=(ALL) ALL
+
+#includedir /etc/sudoers.d

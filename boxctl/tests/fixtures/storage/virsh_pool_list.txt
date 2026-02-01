@@ -1,0 +1,4 @@
+ Name      State    Autostart
+-------------------------------
+ default   active   yes
+ images    active   yes

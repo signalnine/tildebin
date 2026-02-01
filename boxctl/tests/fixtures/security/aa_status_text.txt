@@ -1,0 +1,15 @@
+apparmor module is loaded.
+25 profiles are loaded.
+22 profiles are in enforce mode.
+   /usr/sbin/sshd
+   /usr/sbin/ntpd
+3 profiles are in complain mode.
+   /snap/snapd/21759/usr/lib/snapd/snap-confine
+0 profiles are in kill mode.
+0 profiles are in unconfined mode.
+2 processes have profiles defined.
+2 processes are in enforce mode.
+0 processes are in complain mode.
+0 processes are unconfined but have a profile defined.
+0 processes are in mixed mode.
+0 processes are in kill mode.

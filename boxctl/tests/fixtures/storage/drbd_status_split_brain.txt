@@ -1,0 +1,4 @@
+r0 role:Primary
+  disk:UpToDate
+  peer role:Primary
+    peer-disk:UpToDate

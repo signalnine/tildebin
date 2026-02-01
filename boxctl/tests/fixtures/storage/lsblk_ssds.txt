@@ -1,0 +1,3 @@
+sda   disk
+sdb   disk
+nvme0n1 disk

@@ -1,0 +1,43 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "broken-service",
+        "namespace": "staging"
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {
+          "app": "broken"
+        },
+        "ports": [
+          {"port": 80, "targetPort": 8080}
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "lb-pending",
+        "namespace": "staging"
+      },
+      "spec": {
+        "type": "LoadBalancer",
+        "selector": {
+          "app": "lb-app"
+        },
+        "ports": [
+          {"port": 443, "targetPort": 8443}
+        ]
+      },
+      "status": {
+        "loadBalancer": {}
+      }
+    }
+  ]
+}

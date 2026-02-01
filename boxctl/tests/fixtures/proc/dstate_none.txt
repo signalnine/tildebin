@@ -1,0 +1,10 @@
+# No D-state processes - all processes are in normal states (S, R, etc.)
+
+# /proc/100/stat - sleeping process
+100 (nginx) S 1 100 100 0 -1 0 0 0 0 0 0 0 0 0 20 0 4 0 100000 0 0
+
+# /proc/200/stat - running process
+200 (python) R 1 200 200 0 -1 0 0 0 0 0 0 0 0 0 20 0 1 0 200000 0 0
+
+# /proc/300/stat - sleeping process
+300 (bash) S 1 300 300 0 -1 0 0 0 0 0 0 0 0 0 20 0 1 0 300000 0 0

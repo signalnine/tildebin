@@ -1,0 +1,13 @@
+Name:	java
+Umask:	0022
+State:	S (sleeping)
+Tgid:	3000
+Ngid:	0
+Pid:	3000
+PPid:	1
+TracerPid:	0
+Uid:	1000	1000	1000	1000
+Gid:	1000	1000	1000	1000
+VmPeak:	16777216 kB
+VmSize:	16777216 kB
+VmRSS:	8388608 kB

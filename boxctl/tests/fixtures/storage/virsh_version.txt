@@ -1,0 +1,4 @@
+Compiled against library: libvirt 8.0.0
+Using library: libvirt 8.0.0
+Using API: QEMU 8.0.0
+Running hypervisor: QEMU 6.2.0

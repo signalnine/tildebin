@@ -1,0 +1,24 @@
+           CPU0       CPU1       CPU2       CPU3
+  0:         22          0          0          0   IO-APIC   2-edge      timer
+  1:          9          0          0          0   IO-APIC   1-edge      i8042
+  8:          0          0          0          1   IO-APIC   8-edge      rtc0
+  9:          0          0          0          0   IO-APIC   9-fasteoi   acpi
+ 12:         40         39         40         38   IO-APIC  12-edge      i8042
+ 14:          0          0          0          0   IO-APIC  14-edge      ata_piix
+ 15:          0          0          0          0   IO-APIC  15-edge      ata_piix
+ 16:      25000      25000      25000      25000   IO-APIC  16-fasteoi   i801_smbus
+ 23:     500000     500000     500000     500000   IO-APIC  23-fasteoi   ehci_hcd:usb1
+ 24:    1000000    1000000    1000000    1000000   PCI-MSI 524288-edge      nvme0q0
+ 25:    1000000    1000000    1000000    1000000   PCI-MSI 524289-edge      nvme0q1
+ 26:    1000000    1000000    1000000    1000000   PCI-MSI 524290-edge      nvme0q2
+ 27:    1000000    1000000    1000000    1000000   PCI-MSI 524291-edge      nvme0q3
+NMI:         10         10         10         10   Non-maskable interrupts
+LOC:    2000000    2000000    2000000    2000000   Local timer interrupts
+SPU:          0          0          0          0   Spurious interrupts
+PMI:         10         10         10         10   Performance monitoring interrupts
+IWI:          0          0          0          0   IRQ work interrupts
+RES:     100000     100000     100000     100000   Rescheduling interrupts
+CAL:      50000      50000      50000      50000   Function call interrupts
+TLB:      10000      10000      10000      10000   TLB shootdowns
+TRM:          0          0          0          0   Thermal event interrupts
+THR:          0          0          0          0   Threshold APIC interrupts

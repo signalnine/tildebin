@@ -1,0 +1,7 @@
+/usr/bin/passwd
+/usr/bin/sudo
+/usr/bin/su
+/tmp/suspicious_binary
+/home/user/malware
+/var/tmp/backdoor
+/usr/local/bin/custom_suid

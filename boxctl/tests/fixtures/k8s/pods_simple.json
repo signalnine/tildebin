@@ -1,0 +1,100 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "nginx-1",
+        "namespace": "default",
+        "labels": {
+          "app": "nginx"
+        }
+      },
+      "spec": {
+        "nodeName": "node-1",
+        "tolerations": [],
+        "containers": [
+          {
+            "name": "nginx",
+            "resources": {
+              "requests": {
+                "cpu": "100m",
+                "memory": "128Mi"
+              }
+            }
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "nginx-2",
+        "namespace": "default",
+        "labels": {
+          "app": "nginx"
+        }
+      },
+      "spec": {
+        "nodeName": "node-2",
+        "tolerations": [],
+        "containers": [
+          {
+            "name": "nginx",
+            "resources": {
+              "requests": {
+                "cpu": "100m",
+                "memory": "128Mi"
+              }
+            }
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "gpu-pod",
+        "namespace": "ml",
+        "labels": {
+          "app": "training"
+        }
+      },
+      "spec": {
+        "nodeName": "gpu-node",
+        "tolerations": [
+          {
+            "key": "nvidia.com/gpu",
+            "operator": "Equal",
+            "value": "true",
+            "effect": "NoSchedule"
+          }
+        ],
+        "containers": [
+          {
+            "name": "trainer",
+            "resources": {
+              "requests": {
+                "cpu": "4000m",
+                "memory": "16Gi"
+              }
+            }
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running"
+      }
+    }
+  ]
+}

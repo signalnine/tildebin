@@ -1,0 +1,25 @@
+{
+  "health": {
+    "status": "HEALTH_WARN",
+    "checks": {
+      "OSD_NEARFULL": {
+        "severity": "HEALTH_WARN",
+        "summary": {
+          "message": "1 nearfull osd(s)"
+        }
+      }
+    }
+  },
+  "pgmap": {
+    "num_pgs": 256,
+    "pgs_by_state": [
+      {"state_name": "active+clean", "count": 240},
+      {"state_name": "active+degraded", "count": 16}
+    ]
+  },
+  "monmap": {
+    "num_mons": 3
+  },
+  "quorum": [0, 1, 2],
+  "quorum_names": ["mon1", "mon2", "mon3"]
+}

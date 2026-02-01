@@ -1,0 +1,8 @@
+# Invalid crontab with syntax errors
+SHELL=/bin/sh
+
+# This has non-existent user which will be caught
+0 5 * * * baduser123 /usr/bin/echo "test"
+
+# Valid entry for comparison
+0 5 * * * root /usr/bin/backup.sh

@@ -1,0 +1,9 @@
+Stats:
+	txdata_octets: 1234567890
+	rxdata_octets: 9876543210
+	noptx_pdus: 100
+	noprx_pdus: 100
+	dataout_pdus: 50000
+	datain_pdus: 80000
+	timeout_err: 15
+	digest_err: 3

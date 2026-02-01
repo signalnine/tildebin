@@ -1,0 +1,7 @@
+thp_fault_alloc 5000
+thp_fault_fallback 2000
+thp_collapse_alloc 1000
+thp_collapse_fail 5000
+thp_split_page 500
+thp_split_pmd 600
+thp_zero_page_alloc 0

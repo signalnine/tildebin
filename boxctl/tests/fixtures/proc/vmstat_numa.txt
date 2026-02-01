@@ -1,0 +1,13 @@
+nr_free_pages 524288
+nr_zone_inactive_anon 0
+nr_zone_active_anon 2097152
+nr_zone_inactive_file 524288
+nr_zone_active_file 1048576
+nr_zone_unevictable 32768
+numa_hit 9000000
+numa_miss 100000
+numa_foreign 95000
+numa_interleave 2000
+numa_local 8500000
+numa_other 500000
+numa_pages_migrated 50000

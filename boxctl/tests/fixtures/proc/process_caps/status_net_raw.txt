@@ -1,0 +1,21 @@
+# Process with CAP_NET_RAW capability (bit 13 = 0x2000)
+Name:	ping
+Umask:	0022
+State:	R (running)
+Tgid:	2000
+Ngid:	0
+Pid:	2000
+PPid:	1000
+TracerPid:	0
+Uid:	1000	1000	1000	1000
+Gid:	1000	1000	1000	1000
+FDSize:	64
+Groups:	4 24 27 30 46 108 124 1000
+VmPeak:	    8192 kB
+VmSize:	    8192 kB
+VmRSS:	    4096 kB
+CapInh:	0000000000000000
+CapPrm:	0000000000002000
+CapEff:	0000000000002000
+CapBnd:	000001ffffffffff
+CapAmb:	0000000000000000

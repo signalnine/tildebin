@@ -1,0 +1,7 @@
+# Thermal zone: x86_pkg_temp at 102C (above critical threshold!)
+type: x86_pkg_temp
+temp: 102000
+trip_point_0_type: passive
+trip_point_0_temp: 80000
+trip_point_1_type: critical
+trip_point_1_temp: 100000

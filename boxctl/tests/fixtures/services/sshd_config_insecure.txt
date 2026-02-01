@@ -1,0 +1,10 @@
+port 22
+addressfamily any
+listenaddress 0.0.0.0
+permitrootlogin yes
+passwordauthentication yes
+permitemptypasswords yes
+maxsessions 10
+maxstartups 10:30:100
+clientaliveinterval 0
+x11forwarding yes

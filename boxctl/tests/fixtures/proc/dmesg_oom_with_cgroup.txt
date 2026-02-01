@@ -1,0 +1,5 @@
+[Mon Jan 15 10:30:00 2024] Task in /docker/abc123def456 killed as a result of limit of /docker/abc123def456
+[Mon Jan 15 10:30:00 2024] memory cgroup /docker/abc123def456 Out of memory: Killed process 12345 (python3) total-vm:8388608kB, anon-rss:4194304kB, file-rss:2048kB
+[Mon Jan 15 11:00:00 2024] Task in /kubepods/burstable/podxyz789 killed as a result of limit of /kubepods/burstable/podxyz789
+[Mon Jan 15 11:00:00 2024] memory cgroup /kubepods/burstable/podxyz789 Out of memory: Killed process 23456 (java) total-vm:4194304kB, anon-rss:2097152kB, file-rss:1024kB
+[Mon Jan 15 12:00:00 2024] cgroup /system.slice/httpd.service Out of memory: Killed process 34567 (httpd) total-vm:1048576kB, anon-rss:524288kB, file-rss:512kB

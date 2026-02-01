@@ -69,9 +69,49 @@ class MockContext:
         return path in self.file_contents
 
     def glob(self, pattern: str, root: str = ".") -> list[str]:
-        """Return mocked glob results."""
+        """Return mocked glob results.
+
+        Simulates Path(root).glob(pattern) behavior.
+        Returns paths that start with root and match the pattern.
+        For absolute patterns (starting with /), matches against file_contents.
+        """
         from fnmatch import fnmatch
-        return [p for p in self.file_contents.keys() if fnmatch(p, pattern)]
+
+        results = set()
+
+        # Handle absolute path patterns (e.g., "/proc/*/stat")
+        if pattern.startswith("/"):
+            for path in self.file_contents.keys():
+                if fnmatch(path, pattern):
+                    results.add(path)
+            return sorted(results)
+
+        # Normalize root for relative patterns
+        if not root.endswith("/"):
+            root = root + "/"
+
+        for path in self.file_contents.keys():
+            # Check if path is under root
+            if not path.startswith(root):
+                continue
+
+            # Get the relative part after root
+            relative = path[len(root):]
+
+            # For patterns like "[0-9]*", we want to match immediate children
+            # (like "1234/comm" should yield "/proc/1234" as a dir match)
+            parts = relative.split("/")
+            if not parts or not parts[0]:
+                continue
+
+            immediate_child = parts[0]
+
+            # Check if immediate child matches the pattern
+            if fnmatch(immediate_child, pattern):
+                full_child_path = root.rstrip("/") + "/" + immediate_child
+                results.add(full_child_path)
+
+        return sorted(results)
 
     def get_env(self, key: str, default: str | None = None) -> str | None:
         """Return mocked environment variable."""

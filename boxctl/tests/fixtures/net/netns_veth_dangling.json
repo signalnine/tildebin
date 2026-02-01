@@ -1,0 +1,12 @@
+[
+  {
+    "ifindex": 10,
+    "ifname": "veth123abc",
+    "flags": ["BROADCAST", "MULTICAST"],
+    "mtu": 1500,
+    "qdisc": "noqueue",
+    "operstate": "down",
+    "link_index": 0,
+    "master": "docker0"
+  }
+]

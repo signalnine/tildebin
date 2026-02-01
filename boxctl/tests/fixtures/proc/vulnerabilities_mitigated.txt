@@ -1,0 +1,7 @@
+meltdown: Mitigation: PTI
+spectre_v1: Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+spectre_v2: Mitigation: Retpolines, IBPB: conditional, IBRS_FW, STIBP: conditional, RSB filling
+spec_store_bypass: Mitigation: Speculative Store Bypass disabled via prctl and seccomp
+l1tf: Mitigation: PTE Inversion; VMX: conditional cache flushes, SMT disabled
+mds: Mitigation: Clear CPU buffers; SMT disabled
+itlb_multihit: Not affected

@@ -1,0 +1,67 @@
+{
+  "apiVersion": "snapshot.storage.k8s.io/v1",
+  "items": [
+    {
+      "apiVersion": "snapshot.storage.k8s.io/v1",
+      "kind": "VolumeSnapshot",
+      "metadata": {
+        "name": "snap-healthy",
+        "namespace": "production",
+        "creationTimestamp": "2024-01-15T00:00:00Z"
+      },
+      "spec": {
+        "source": {
+          "persistentVolumeClaimName": "data-pvc"
+        },
+        "volumeSnapshotClassName": "csi-aws-snapclass"
+      },
+      "status": {
+        "readyToUse": true,
+        "boundVolumeSnapshotContentName": "snapcontent-healthy",
+        "restoreSize": "100Gi"
+      }
+    },
+    {
+      "apiVersion": "snapshot.storage.k8s.io/v1",
+      "kind": "VolumeSnapshot",
+      "metadata": {
+        "name": "snap-failed",
+        "namespace": "staging",
+        "creationTimestamp": "2024-01-14T12:00:00Z"
+      },
+      "spec": {
+        "source": {
+          "persistentVolumeClaimName": "staging-pvc"
+        },
+        "volumeSnapshotClassName": "csi-aws-snapclass"
+      },
+      "status": {
+        "readyToUse": false,
+        "error": {
+          "message": "failed to take snapshot: volume not found"
+        }
+      }
+    },
+    {
+      "apiVersion": "snapshot.storage.k8s.io/v1",
+      "kind": "VolumeSnapshot",
+      "metadata": {
+        "name": "snap-old",
+        "namespace": "production",
+        "creationTimestamp": "2023-06-01T00:00:00Z"
+      },
+      "spec": {
+        "source": {
+          "persistentVolumeClaimName": "old-pvc"
+        },
+        "volumeSnapshotClassName": "csi-aws-snapclass"
+      },
+      "status": {
+        "readyToUse": true,
+        "boundVolumeSnapshotContentName": "snapcontent-old",
+        "restoreSize": "50Gi"
+      }
+    }
+  ],
+  "kind": "List"
+}

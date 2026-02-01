@@ -1,0 +1,9 @@
+# Single zombie process fixture
+# This represents a zombie process created by PID 100 (bash)
+
+# Format for /proc/[pid]/stat:
+# pid (comm) state ppid pgrp session tty_nr tpgid flags minflt cminflt majflt cmajflt utime stime cutime cstime priority nice num_threads itrealvalue starttime ...
+
+# Zombie process - state 'Z'
+# PID 500, parent 100 (bash), started at tick 50000
+500 (defunct_child) Z 100 500 100 0 -1 0 0 0 0 0 0 0 0 0 20 0 1 0 50000 0 0 18446744073709551615 0 0 0 0 0 0 0 0 0

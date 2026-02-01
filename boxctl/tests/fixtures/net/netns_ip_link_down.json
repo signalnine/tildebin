@@ -1,0 +1,22 @@
+[
+  {
+    "ifindex": 1,
+    "ifname": "lo",
+    "flags": ["LOOPBACK", "UP", "LOWER_UP"],
+    "mtu": 65536,
+    "qdisc": "noqueue",
+    "operstate": "UNKNOWN",
+    "group": "default",
+    "txqlen": 1000
+  },
+  {
+    "ifindex": 4,
+    "ifname": "eth0",
+    "flags": ["BROADCAST", "MULTICAST"],
+    "mtu": 1500,
+    "qdisc": "fq_codel",
+    "operstate": "DOWN",
+    "group": "default",
+    "link_type": "ether"
+  }
+]

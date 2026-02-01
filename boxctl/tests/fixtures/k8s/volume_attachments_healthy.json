@@ -1,0 +1,42 @@
+{
+  "apiVersion": "storage.k8s.io/v1",
+  "items": [
+    {
+      "apiVersion": "storage.k8s.io/v1",
+      "kind": "VolumeAttachment",
+      "metadata": {
+        "name": "csi-abc123",
+        "creationTimestamp": "2024-01-15T10:30:00Z"
+      },
+      "spec": {
+        "attacher": "ebs.csi.aws.com",
+        "nodeName": "node-1",
+        "source": {
+          "persistentVolumeName": "pv-data-001"
+        }
+      },
+      "status": {
+        "attached": true
+      }
+    },
+    {
+      "apiVersion": "storage.k8s.io/v1",
+      "kind": "VolumeAttachment",
+      "metadata": {
+        "name": "csi-def456",
+        "creationTimestamp": "2024-01-15T11:00:00Z"
+      },
+      "spec": {
+        "attacher": "ebs.csi.aws.com",
+        "nodeName": "node-2",
+        "source": {
+          "persistentVolumeName": "pv-logs-001"
+        }
+      },
+      "status": {
+        "attached": true
+      }
+    }
+  ],
+  "kind": "List"
+}

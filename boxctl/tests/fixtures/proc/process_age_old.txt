@@ -1,0 +1,9 @@
+# Process age test fixture - old processes (running for a long time)
+# btime 1704067200 = 2024-01-01 00:00:00 UTC
+
+# Very old process - started right after boot (tick 100 = 1 second after boot)
+# If current time is much later, this will be very old
+100 (old_daemon) S 1 100 100 0 -1 0 0 0 0 0 0 0 0 0 20 0 1 0 100 0 0
+
+# Another old process
+200 (legacy_app) R 1 200 200 0 -1 0 0 0 0 0 0 0 0 0 20 0 2 0 200 0 0

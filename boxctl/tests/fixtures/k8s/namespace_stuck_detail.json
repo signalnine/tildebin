@@ -1,0 +1,39 @@
+{
+  "apiVersion": "v1",
+  "kind": "Namespace",
+  "metadata": {
+    "name": "stuck-namespace",
+    "deletionTimestamp": "2024-01-15T10:30:00Z",
+    "finalizers": [
+      "kubernetes"
+    ]
+  },
+  "spec": {
+    "finalizers": [
+      "kubernetes"
+    ]
+  },
+  "status": {
+    "phase": "Terminating",
+    "conditions": [
+      {
+        "type": "NamespaceDeletionContentFailure",
+        "status": "True",
+        "reason": "ContentDeletionFailed",
+        "message": "Failed to delete all resources in the namespace"
+      },
+      {
+        "type": "NamespaceContentRemaining",
+        "status": "True",
+        "reason": "ResourcesRemaining",
+        "message": "Some resources are remaining in the namespace"
+      },
+      {
+        "type": "NamespaceFinalizersRemaining",
+        "status": "True",
+        "reason": "FinalizersRemaining",
+        "message": "Some finalizers are still present"
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+[    0.000000] Linux version 5.15.0-generic (buildd@server) (gcc version 11.2.0)
+[    1.234567] ACPI: Core revision 20210730
+[  123.456789] ata1.00: exception Emask 0x0 SAct 0x0 SErr 0x0 action 0x6
+[  123.567890] ata1.00: failed command: READ DMA
+[  123.678901] ata1.00: status: { DRDY ERR }
+[  123.789012] ata1.00: error: { UNC }
+[  234.890123] Buffer I/O error on device sdb1, logical block 12345
+[  345.901234] EXT4-fs error (device sda1): ext4_lookup:1234: inode #56789: comm cat: deleted inode referenced
+[  456.012345] mce: [Hardware Error]: Machine check events logged
+[  567.123456] EDAC MC0: 1 CE memory read error on CPU_SrcID#0_Ha#0_Chan#0_DIMM#0

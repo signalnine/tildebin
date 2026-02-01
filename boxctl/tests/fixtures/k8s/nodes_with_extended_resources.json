@@ -1,0 +1,96 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Node",
+      "metadata": {
+        "name": "gpu-node-1",
+        "labels": {
+          "kubernetes.io/hostname": "gpu-node-1",
+          "accelerator": "nvidia-tesla-v100"
+        }
+      },
+      "spec": {
+        "taints": []
+      },
+      "status": {
+        "conditions": [
+          {"type": "Ready", "status": "True"}
+        ],
+        "capacity": {
+          "cpu": "16",
+          "memory": "64Gi",
+          "nvidia.com/gpu": "4",
+          "pods": "110"
+        },
+        "allocatable": {
+          "cpu": "15500m",
+          "memory": "62Gi",
+          "nvidia.com/gpu": "4",
+          "pods": "110"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Node",
+      "metadata": {
+        "name": "gpu-node-2",
+        "labels": {
+          "kubernetes.io/hostname": "gpu-node-2",
+          "accelerator": "nvidia-tesla-v100"
+        }
+      },
+      "spec": {
+        "taints": []
+      },
+      "status": {
+        "conditions": [
+          {"type": "Ready", "status": "True"}
+        ],
+        "capacity": {
+          "cpu": "16",
+          "memory": "64Gi",
+          "nvidia.com/gpu": "4",
+          "pods": "110"
+        },
+        "allocatable": {
+          "cpu": "15500m",
+          "memory": "62Gi",
+          "nvidia.com/gpu": "4",
+          "pods": "110"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Node",
+      "metadata": {
+        "name": "regular-node-1",
+        "labels": {
+          "kubernetes.io/hostname": "regular-node-1"
+        }
+      },
+      "spec": {
+        "taints": []
+      },
+      "status": {
+        "conditions": [
+          {"type": "Ready", "status": "True"}
+        ],
+        "capacity": {
+          "cpu": "8",
+          "memory": "32Gi",
+          "pods": "110"
+        },
+        "allocatable": {
+          "cpu": "7800m",
+          "memory": "31Gi",
+          "pods": "110"
+        }
+      }
+    }
+  ]
+}

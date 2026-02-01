@@ -1,0 +1,14 @@
+# No orphaned processes - all have proper parents (not ppid=1 or expected services)
+# Normal process hierarchy
+
+# /proc/1/stat - init/systemd
+1 (systemd) S 0 1 1 0 -1 4194560 10000 20000 10 20 100 50 0 0 20 0 1 0 1 100000000 1000 18446744073709551615 0 0 0 0 0 0 0 0 0
+
+# /proc/100/stat - sshd (daemon, expected to have ppid=1)
+100 (sshd) S 1 100 100 0 -1 4194304 5000 0 0 0 50 25 0 0 20 0 1 0 500 50000000 500 18446744073709551615 0 0 0 0 0 0 0 0 0
+
+# /proc/200/stat - bash shell (child of sshd)
+200 (bash) S 100 200 200 0 -1 4194304 3000 0 0 0 30 15 0 0 20 0 1 0 1000 80000000 2000 18446744073709551615 0 0 0 0 0 0 0 0 0
+
+# /proc/300/stat - vim (child of bash)
+300 (vim) S 200 300 200 0 -1 4194304 2000 0 0 0 20 10 0 0 20 0 1 0 1500 40000000 1000 18446744073709551615 0 0 0 0 0 0 0 0 0

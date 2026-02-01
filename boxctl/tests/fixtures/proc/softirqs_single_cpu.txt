@@ -1,0 +1,11 @@
+                    CPU0
+          HI:          1
+       TIMER:     125000
+      NET_TX:       5000
+      NET_RX:      50000
+       BLOCK:      25000
+    IRQ_POLL:          0
+     TASKLET:       1000
+       SCHED:      75000
+     HRTIMER:       8000
+         RCU:      40000

@@ -1,0 +1,10 @@
+# Single D-state process - waiting for I/O
+
+# /proc/100/stat - D-state process (uninterruptible sleep)
+100 (dd) D 1 100 100 0 -1 0 0 0 0 0 0 0 0 0 20 0 1 0 50000 0 0
+
+# /proc/100/wchan - wait channel (blocked on NFS)
+nfs_wait_on_request
+
+# /proc/200/stat - normal process
+200 (bash) S 1 200 200 0 -1 0 0 0 0 0 0 0 0 0 20 0 1 0 100000 0 0

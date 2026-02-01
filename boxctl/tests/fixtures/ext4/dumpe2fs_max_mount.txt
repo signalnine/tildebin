@@ -1,0 +1,28 @@
+dumpe2fs 1.46.5 (30-Dec-2021)
+Filesystem volume name:   <none>
+Last mounted on:          /
+Filesystem UUID:          abc12345-6789-0abc-def0-123456789abc
+Filesystem magic number:  0xEF53
+Filesystem revision #:    1 (dynamic)
+Filesystem features:      has_journal ext_attr resize_inode dir_index filetype needs_recovery extent 64bit flex_bg sparse_super large_file huge_file dir_nlink extra_isize metadata_csum
+Filesystem flags:         signed_directory_hash
+Default mount options:    user_xattr acl
+Filesystem state:         clean
+Errors behavior:          Continue
+Filesystem OS type:       Linux
+Inode count:              6553600
+Block count:              26214400
+Reserved block count:     1310720
+Free blocks:              22174893
+Free inodes:              6437812
+First block:              0
+Block size:               4096
+Fragment size:            4096
+Mount count:              30
+Maximum mount count:      30
+Last checked:             Mon Jan  1 00:00:00 2024
+Check interval:           0 (<none>)
+Journal inode:            8
+Journal features:         journal_incompat_revoke journal_64bit journal_checksum_v3
+Journal size:             128M
+Journal length:           32768

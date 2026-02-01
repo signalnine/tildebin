@@ -1,0 +1,10 @@
+2024-01-15T10:00:01+0000 server kernel: Linux version 5.15.0-91-generic (buildd@lcy02-amd64-012) (gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, GNU ld (GNU Binutils for Ubuntu) 2.38) #101-Ubuntu SMP Tue Nov 14 13:30:08 UTC 2023
+2024-01-15T10:00:02+0000 server kernel: Command line: BOOT_IMAGE=/vmlinuz-5.15.0-91-generic root=UUID=abc123 ro quiet splash
+2024-01-15T10:00:03+0000 server kernel: Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)
+2024-01-15T10:00:03+0000 server kernel: CPU: 0 PID: 1 Comm: swapper/0 Not tainted 5.15.0-91-generic
+2024-01-15T10:00:03+0000 server kernel: Call Trace:
+2024-01-15T10:00:03+0000 server kernel:  dump_stack+0x107/0x163
+2024-01-15T10:00:03+0000 server kernel:  panic+0x35c/0x3d0
+2024-01-15T10:00:03+0000 server kernel:  mount_block_root+0x203/0x2a0
+2024-01-15T10:00:03+0000 server kernel: RIP: 0010:panic+0x35c/0x3d0
+2024-01-15T10:00:03+0000 server kernel: ---[ end Kernel panic - not syncing: VFS: Unable to mount root fs ]---

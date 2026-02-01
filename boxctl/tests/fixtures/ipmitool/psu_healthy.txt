@@ -1,0 +1,3 @@
+PS1 Status       | 60h | ok  |  10.1 | Presence detected
+PS2 Status       | 61h | ok  |  10.2 | Presence detected
+PS Redundancy    | 62h | ok  |  10.0 | Fully Redundant

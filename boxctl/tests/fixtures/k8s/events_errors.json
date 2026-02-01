@@ -1,0 +1,81 @@
+{
+  "apiVersion": "v1",
+  "kind": "EventList",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "api-gateway-6d9b8c7f-qwe12.17c3d4e5f",
+        "namespace": "production"
+      },
+      "involvedObject": {
+        "kind": "Pod",
+        "name": "api-gateway-6d9b8c7f-qwe12",
+        "namespace": "production"
+      },
+      "reason": "Failed",
+      "message": "Error: ImagePullBackOff",
+      "type": "Warning",
+      "count": 25,
+      "firstTimestamp": "2024-01-15T06:00:00Z",
+      "lastTimestamp": "2024-01-15T10:30:00Z"
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "pvc-data-claim.17c3d4e6a",
+        "namespace": "production"
+      },
+      "involvedObject": {
+        "kind": "PersistentVolumeClaim",
+        "name": "pvc-data-claim",
+        "namespace": "production"
+      },
+      "reason": "ProvisioningFailed",
+      "message": "storageclass.storage.k8s.io \"fast-ssd\" not found",
+      "type": "Warning",
+      "count": 3,
+      "firstTimestamp": "2024-01-15T09:45:00Z",
+      "lastTimestamp": "2024-01-15T10:20:00Z"
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "db-service-account.17c3d4e6b",
+        "namespace": "database"
+      },
+      "involvedObject": {
+        "kind": "ServiceAccount",
+        "name": "db-service-account",
+        "namespace": "database"
+      },
+      "reason": "FailedCreate",
+      "message": "Error creating: secrets \"db-service-account-token\" is forbidden: exceeded quota",
+      "type": "Warning",
+      "count": 10,
+      "firstTimestamp": "2024-01-15T08:30:00Z",
+      "lastTimestamp": "2024-01-15T10:28:00Z"
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "worker-node-3.17c3d4e6c",
+        "namespace": "default"
+      },
+      "involvedObject": {
+        "kind": "Node",
+        "name": "worker-node-3"
+      },
+      "reason": "OOMKilling",
+      "message": "Memory cgroup out of memory: Killed process 12345 (java)",
+      "type": "Warning",
+      "count": 2,
+      "firstTimestamp": "2024-01-15T10:00:00Z",
+      "lastTimestamp": "2024-01-15T10:25:00Z"
+    }
+  ]
+}

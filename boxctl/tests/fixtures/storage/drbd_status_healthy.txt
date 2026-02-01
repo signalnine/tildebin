@@ -1,0 +1,8 @@
+r0 role:Primary
+  disk:UpToDate
+  peer connection:Connected
+    peer-disk:UpToDate
+r1 role:Secondary
+  disk:UpToDate
+  peer connection:Connected
+    peer-disk:UpToDate

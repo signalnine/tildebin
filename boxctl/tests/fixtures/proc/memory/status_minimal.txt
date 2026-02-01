@@ -1,0 +1,11 @@
+Name:	tiny_process
+Umask:	0022
+State:	S (sleeping)
+Tgid:	3000
+Pid:	3000
+PPid:	1000
+Uid:	1000	1000	1000	1000
+Gid:	1000	1000	1000	1000
+VmPeak:	    4096 kB
+VmSize:	    4096 kB
+VmRSS:	    1024 kB

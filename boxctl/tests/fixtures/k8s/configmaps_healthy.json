@@ -1,0 +1,29 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "app-config",
+        "namespace": "production"
+      },
+      "data": {
+        "config.yaml": "database:\n  host: db.example.com\n  port: 5432\n",
+        "settings.json": "{\"debug\": false, \"log_level\": \"info\"}"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "nginx-config",
+        "namespace": "production"
+      },
+      "data": {
+        "nginx.conf": "server { listen 80; server_name example.com; }"
+      }
+    }
+  ]
+}

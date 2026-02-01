@@ -1,0 +1,6 @@
+[Mon Jan 15 10:30:00 2024] Linux version 5.15.0-generic (buildd@server) (gcc version 11.2.0)
+[Mon Jan 15 10:30:01 2024] Command line: BOOT_IMAGE=/vmlinuz-5.15.0-generic root=/dev/sda1 ro quiet
+[Mon Jan 15 10:30:02 2024] Memory: 16384000K/16777216K available
+[Mon Jan 15 10:30:03 2024] Initializing cgroup subsys memory
+[Mon Jan 15 10:30:04 2024] CPU: Physical Processor ID: 0
+[Mon Jan 15 10:30:05 2024] smpboot: CPU0: Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz

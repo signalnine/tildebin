@@ -1,0 +1,29 @@
+{
+  "bridges": {
+    "br0": {
+      "operstate": "up",
+      "mtu": "9000",
+      "address": "52:54:00:12:34:56",
+      "bridge": {
+        "bridge_id": "8000.525400123456",
+        "stp_state": "0",
+        "forward_delay": "200",
+        "root_id": "8000.525400123456"
+      },
+      "ports": {
+        "veth0": {
+          "state": "3",
+          "path_cost": "100",
+          "priority": "128",
+          "hairpin_mode": "0",
+          "interface": {
+            "operstate": "up",
+            "mtu": "1500",
+            "address": "52:54:00:12:34:57"
+          }
+        }
+      }
+    }
+  },
+  "description": "Bridge MTU exceeds port MTU"
+}

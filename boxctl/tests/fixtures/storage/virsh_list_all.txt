@@ -1,0 +1,5 @@
+ Id   Name         State
+-----------------------------
+ 1    webserver    running
+ 2    database     running
+ -    testvm       shut off

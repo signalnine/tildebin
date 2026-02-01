@@ -1,0 +1,6 @@
+ActiveState=inactive
+SubState=dead
+Description=Disabled timer
+LastTriggerUSec=0
+NextElapseUSecRealtime=0
+Result=success

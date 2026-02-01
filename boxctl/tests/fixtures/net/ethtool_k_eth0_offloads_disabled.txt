@@ -1,0 +1,23 @@
+Features for eth0:
+rx-checksumming: off
+tx-checksumming: off
+	tx-checksum-ipv4: off
+	tx-checksum-ip-generic: off [fixed]
+	tx-checksum-ipv6: off
+	tx-checksum-fcoe-crc: off [fixed]
+	tx-checksum-sctp: off
+scatter-gather: off
+	tx-scatter-gather: off
+	tx-scatter-gather-fraglist: off [fixed]
+tcp-segmentation-offload: off
+	tx-tcp-segmentation: off
+	tx-tcp-ecn-segmentation: off [fixed]
+	tx-tcp-mangleid-segmentation: off
+	tx-tcp6-segmentation: off
+generic-segmentation-offload: off
+generic-receive-offload: off
+large-receive-offload: on
+rx-vlan-offload: on
+tx-vlan-offload: on
+ntuple-filters: off
+receive-hashing: on

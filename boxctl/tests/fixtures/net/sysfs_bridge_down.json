@@ -1,0 +1,17 @@
+{
+  "bridges": {
+    "br0": {
+      "operstate": "down",
+      "mtu": "1500",
+      "address": "52:54:00:12:34:56",
+      "bridge": {
+        "bridge_id": "8000.525400123456",
+        "stp_state": "0",
+        "forward_delay": "200",
+        "root_id": "8000.525400123456"
+      },
+      "ports": {}
+    }
+  },
+  "description": "Bridge is administratively down"
+}

@@ -1,0 +1,28 @@
+{
+  "interfaces": {
+    "bond0": {
+      "mtu": "1500",
+      "operstate": "up",
+      "flags": "0x1003",
+      "disable_ipv6": "0",
+      "bonding": {
+        "mode": "802.3ad 4",
+        "slaves": "eth0 eth1",
+        "mii_status": "up"
+      }
+    },
+    "eth0": {
+      "mtu": "1500",
+      "operstate": "up",
+      "flags": "0x1003",
+      "disable_ipv6": "0"
+    },
+    "eth1": {
+      "mtu": "1500",
+      "operstate": "up",
+      "flags": "0x1003",
+      "disable_ipv6": "0"
+    }
+  },
+  "description": "Healthy bond with two slaves"
+}

@@ -1,0 +1,10 @@
+driver: mlx5_core
+version: 5.8-1.0.0
+firmware-version: 16.35.2000
+expansion-rom-version:
+bus-info: 0000:81:00.0
+supports-statistics: yes
+supports-test: yes
+supports-eeprom-access: yes
+supports-register-dump: yes
+supports-priv-flags: yes

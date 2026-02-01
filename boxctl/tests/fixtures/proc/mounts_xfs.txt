@@ -1,0 +1,4 @@
+/dev/sda1 / ext4 rw,relatime,errors=remount-ro 0 0
+/dev/sdb1 /data xfs rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,noquota 0 0
+/dev/sdc1 /backup xfs rw,relatime,attr2,inode64,nobarrier 0 0
+tmpfs /run tmpfs rw,nosuid,nodev,mode=755 0 0

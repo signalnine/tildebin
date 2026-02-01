@@ -1,0 +1,4 @@
+Username         Port     From             Latest
+root             pts/0    192.168.1.1      Mon Jan 15 10:00:00 +0000 2024
+gabe             pts/1    192.168.1.100    Mon Jan 15 09:30:00 +0000 2024
+admin            pts/2    192.168.1.101    Sun Jan 14 14:00:00 +0000 2024

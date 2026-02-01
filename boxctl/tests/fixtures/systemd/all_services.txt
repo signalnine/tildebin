@@ -1,0 +1,4 @@
+sshd.service              loaded active   running OpenSSH server daemon
+nginx.service             loaded active   running A high performance web server
+docker.service            loaded active   running Docker Application Container Engine
+cron.service              loaded active   running Regular background program processing daemon

@@ -1,0 +1,40 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "app-pod",
+        "namespace": "production"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "env": [
+              {
+                "name": "CONFIG_FILE",
+                "valueFrom": {
+                  "configMapKeyRef": {
+                    "name": "app-config",
+                    "key": "config.yaml"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "nginx-vol",
+            "configMap": {
+              "name": "nginx-config"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

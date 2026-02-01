@@ -1,0 +1,14 @@
+Name:	leaky_app
+Umask:	0022
+State:	R (running)
+Tgid:	2000
+Pid:	2000
+PPid:	1
+Uid:	1000	1000	1000	1000
+Gid:	1000	1000	1000	1000
+VmPeak:	  524288 kB
+VmSize:	  524288 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	  262144 kB
+VmRSS:	  262144 kB

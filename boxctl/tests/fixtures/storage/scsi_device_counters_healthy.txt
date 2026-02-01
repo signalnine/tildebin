@@ -1,0 +1,4 @@
+iorequest_cnt: 1000000
+iodone_cnt: 1000000
+ioerr_cnt: 0
+iotmo_cnt: 0

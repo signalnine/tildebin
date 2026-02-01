@@ -1,0 +1,6 @@
+ActiveState=failed
+SubState=failed
+Description=Failed timer
+LastTriggerUSec=1736931600000000
+NextElapseUSecRealtime=0
+Result=exit-code

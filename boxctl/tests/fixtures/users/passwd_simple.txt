@@ -1,0 +1,5 @@
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+gabe:x:1000:1000:Gabe User:/home/gabe:/bin/bash
+admin:x:1001:1001:Admin User:/home/admin:/bin/bash
+testuser:x:1002:1002:Test User:/home/testuser:/bin/bash

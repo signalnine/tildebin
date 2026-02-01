@@ -1,0 +1,12 @@
+Global
+       Protocols: +LLMNR +mDNS -DNSOverTLS DNSSEC=no/unsupported
+resolv.conf mode: stub
+     DNS Servers: 8.8.8.8 8.8.4.4
+      DNS Domain: example.com
+
+Link 2 (eth0)
+    Current Scopes: DNS LLMNR/IPv4 LLMNR/IPv6
+         Protocols: +DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+Current DNS Server: 8.8.8.8
+       DNS Servers: 8.8.8.8 8.8.4.4
+        DNS Domain: example.com

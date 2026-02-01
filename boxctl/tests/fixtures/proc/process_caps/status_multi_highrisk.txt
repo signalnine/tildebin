@@ -1,0 +1,22 @@
+# Process with multiple high-risk capabilities
+# CAP_DAC_OVERRIDE (1), CAP_SETUID (7), CAP_SETGID (6), CAP_SYS_ADMIN (21), CAP_NET_ADMIN (12), CAP_NET_RAW (13)
+# Bits: 1 + 64 + 128 + 2097152 + 4096 + 8192 = 0x2030C2
+Name:	suspicious_app
+Umask:	0022
+State:	R (running)
+Tgid:	4000
+Ngid:	0
+Pid:	4000
+PPid:	1000
+TracerPid:	0
+Uid:	1000	1000	1000	1000
+Gid:	1000	1000	1000	1000
+FDSize:	64
+VmPeak:	    131072 kB
+VmSize:	    131072 kB
+VmRSS:	    65536 kB
+CapInh:	0000000000000000
+CapPrm:	00000000002030c2
+CapEff:	00000000002030c2
+CapBnd:	000001ffffffffff
+CapAmb:	0000000000000000

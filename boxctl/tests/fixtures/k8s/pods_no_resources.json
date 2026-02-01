@@ -1,0 +1,49 @@
+{
+  "apiVersion": "v1",
+  "kind": "PodList",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "app-no-requests-abc",
+        "namespace": "default"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "resources": {}
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "app-no-limits-def",
+        "namespace": "default"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "resources": {
+              "requests": {
+                "cpu": "100m",
+                "memory": "128Mi"
+              }
+            }
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running"
+      }
+    }
+  ]
+}

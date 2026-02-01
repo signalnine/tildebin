@@ -1,0 +1,1 @@
+BOOT_IMAGE=/vmlinuz-5.4.0-generic root=UUID=abc-123 ro quiet splash pti=on spectre_v2=on

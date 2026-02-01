@@ -1,0 +1,10 @@
+mpatha (360000000000000001) dm-0 VENDOR,PRODUCT
+size=100G features='1 queue_if_no_path' hwhandler='1 alua'
+`-+- policy='service-time 0' prio=50 status=active
+  |- 1:0:0:1 sda 8:0  active ready running
+  `- 2:0:0:1 sdb 8:16 active ready running
+mpathb (360000000000000002) dm-1 VENDOR,PRODUCT
+size=200G features='1 queue_if_no_path' hwhandler='1 alua'
+`-+- policy='service-time 0' prio=50 status=active
+  |- 1:0:0:2 sdc 8:32 active ready running
+  `- 2:0:0:2 sdd 8:48 active ready running

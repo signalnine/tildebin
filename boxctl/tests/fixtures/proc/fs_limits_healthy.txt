@@ -1,0 +1,6 @@
+# fs limits for healthy system
+file-max = 9223372036854775807
+file-nr = 5120	0	9223372036854775807
+aio-max-nr = 1048576
+aio-nr = 256
+inotify/max_user_watches = 524288

@@ -1,0 +1,162 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Node",
+      "metadata": {
+        "name": "pressure-node-1",
+        "labels": {
+          "kubernetes.io/hostname": "pressure-node-1",
+          "node-role.kubernetes.io/worker": ""
+        }
+      },
+      "spec": {},
+      "status": {
+        "conditions": [
+          {
+            "type": "Ready",
+            "status": "True",
+            "reason": "KubeletReady",
+            "message": "kubelet is posting ready status"
+          },
+          {
+            "type": "MemoryPressure",
+            "status": "True",
+            "reason": "KubeletHasInsufficientMemory",
+            "message": "Available memory is below threshold: 512Mi < 1Gi"
+          },
+          {
+            "type": "DiskPressure",
+            "status": "False",
+            "reason": "KubeletHasNoDiskPressure",
+            "message": "kubelet has no disk pressure"
+          },
+          {
+            "type": "PIDPressure",
+            "status": "False",
+            "reason": "KubeletHasSufficientPID",
+            "message": "kubelet has sufficient PID available"
+          }
+        ],
+        "capacity": {
+          "cpu": "16",
+          "memory": "65000000Ki",
+          "pods": "110",
+          "ephemeral-storage": "1000Gi"
+        },
+        "allocatable": {
+          "cpu": "15500m",
+          "memory": "45000000Ki",
+          "pods": "110",
+          "ephemeral-storage": "900Gi"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Node",
+      "metadata": {
+        "name": "pressure-node-2",
+        "labels": {
+          "kubernetes.io/hostname": "pressure-node-2",
+          "node-role.kubernetes.io/control-plane": ""
+        }
+      },
+      "spec": {},
+      "status": {
+        "conditions": [
+          {
+            "type": "Ready",
+            "status": "True",
+            "reason": "KubeletReady",
+            "message": "kubelet is posting ready status"
+          },
+          {
+            "type": "MemoryPressure",
+            "status": "False",
+            "reason": "KubeletHasSufficientMemory",
+            "message": "kubelet has sufficient memory available"
+          },
+          {
+            "type": "DiskPressure",
+            "status": "True",
+            "reason": "KubeletHasDiskPressure",
+            "message": "Available disk space is below threshold"
+          },
+          {
+            "type": "PIDPressure",
+            "status": "True",
+            "reason": "KubeletHasInsufficientPID",
+            "message": "Too many processes running"
+          }
+        ],
+        "capacity": {
+          "cpu": "8",
+          "memory": "32000000Ki",
+          "pods": "110",
+          "ephemeral-storage": "500Gi"
+        },
+        "allocatable": {
+          "cpu": "7800m",
+          "memory": "31000000Ki",
+          "pods": "110",
+          "ephemeral-storage": "450Gi"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Node",
+      "metadata": {
+        "name": "healthy-node-3",
+        "labels": {
+          "kubernetes.io/hostname": "healthy-node-3",
+          "node-role.kubernetes.io/worker": ""
+        }
+      },
+      "spec": {},
+      "status": {
+        "conditions": [
+          {
+            "type": "Ready",
+            "status": "True",
+            "reason": "KubeletReady",
+            "message": "kubelet is posting ready status"
+          },
+          {
+            "type": "MemoryPressure",
+            "status": "False",
+            "reason": "KubeletHasSufficientMemory",
+            "message": "kubelet has sufficient memory available"
+          },
+          {
+            "type": "DiskPressure",
+            "status": "False",
+            "reason": "KubeletHasNoDiskPressure",
+            "message": "kubelet has no disk pressure"
+          },
+          {
+            "type": "PIDPressure",
+            "status": "False",
+            "reason": "KubeletHasSufficientPID",
+            "message": "kubelet has sufficient PID available"
+          }
+        ],
+        "capacity": {
+          "cpu": "8",
+          "memory": "32000000Ki",
+          "pods": "110",
+          "ephemeral-storage": "500Gi"
+        },
+        "allocatable": {
+          "cpu": "7800m",
+          "memory": "31000000Ki",
+          "pods": "110",
+          "ephemeral-storage": "450Gi"
+        }
+      }
+    }
+  ]
+}

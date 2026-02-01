@@ -1,0 +1,4 @@
+COMMAND    PID USER   FD   TYPE DEVICE SIZE/OFF   NODE NAME
+nginx     1234 www    mem   REG   8,1  1234567 123456 /usr/lib/x86_64-linux-gnu/libssl.so.1.1 (deleted)
+nginx     1235 www    mem   REG   8,1  1234567 123456 /usr/lib/x86_64-linux-gnu/libssl.so.1.1 (deleted)
+java      2345 app    mem   REG   8,1  2345678 234567 /usr/lib/jvm/java-11/lib/libjava.so (deleted)

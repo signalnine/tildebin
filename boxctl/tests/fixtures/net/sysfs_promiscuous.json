@@ -1,0 +1,11 @@
+{
+  "interfaces": {
+    "eth0": {
+      "mtu": "1500",
+      "operstate": "up",
+      "flags": "0x1103",
+      "disable_ipv6": "0"
+    }
+  },
+  "description": "Interface in promiscuous mode (0x100 flag set)"
+}

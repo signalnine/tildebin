@@ -1,0 +1,10 @@
+# Multiple D-state processes with different wait channels
+
+# /proc/100/stat - D-state waiting for NFS
+100 (nfs_client) D 1 100 100 0 -1 0 0 0 0 0 0 0 0 0 20 0 1 0 50000 0 0
+
+# /proc/200/stat - D-state waiting for disk I/O
+200 (dd) D 1 200 200 0 -1 0 0 0 0 0 0 0 0 0 20 0 1 0 60000 0 0
+
+# /proc/300/stat - D-state waiting for mutex
+300 (app_worker) D 1 300 300 0 -1 0 0 0 0 0 0 0 0 0 20 0 1 0 70000 0 0

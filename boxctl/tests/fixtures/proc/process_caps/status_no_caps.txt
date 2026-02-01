@@ -1,0 +1,28 @@
+# Regular process with no capabilities (non-root user)
+Name:	python3
+Umask:	0022
+State:	S (sleeping)
+Tgid:	1234
+Ngid:	0
+Pid:	1234
+PPid:	1000
+TracerPid:	0
+Uid:	1000	1000	1000	1000
+Gid:	1000	1000	1000	1000
+FDSize:	64
+Groups:	4 24 27 30 46 108 124 1000
+NStgid:	1234
+NSpid:	1234
+NSpgid:	1234
+NSsid:	1234
+VmPeak:	    32768 kB
+VmSize:	    32768 kB
+VmLck:	        0 kB
+VmPin:	        0 kB
+VmHWM:	    16384 kB
+VmRSS:	    16384 kB
+CapInh:	0000000000000000
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	000001ffffffffff
+CapAmb:	0000000000000000

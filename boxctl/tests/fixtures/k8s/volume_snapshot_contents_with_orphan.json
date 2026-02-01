@@ -1,0 +1,44 @@
+{
+  "apiVersion": "snapshot.storage.k8s.io/v1",
+  "items": [
+    {
+      "apiVersion": "snapshot.storage.k8s.io/v1",
+      "kind": "VolumeSnapshotContent",
+      "metadata": {
+        "name": "snapcontent-healthy"
+      },
+      "spec": {
+        "deletionPolicy": "Delete",
+        "driver": "ebs.csi.aws.com",
+        "volumeSnapshotRef": {
+          "name": "snap-healthy",
+          "namespace": "production"
+        }
+      },
+      "status": {
+        "readyToUse": true,
+        "restoreSize": 107374182400
+      }
+    },
+    {
+      "apiVersion": "snapshot.storage.k8s.io/v1",
+      "kind": "VolumeSnapshotContent",
+      "metadata": {
+        "name": "snapcontent-orphan"
+      },
+      "spec": {
+        "deletionPolicy": "Retain",
+        "driver": "ebs.csi.aws.com",
+        "volumeSnapshotRef": {
+          "name": "deleted-snapshot",
+          "namespace": "default"
+        }
+      },
+      "status": {
+        "readyToUse": true,
+        "restoreSize": 53687091200
+      }
+    }
+  ],
+  "kind": "List"
+}
