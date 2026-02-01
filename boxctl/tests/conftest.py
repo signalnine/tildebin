@@ -73,6 +73,14 @@ class MockContext:
         from fnmatch import fnmatch
         return [p for p in self.file_contents.keys() if fnmatch(p, pattern)]
 
+    def get_env(self, key: str, default: str | None = None) -> str | None:
+        """Return mocked environment variable."""
+        return self.env.get(key, default)
+
+    def cpu_count(self) -> int:
+        """Return mocked CPU count."""
+        return int(self.env.get("cpu_count", "1"))
+
 
 @pytest.fixture
 def mock_context():

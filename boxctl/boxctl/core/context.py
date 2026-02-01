@@ -1,5 +1,6 @@
 """Execution context for testability."""
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -56,3 +57,11 @@ class Context:
     def glob(self, pattern: str, root: str = ".") -> list[str]:
         """Find files matching pattern."""
         return [str(p) for p in Path(root).glob(pattern)]
+
+    def get_env(self, key: str, default: str | None = None) -> str | None:
+        """Get environment variable."""
+        return os.environ.get(key, default)
+
+    def cpu_count(self) -> int:
+        """Get CPU count."""
+        return os.cpu_count() or 1

@@ -1,0 +1,5 @@
+nr_free_pages 524288
+nr_zone_inactive_anon 262144
+nr_zone_active_anon 1048576
+pswpin 1000
+pswpout 2000
