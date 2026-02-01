@@ -61,6 +61,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_crash_dump_monitor.py`: Monitor kernel crash dumps and kdump configuration - checks kdump service status, crashkernel memory reservation, historical crash dumps in /var/crash with age tracking, and optionally scans dmesg for panic/oops indicators - essential for reliability analysis and post-mortem debugging
 - `baremetal_kernel_log_rate_monitor.py`: Monitor kernel log message rates to detect anomalies that may indicate hardware problems, driver issues, or system instability with configurable thresholds and burst detection
 - `disk_health_check.py`: Monitor disk health using SMART attributes
+- `baremetal_disk_sector_health.py`: Monitor disk sector health metrics (Reallocated, Pending, Uncorrectable) to predict imminent disk failure - focuses on the SMART attributes most predictive of data loss for proactive replacement in large fleets
 - `baremetal_disk_encryption_status.py`: Monitor disk encryption status for LUKS/dm-crypt volumes to identify unencrypted data partitions for security compliance auditing
 - `baremetal_disk_life_predictor.py`: Predict disk failure risk using SMART attribute trend analysis with weighted risk scoring for both SATA/SAS and NVMe drives
 - `baremetal_disk_lifecycle_monitor.py`: Monitor disk power-on hours, age, and lifecycle status for hardware refresh planning - tracks HDD/SSD separately with configurable thresholds for fleet-wide hardware lifecycle management
@@ -703,6 +704,32 @@ python disk_health_check.py [-d disk] [-v] [--format format] [--warn-only]
   --format: Output format, either 'plain' or 'json' (default: plain)
   --warn-only: Only show disks with warnings or failures
 ```
+
+Requirements:
+  - smartmontools package (smartctl command)
+  - Ubuntu/Debian: `sudo apt-get install smartmontools`
+  - RHEL/CentOS: `sudo yum install smartmontools`
+
+### baremetal_disk_sector_health.py
+```
+python baremetal_disk_sector_health.py [-d device] [-f format] [-v] [-w]
+  -d, --device: Check specific device (e.g., /dev/sda)
+  -f, --format: Output format - 'plain', 'json', or 'table' (default: plain)
+  -v, --verbose: Show detailed information including serial numbers
+  -w, --warn-only: Only show disks with sector issues
+```
+
+Key SMART attributes monitored:
+  - Reallocated Sector Count (ID 5): Bad sectors remapped to spare areas
+  - Current Pending Sector (ID 197): Unstable sectors awaiting reallocation
+  - Uncorrectable Sector Count (ID 198): Sectors that couldn't be read/written
+
+For NVMe drives monitors Media and Data Integrity Errors and Available Spare percentage.
+
+Exit codes:
+  - 0: All disks healthy
+  - 1: Sector issues detected
+  - 2: smartctl not found
 
 Requirements:
   - smartmontools package (smartctl command)
