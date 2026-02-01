@@ -95,6 +95,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_thermal_throttle_monitor.py`: Monitor CPU thermal throttling events by reading kernel throttle counters to detect performance degradation from overheating
 - `gpu_health_monitor.py`: Monitor NVIDIA GPU health, temperature, memory, ECC errors, and power consumption
 - `ipmi_sel_monitor.py`: Monitor IPMI System Event Log (SEL) for hardware errors and critical events
+- `baremetal_ipmi_sensor_monitor.py`: Monitor IPMI sensor readings (temperature, fan, voltage, power) for real-time hardware health monitoring - complements ipmi_sel_monitor.py by providing live sensor data rather than historical events
 - `baremetal_psu_monitor.py`: Monitor Power Supply Unit (PSU) health via IPMI including power supply status, redundancy, voltage sensors, and FRU information for proactive failure detection
 - `baremetal_ups_monitor.py`: Monitor UPS (Uninterruptible Power Supply) status via NUT or apcaccess including battery charge, runtime remaining, load percentage, and power status for datacenter power monitoring
 - `memory_health_monitor.py`: Monitor memory health, ECC errors, and memory pressure
