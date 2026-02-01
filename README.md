@@ -264,6 +264,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `k8s_node_label_auditor.py`: Audit node labels and annotations for consistency, compliance with naming conventions, missing topology/role labels, and deprecated labels
 - `k8s_node_kernel_config_audit.py`: Audit sysctl kernel parameters across Kubernetes nodes to detect inconsistencies and non-compliant configurations critical for baremetal clusters
 - `k8s_resource_quota_auditor.py`: Audit ResourceQuota and LimitRange policies across namespaces to ensure proper resource governance
+- `k8s_limitrange_auditor.py`: Audit LimitRange configurations across namespaces including default requests/limits, min/max constraints, and namespace coverage analysis to ensure proper resource guardrails for containers
 - `k8s_namespace_resource_analyzer.py`: Analyze namespace resource utilization for capacity planning, chargeback, and multi-tenant governance
 - `k8s_resource_right_sizer.py`: Analyze resource requests/limits against actual usage to identify over-provisioned and under-provisioned workloads for cost optimization
 - `k8s_image_pull_analyzer.py`: Analyze image pull issues including ImagePullBackOff errors, slow pulls, registry connectivity, and authentication failures
