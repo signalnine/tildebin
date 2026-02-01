@@ -1,20 +1,28 @@
 #!/usr/bin/env python3
 """
-Analyze Kubernetes pods stuck in Pending state and diagnose scheduling failures.
+Analyze Kubernetes pending pods and identify scheduling failure root causes.
 
-This script helps operators quickly identify why pods cannot be scheduled:
+This script identifies why pods are stuck in Pending state and provides
+actionable insights for resolution. It analyzes scheduling conditions,
+resource constraints, node selectors, affinity rules, and taints/tolerations.
+
+Common causes detected:
 - Insufficient CPU/memory resources
 - Node selector mismatches
+- Affinity/anti-affinity rule failures
 - Taint/toleration issues
-- Affinity/anti-affinity conflicts
 - PersistentVolumeClaim binding failures
 - Unschedulable nodes
 
-Useful for troubleshooting scheduling bottlenecks in large-scale Kubernetes deployments.
+Useful for:
+- Troubleshooting delayed pod deployments
+- Capacity planning based on unschedulable workloads
+- Identifying misconfigured node selectors or affinities
+- Detecting resource exhaustion in the cluster
 
 Exit codes:
     0 - No pending pods found
-    1 - Pending pods found (with analysis)
+    1 - One or more pending pods detected
     2 - Usage error or kubectl not available
 """
 
@@ -57,366 +65,332 @@ def get_pending_pods(namespace=None):
 
 
 def get_nodes():
-    """Get all nodes with their status and resources."""
+    """Get all nodes with their conditions and resources."""
     output = run_kubectl(['get', 'nodes', '-o', 'json'])
     return json.loads(output)
 
 
 def get_events_for_pod(namespace, pod_name):
-    """Get recent events for a specific pod."""
+    """Get events related to a specific pod."""
     try:
         output = run_kubectl([
             'get', 'events', '-n', namespace,
             '--field-selector', f'involvedObject.name={pod_name}',
             '-o', 'json'
         ])
-        events = json.loads(output)
-        return events.get('items', [])
+        return json.loads(output)
     except subprocess.CalledProcessError:
-        return []
+        return {'items': []}
 
 
-def analyze_scheduling_failure(pod, events):
-    """Analyze why a pod is stuck in Pending state."""
-    reasons = []
+def parse_resource_value(value_str, resource_type='cpu'):
+    """
+    Parse Kubernetes resource value to a numeric format.
 
-    # Check pod conditions
-    conditions = pod.get('status', {}).get('conditions', [])
+    For CPU: Returns millicores (e.g., "100m" -> 100, "1" -> 1000)
+    For memory: Returns bytes (e.g., "1Gi" -> 1073741824)
+    """
+    if not value_str:
+        return 0
+
+    value_str = str(value_str).strip()
+
+    if resource_type == 'cpu':
+        if value_str.endswith('m'):
+            return int(value_str[:-1])
+        else:
+            return int(float(value_str) * 1000)
+
+    # Memory
+    units = {
+        'Ki': 1024,
+        'Mi': 1024 ** 2,
+        'Gi': 1024 ** 3,
+        'Ti': 1024 ** 4,
+        'K': 1000,
+        'M': 1000 ** 2,
+        'G': 1000 ** 3,
+        'T': 1000 ** 4,
+    }
+
+    for suffix, multiplier in sorted(units.items(), key=lambda x: -len(x[0])):
+        if value_str.endswith(suffix):
+            return int(float(value_str[:-len(suffix)]) * multiplier)
+
+    return int(value_str)
+
+
+def analyze_scheduling_failure(pod, nodes_data, events):
+    """
+    Analyze why a pod is pending and identify the root cause.
+
+    Returns:
+        dict with 'category', 'reason', 'details', and 'suggestion'
+    """
+    pod_name = pod.get('metadata', {}).get('name', 'unknown')
+    namespace = pod.get('metadata', {}).get('namespace', 'default')
+    spec = pod.get('spec', {})
+    status = pod.get('status', {})
+    conditions = status.get('conditions', [])
+
+    # Check for scheduler events
+    scheduler_messages = []
+    for event in events.get('items', []):
+        if event.get('reason') in ['FailedScheduling', 'Unschedulable']:
+            msg = event.get('message', '')
+            scheduler_messages.append(msg)
+
+    # Analyze the most recent scheduler message
+    latest_message = scheduler_messages[0] if scheduler_messages else ''
+
+    # Check for resource constraints
+    containers = spec.get('containers', [])
+    total_cpu_request = 0
+    total_memory_request = 0
+
+    for container in containers:
+        resources = container.get('resources', {})
+        requests = resources.get('requests', {})
+        total_cpu_request += parse_resource_value(requests.get('cpu', '0'), 'cpu')
+        total_memory_request += parse_resource_value(requests.get('memory', '0'), 'memory')
+
+    # Categorize the failure
+    if 'Insufficient cpu' in latest_message or 'cpu' in latest_message.lower() and 'insufficient' in latest_message.lower():
+        return {
+            'category': 'RESOURCES',
+            'reason': 'Insufficient CPU',
+            'details': f"Requested {total_cpu_request}m CPU; {latest_message[:100]}",
+            'suggestion': 'Scale up cluster or reduce CPU requests'
+        }
+
+    if 'Insufficient memory' in latest_message or 'memory' in latest_message.lower() and 'insufficient' in latest_message.lower():
+        memory_gb = total_memory_request / (1024 ** 3)
+        return {
+            'category': 'RESOURCES',
+            'reason': 'Insufficient memory',
+            'details': f"Requested {memory_gb:.2f}Gi memory; {latest_message[:100]}",
+            'suggestion': 'Scale up cluster or reduce memory requests'
+        }
+
+    # Check for node selector issues
+    node_selector = spec.get('nodeSelector', {})
+    if node_selector and ('node' in latest_message.lower() and 'match' in latest_message.lower()):
+        selector_str = ', '.join(f'{k}={v}' for k, v in node_selector.items())
+        return {
+            'category': 'NODE_SELECTOR',
+            'reason': 'No matching nodes',
+            'details': f"nodeSelector: {selector_str}",
+            'suggestion': 'Add matching labels to nodes or update nodeSelector'
+        }
+
+    # Check for affinity/anti-affinity issues
+    affinity = spec.get('affinity', {})
+    if affinity and 'affinity' in latest_message.lower():
+        affinity_type = 'nodeAffinity' if 'nodeAffinity' in affinity else 'podAffinity/podAntiAffinity'
+        return {
+            'category': 'AFFINITY',
+            'reason': 'Affinity rules not satisfied',
+            'details': f"{affinity_type} constraints cannot be met",
+            'suggestion': 'Review affinity rules or add nodes matching requirements'
+        }
+
+    # Check for taint/toleration issues
+    tolerations = spec.get('tolerations', [])
+    if 'taint' in latest_message.lower() or 'toleration' in latest_message.lower():
+        return {
+            'category': 'TAINTS',
+            'reason': 'Taint/toleration mismatch',
+            'details': f"Pod has {len(tolerations)} tolerations but cannot tolerate node taints",
+            'suggestion': 'Add required tolerations or remove taints from nodes'
+        }
+
+    # Check for PVC binding issues
+    volumes = spec.get('volumes', [])
+    pvc_volumes = [v for v in volumes if 'persistentVolumeClaim' in v]
+    if pvc_volumes and ('pvc' in latest_message.lower() or 'persistentvolumeclaim' in latest_message.lower() or 'volume' in latest_message.lower()):
+        pvc_names = [v['persistentVolumeClaim']['claimName'] for v in pvc_volumes]
+        return {
+            'category': 'STORAGE',
+            'reason': 'PVC binding pending',
+            'details': f"Waiting for PVCs: {', '.join(pvc_names)}",
+            'suggestion': 'Check PVC status and storage provisioner'
+        }
+
+    # Check for unschedulable condition
     for condition in conditions:
         if condition.get('type') == 'PodScheduled' and condition.get('status') == 'False':
-            reason = condition.get('reason', '')
-            message = condition.get('message', '')
-            if reason:
-                reasons.append({
-                    'type': 'scheduling',
-                    'reason': reason,
-                    'message': message
-                })
+            reason = condition.get('reason', 'Unknown')
+            message = condition.get('message', '')[:100]
+            return {
+                'category': 'SCHEDULING',
+                'reason': reason,
+                'details': message,
+                'suggestion': 'Check scheduler logs and node availability'
+            }
 
-    # Analyze events for more details
-    for event in events:
-        if event.get('type') == 'Warning':
-            event_reason = event.get('reason', '')
-            event_message = event.get('message', '')
+    # Check node availability
+    nodes = nodes_data.get('items', [])
+    schedulable_nodes = 0
+    for node in nodes:
+        node_spec = node.get('spec', {})
+        if not node_spec.get('unschedulable', False):
+            # Check if node is ready
+            node_conditions = node.get('status', {}).get('conditions', [])
+            for cond in node_conditions:
+                if cond.get('type') == 'Ready' and cond.get('status') == 'True':
+                    schedulable_nodes += 1
+                    break
 
-            # Categorize common scheduling failures
-            if 'Insufficient' in event_message:
-                reasons.append({
-                    'type': 'resources',
-                    'reason': event_reason,
-                    'message': event_message
-                })
-            elif 'node(s) had taint' in event_message or 'toleration' in event_message.lower():
-                reasons.append({
-                    'type': 'taints',
-                    'reason': event_reason,
-                    'message': event_message
-                })
-            elif 'node(s) didn\'t match' in event_message:
-                reasons.append({
-                    'type': 'affinity',
-                    'reason': event_reason,
-                    'message': event_message
-                })
-            elif 'persistentvolumeclaim' in event_message.lower() or 'pvc' in event_message.lower():
-                reasons.append({
-                    'type': 'storage',
-                    'reason': event_reason,
-                    'message': event_message
-                })
-            elif event_reason in ['FailedScheduling', 'Unschedulable']:
-                reasons.append({
-                    'type': 'scheduling',
-                    'reason': event_reason,
-                    'message': event_message
-                })
+    if schedulable_nodes == 0:
+        return {
+            'category': 'NODES',
+            'reason': 'No schedulable nodes',
+            'details': 'All nodes are either unschedulable or NotReady',
+            'suggestion': 'Check node health and cordoned status'
+        }
 
-    # Check for node selector that might not match any nodes
-    spec = pod.get('spec', {})
-    if spec.get('nodeSelector'):
-        reasons.append({
-            'type': 'nodeSelector',
-            'reason': 'NodeSelectorPresent',
-            'message': f"Pod requires nodeSelector: {spec['nodeSelector']}"
-        })
+    # Default case - check for any scheduler message
+    if latest_message:
+        return {
+            'category': 'UNKNOWN',
+            'reason': 'Scheduling failed',
+            'details': latest_message[:150],
+            'suggestion': 'Review scheduler events for more details'
+        }
 
-    # Check for node affinity
-    affinity = spec.get('affinity', {})
-    if affinity.get('nodeAffinity', {}).get('requiredDuringSchedulingIgnoredDuringExecution'):
-        reasons.append({
-            'type': 'affinity',
-            'reason': 'RequiredNodeAffinity',
-            'message': 'Pod has required node affinity rules'
-        })
-
-    # Check for pod anti-affinity
-    if affinity.get('podAntiAffinity', {}).get('requiredDuringSchedulingIgnoredDuringExecution'):
-        reasons.append({
-            'type': 'antiAffinity',
-            'reason': 'RequiredPodAntiAffinity',
-            'message': 'Pod has required pod anti-affinity rules'
-        })
-
-    # Check for PVC references
-    volumes = spec.get('volumes', [])
-    for volume in volumes:
-        if volume.get('persistentVolumeClaim'):
-            pvc_name = volume['persistentVolumeClaim'].get('claimName', '')
-            reasons.append({
-                'type': 'storage',
-                'reason': 'PVCRequired',
-                'message': f"Pod references PVC: {pvc_name}"
-            })
-
-    # Deduplicate reasons by message
-    seen = set()
-    unique_reasons = []
-    for r in reasons:
-        key = (r['type'], r['message'])
-        if key not in seen:
-            seen.add(key)
-            unique_reasons.append(r)
-
-    return unique_reasons
+    # No events found
+    return {
+        'category': 'PENDING',
+        'reason': 'Waiting for scheduler',
+        'details': 'No scheduling events found yet',
+        'suggestion': 'Pod may be newly created; wait or check scheduler health'
+    }
 
 
-def get_pending_duration(pod):
-    """Calculate how long a pod has been pending."""
-    import datetime
-
-    creation_time = pod.get('metadata', {}).get('creationTimestamp', '')
-    if not creation_time:
-        return None
-
-    try:
-        # Parse ISO format timestamp
-        created = datetime.datetime.fromisoformat(creation_time.replace('Z', '+00:00'))
-        now = datetime.datetime.now(datetime.timezone.utc)
-        delta = now - created
-
-        # Format duration
-        total_seconds = int(delta.total_seconds())
-        if total_seconds < 60:
-            return f"{total_seconds}s"
-        elif total_seconds < 3600:
-            return f"{total_seconds // 60}m"
-        elif total_seconds < 86400:
-            return f"{total_seconds // 3600}h"
-        else:
-            return f"{total_seconds // 86400}d"
-    except (ValueError, TypeError):
-        return None
+def format_output_plain(pending_pods):
+    """Format output as plain text."""
+    for pod in pending_pods:
+        ns = pod['namespace']
+        name = pod['name']
+        category = pod['analysis']['category']
+        reason = pod['analysis']['reason']
+        print(f"{ns} {name} {category} {reason}")
 
 
-def analyze_pods(pods_data, verbose=False):
-    """Analyze all pending pods and return analysis results."""
-    pods = pods_data.get('items', [])
-    results = []
+def format_output_table(pending_pods):
+    """Format output as ASCII table."""
+    print(f"{'NAMESPACE':<25} {'POD NAME':<40} {'CATEGORY':<15} {'REASON':<30} {'SUGGESTION':<40}")
+    print("-" * 150)
 
-    for pod in pods:
-        pod_name = pod['metadata']['name']
-        namespace = pod['metadata'].get('namespace', 'default')
-
-        # Get events for this pod
-        events = get_events_for_pod(namespace, pod_name) if verbose else []
-
-        # Analyze scheduling failure
-        reasons = analyze_scheduling_failure(pod, events)
-
-        # Get pending duration
-        duration = get_pending_duration(pod)
-
-        # Extract resource requests
-        containers = pod.get('spec', {}).get('containers', [])
-        total_cpu_request = 0
-        total_memory_request = 0
-
-        for container in containers:
-            resources = container.get('resources', {}).get('requests', {})
-            cpu = resources.get('cpu', '0')
-            memory = resources.get('memory', '0')
-
-            # Parse CPU (convert to millicores)
-            if isinstance(cpu, str):
-                if cpu.endswith('m'):
-                    total_cpu_request += int(cpu[:-1])
-                else:
-                    try:
-                        total_cpu_request += int(float(cpu) * 1000)
-                    except ValueError:
-                        pass
-
-            # Parse memory (keep as string for display)
-            if memory != '0':
-                total_memory_request = memory  # Just show last one for simplicity
-
-        results.append({
-            'namespace': namespace,
-            'name': pod_name,
-            'duration': duration,
-            'cpu_request': f"{total_cpu_request}m" if total_cpu_request else 'none',
-            'memory_request': total_memory_request if total_memory_request else 'none',
-            'reasons': reasons,
-            'reason_summary': categorize_failure(reasons)
-        })
-
-    return results
+    for pod in pending_pods:
+        ns = pod['namespace'][:24]
+        name = pod['name'][:39]
+        category = pod['analysis']['category'][:14]
+        reason = pod['analysis']['reason'][:29]
+        suggestion = pod['analysis']['suggestion'][:39]
+        print(f"{ns:<25} {name:<40} {category:<15} {reason:<30} {suggestion:<40}")
 
 
-def categorize_failure(reasons):
-    """Categorize the primary failure reason."""
-    if not reasons:
-        return 'unknown'
+def format_output_json(pending_pods):
+    """Format output as JSON."""
+    output = {
+        'pending_count': len(pending_pods),
+        'by_category': defaultdict(int),
+        'pods': pending_pods
+    }
 
-    # Priority order for categorization
-    type_priority = ['resources', 'storage', 'taints', 'affinity', 'antiAffinity', 'nodeSelector', 'scheduling']
+    for pod in pending_pods:
+        output['by_category'][pod['analysis']['category']] += 1
 
-    for priority_type in type_priority:
-        for reason in reasons:
-            if reason['type'] == priority_type:
-                return priority_type
-
-    return reasons[0]['type'] if reasons else 'unknown'
-
-
-def print_plain(results, verbose=False):
-    """Print results in plain text format."""
-    if not results:
-        print("No pending pods found")
-        return
-
-    # Group by failure reason
-    by_reason = defaultdict(list)
-    for pod in results:
-        by_reason[pod['reason_summary']].append(pod)
-
-    print(f"Found {len(results)} pending pod(s)\n")
-
-    # Summary by reason
-    print("Summary by failure type:")
-    for reason_type, pods in sorted(by_reason.items(), key=lambda x: -len(x[1])):
-        print(f"  {reason_type}: {len(pods)} pod(s)")
-    print()
-
-    # Details
-    print("Pending pods:")
-    print("-" * 80)
-
-    for pod in results:
-        duration_str = f" ({pod['duration']})" if pod['duration'] else ""
-        print(f"{pod['namespace']}/{pod['name']}{duration_str}")
-        print(f"  Resources: CPU={pod['cpu_request']}, Memory={pod['memory_request']}")
-        print(f"  Failure type: {pod['reason_summary']}")
-
-        if verbose and pod['reasons']:
-            print("  Details:")
-            for reason in pod['reasons'][:3]:  # Limit to 3 reasons
-                msg = reason['message']
-                if len(msg) > 100:
-                    msg = msg[:100] + "..."
-                print(f"    - [{reason['type']}] {msg}")
-        print()
-
-
-def print_json(results):
-    """Print results in JSON format."""
-    print(json.dumps(results, indent=2))
-
-
-def print_table(results):
-    """Print results in table format."""
-    if not results:
-        print("No pending pods found")
-        return
-
-    # Header
-    print(f"{'Namespace':<20} {'Pod':<35} {'Duration':<10} {'Failure Type':<15}")
-    print("-" * 85)
-
-    for pod in results:
-        namespace = pod['namespace'][:19]
-        name = pod['name'][:34]
-        duration = pod['duration'] or 'N/A'
-        reason = pod['reason_summary'][:14]
-        print(f"{namespace:<20} {name:<35} {duration:<10} {reason:<15}")
-
-    print()
-    print(f"Total: {len(results)} pending pod(s)")
+    output['by_category'] = dict(output['by_category'])
+    print(json.dumps(output, indent=2))
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Analyze Kubernetes pods stuck in Pending state',
+        description="Analyze Kubernetes pending pods and identify root causes",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s                          # Analyze pending pods across all namespaces
-  %(prog)s -n production            # Analyze pending pods in production namespace
-  %(prog)s -v                       # Verbose output with detailed failure reasons
-  %(prog)s --format json            # JSON output for scripting
-  %(prog)s --format table           # Compact table view
+  # Check all pending pods in the cluster
+  k8s_pending_pod_analyzer.py
 
-Common failure types:
-  resources    - Insufficient CPU/memory on nodes
-  storage      - PVC binding or provisioning issues
-  taints       - Node taints without matching tolerations
-  affinity     - Node/pod affinity rules cannot be satisfied
-  antiAffinity - Pod anti-affinity conflicts
-  nodeSelector - No nodes match the selector
-  scheduling   - Other scheduling failures
+  # Check pending pods in a specific namespace
+  k8s_pending_pod_analyzer.py -n production
 
-Exit codes:
-  0 - No pending pods found
-  1 - Pending pods found
-  2 - Usage error or kubectl unavailable
+  # Get JSON output for automation
+  k8s_pending_pod_analyzer.py --format json
+
+  # Show summary by category
+  k8s_pending_pod_analyzer.py -f json | jq '.by_category'
         """
     )
-
     parser.add_argument(
-        '--namespace', '-n',
-        help='Namespace to analyze (default: all namespaces)'
+        "-n", "--namespace",
+        help="Namespace to check (default: all namespaces)"
     )
-
     parser.add_argument(
-        '--format', '-f',
-        choices=['plain', 'json', 'table'],
-        default='plain',
-        help='Output format (default: plain)'
+        "-f", "--format",
+        choices=["plain", "table", "json"],
+        default="table",
+        help="Output format (default: table)"
     )
-
     parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Show detailed failure reasons from events'
+        "-v", "--verbose",
+        action="store_true",
+        help="Show detailed analysis including suggestions"
     )
 
     args = parser.parse_args()
 
     # Get pending pods
     pods_data = get_pending_pods(args.namespace)
+    pods = pods_data.get('items', [])
 
-    # Check if there are any pending pods
-    if not pods_data.get('items'):
-        if args.format == 'json':
-            print('[]')
+    if not pods:
+        if args.format == "json":
+            print(json.dumps({'pending_count': 0, 'by_category': {}, 'pods': []}, indent=2))
         else:
-            print("No pending pods found")
+            print("No pending pods found", file=sys.stderr)
         sys.exit(0)
 
-    # Analyze pods
-    results = analyze_pods(pods_data, args.verbose)
+    # Get nodes for analysis
+    nodes_data = get_nodes()
+
+    # Analyze each pending pod
+    pending_pods = []
+
+    for pod in pods:
+        namespace = pod.get('metadata', {}).get('namespace', 'default')
+        pod_name = pod.get('metadata', {}).get('name', 'unknown')
+
+        # Get events for this pod
+        events = get_events_for_pod(namespace, pod_name)
+
+        # Analyze scheduling failure
+        analysis = analyze_scheduling_failure(pod, nodes_data, events)
+
+        pending_pods.append({
+            'namespace': namespace,
+            'name': pod_name,
+            'age': pod.get('metadata', {}).get('creationTimestamp', 'unknown'),
+            'analysis': analysis
+        })
+
+    # Sort by category for readability
+    pending_pods.sort(key=lambda x: (x['analysis']['category'], x['namespace'], x['name']))
 
     # Output results
-    if args.format == 'json':
-        print_json(results)
-    elif args.format == 'table':
-        print_table(results)
-    else:
-        print_plain(results, args.verbose)
+    if args.format == "plain":
+        format_output_plain(pending_pods)
+    elif args.format == "table":
+        format_output_table(pending_pods)
+    elif args.format == "json":
+        format_output_json(pending_pods)
 
-    # Exit with code 1 if there are pending pods
-    sys.exit(1 if results else 0)
+    # Exit with code 1 if pending pods found
+    sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
