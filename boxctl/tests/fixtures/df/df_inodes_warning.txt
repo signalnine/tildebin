@@ -1,0 +1,4 @@
+Filesystem      Inodes  IUsed   IFree IUse% Mounted on
+/dev/sda1      6553600 5570560  983040   85% /
+/dev/sda2      3276800  65536 3211264    2% /home
+/dev/sdb1     13107200 131072 12976128    1% /data
