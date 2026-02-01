@@ -202,6 +202,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_systemd_slice_monitor.py`: Monitor systemd slice resource usage (CPU, memory, I/O) using cgroup v2 statistics for capacity planning and troubleshooting on container hosts and multi-tenant systems, tracking resource consumption per slice with PSI (Pressure Stall Information) support
 - `baremetal_systemd_security_scanner.py`: Scan systemd service units for security configuration issues using `systemd-analyze security`, identifying services lacking sandboxing (PrivateTmp, ProtectSystem, etc.) and prioritizing hardening improvements by exposure score
 - `baremetal_watchdog_monitor.py`: Monitor hardware and software watchdog timer status to ensure automatic system recovery from hangs, checking watchdog device availability, daemon status, timeout settings, and systemd watchdog configuration
+- `baremetal_stale_pidfile_detector.py`: Detect stale PID files that reference non-existent processes in /var/run, /run, /var/lock, and /tmp - identifies orphaned PID files from crashed services that can block service startup or cause monitoring false positives
 - `baremetal_ssl_cert_scanner.py`: Scan filesystem for SSL/TLS certificates and check expiration status to prevent outages from expired certificates in web servers, databases, and other services
 - `baremetal_disk_queue_monitor.py`: Monitor disk I/O queue depths to detect storage bottlenecks and saturation before they cause latency spikes, with configurable thresholds and IOPS tracking
 - `baremetal_iptables_audit.py`: Audit iptables firewall rules for security and performance issues including rule count analysis, empty chains, unused rules, overly permissive/restrictive rules, and default policy review
@@ -4094,6 +4095,63 @@ systemd_service_monitor.py --format table --warn-only
 ```
 
 Use Case: In large baremetal fleets, tracking systemd service health across all hosts is essential for identifying failed services, degraded states, or configuration errors. This script provides a quick overview of all systemd units, making it ideal for automated health checks, pre-deployment validation, or troubleshooting. Integration with monitoring systems (via JSON output) enables alerting on service failures.
+
+### baremetal_stale_pidfile_detector.py
+```
+python baremetal_stale_pidfile_detector.py [-d DIR...] [-r] [--check-name] [--min-age SECONDS] [-v] [--format format] [-w]
+  -d, --directories: Directories to search (default: /var/run /run /var/lock /tmp)
+  -r, --recursive: Search directories recursively
+  --check-name: Also detect PID/name mismatches
+  --min-age: Only report stale files older than N seconds
+  -v, --verbose: Show all PID files, not just stale ones
+  -f, --format: Output format, either 'plain', 'json', or 'table' (default: plain)
+  -w, --warn-only: Only show warnings (stale or mismatched PID files)
+```
+
+Requirements:
+  - Linux /proc filesystem for process verification
+
+Exit codes:
+  - 0: No stale PID files detected
+  - 1: Stale PID files found
+  - 2: Usage error or permission issues
+
+Features:
+  - Detect PID files referencing non-existent processes
+  - Identify PID/process name mismatches (optional)
+  - Age-based filtering for recent crashes
+  - Multiple output formats (plain, JSON, table)
+  - Recursive subdirectory scanning
+  - Handles common PID file locations and formats
+
+Examples:
+```bash
+# Check default directories (/var/run, /run, /var/lock, /tmp)
+baremetal_stale_pidfile_detector.py
+
+# Check specific directories
+baremetal_stale_pidfile_detector.py -d /var/run /opt/myapp/run
+
+# Recursive search
+baremetal_stale_pidfile_detector.py -r
+
+# Also detect PID/name mismatches (process name doesn't match filename)
+baremetal_stale_pidfile_detector.py --check-name
+
+# Only report stale files older than 1 hour (ignore recent crashes)
+baremetal_stale_pidfile_detector.py --min-age 3600
+
+# JSON output for monitoring integration
+baremetal_stale_pidfile_detector.py --format json
+
+# Show all PID files including valid ones
+baremetal_stale_pidfile_detector.py -v
+
+# Table format overview
+baremetal_stale_pidfile_detector.py --format table
+```
+
+Use Case: In large baremetal environments, services that crash or are killed improperly leave behind PID files that reference non-existent processes. These stale PID files can prevent services from starting (blocking on pidfile lock), cause monitoring false positives, or indicate services that need investigation. This script identifies orphaned PID files across common runtime directories, helping operators clean up after crashes and identify services that may need attention. Integration with monitoring systems (via JSON output) enables alerting on stale PID accumulation.
 
 ### baremetal_systemd_unit_drift_detector.py
 ```
