@@ -211,6 +211,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - `baremetal_vmalloc_monitor.py`: Monitor kernel vmalloc memory usage to detect exhaustion before cryptic allocation failures, tracking total usage, fragmentation, and top consumers
 - `baremetal_writeback_monitor.py`: Monitor kernel writeback cache behavior and dirty page pressure to detect I/O bottlenecks, track dirty page ratios vs thresholds, and identify when processes are at risk of being throttled due to excessive buffered writes
 - `baremetal_scheduler_affinity_auditor.py`: Audit CPU affinity masks and scheduler policies (SCHED_FIFO, SCHED_RR, SCHED_OTHER) to detect misconfigurations causing latency spikes, RT process starvation risks, and CPU isolation violations
+- `baremetal_cpu_isolation_auditor.py`: Audit CPU isolation configuration (isolcpus, nohz_full, rcu_nocbs) for latency-sensitive workloads including DPDK, real-time applications, and VM CPU pinning - validates consistency between isolation parameters, checks for IRQs and kernel threads on isolated CPUs
 - `baremetal_firmware_inventory.py`: Collect firmware version inventory including BIOS/UEFI, BMC/IPMI, CPU microcode, storage controller, network adapter, and GPU firmware for fleet-wide tracking, security assessments, and compliance reporting
 
 ### Kubernetes Management
