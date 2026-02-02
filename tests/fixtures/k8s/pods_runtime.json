@@ -1,0 +1,44 @@
+{
+  "apiVersion": "v1",
+  "kind": "PodList",
+  "items": [
+    {
+      "metadata": {
+        "name": "secure-pod",
+        "namespace": "secure"
+      },
+      "spec": {
+        "runtimeClassName": "gvisor",
+        "nodeName": "node-1"
+      },
+      "status": {
+        "phase": "Running"
+      }
+    },
+    {
+      "metadata": {
+        "name": "standard-pod",
+        "namespace": "default"
+      },
+      "spec": {
+        "nodeName": "node-1"
+      },
+      "status": {
+        "phase": "Running"
+      }
+    },
+    {
+      "metadata": {
+        "name": "missing-runtime-pod",
+        "namespace": "test"
+      },
+      "spec": {
+        "runtimeClassName": "nonexistent",
+        "nodeName": "node-1"
+      },
+      "status": {
+        "phase": "Pending"
+      }
+    }
+  ]
+}

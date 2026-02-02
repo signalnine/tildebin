@@ -1,0 +1,38 @@
+{
+  "apiVersion": "scheduling.k8s.io/v1",
+  "kind": "PriorityClassList",
+  "items": [
+    {
+      "metadata": {
+        "name": "system-cluster-critical"
+      },
+      "value": 2000000000,
+      "globalDefault": false,
+      "preemptionPolicy": "PreemptLowerPriority"
+    },
+    {
+      "metadata": {
+        "name": "system-node-critical"
+      },
+      "value": 2000001000,
+      "globalDefault": false,
+      "preemptionPolicy": "PreemptLowerPriority"
+    },
+    {
+      "metadata": {
+        "name": "high-priority"
+      },
+      "value": 1000000,
+      "globalDefault": false,
+      "preemptionPolicy": "PreemptLowerPriority"
+    },
+    {
+      "metadata": {
+        "name": "default-priority"
+      },
+      "value": 0,
+      "globalDefault": true,
+      "preemptionPolicy": "PreemptLowerPriority"
+    }
+  ]
+}

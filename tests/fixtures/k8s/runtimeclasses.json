@@ -1,0 +1,28 @@
+{
+  "apiVersion": "node.k8s.io/v1",
+  "kind": "RuntimeClassList",
+  "items": [
+    {
+      "metadata": {
+        "name": "gvisor"
+      },
+      "handler": "runsc",
+      "scheduling": {
+        "nodeSelector": {"sandbox": "gvisor"}
+      },
+      "overhead": {
+        "podFixed": {"cpu": "50m", "memory": "100Mi"}
+      }
+    },
+    {
+      "metadata": {
+        "name": "kata"
+      },
+      "handler": "kata-qemu",
+      "scheduling": {},
+      "overhead": {
+        "podFixed": {"cpu": "100m", "memory": "256Mi"}
+      }
+    }
+  ]
+}

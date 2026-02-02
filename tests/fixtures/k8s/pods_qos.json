@@ -1,0 +1,65 @@
+{
+  "apiVersion": "v1",
+  "kind": "PodList",
+  "items": [
+    {
+      "metadata": {
+        "name": "guaranteed-pod",
+        "namespace": "production"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "resources": {
+              "requests": {"cpu": "100m", "memory": "128Mi"},
+              "limits": {"cpu": "100m", "memory": "128Mi"}
+            }
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running",
+        "qosClass": "Guaranteed"
+      }
+    },
+    {
+      "metadata": {
+        "name": "burstable-pod",
+        "namespace": "production"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "resources": {
+              "requests": {"cpu": "100m", "memory": "128Mi"},
+              "limits": {"cpu": "200m", "memory": "256Mi"}
+            }
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running",
+        "qosClass": "Burstable"
+      }
+    },
+    {
+      "metadata": {
+        "name": "besteffort-pod",
+        "namespace": "production"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app"
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running",
+        "qosClass": "BestEffort"
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "DeploymentList",
+  "items": [
+    {
+      "metadata": {
+        "name": "webapp",
+        "namespace": "production"
+      },
+      "spec": {
+        "replicas": 3,
+        "template": {
+          "spec": {
+            "containers": [{"name": "app"}]
+          }
+        }
+      }
+    },
+    {
+      "metadata": {
+        "name": "api-server",
+        "namespace": "production"
+      },
+      "spec": {
+        "replicas": 2,
+        "template": {
+          "spec": {
+            "topologySpreadConstraints": [
+              {
+                "maxSkew": 1,
+                "topologyKey": "topology.kubernetes.io/zone",
+                "whenUnsatisfiable": "DoNotSchedule"
+              }
+            ],
+            "containers": [{"name": "api"}]
+          }
+        }
+      }
+    }
+  ]
+}
