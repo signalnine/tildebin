@@ -100,7 +100,7 @@ class TestProcessTree:
         assert 10 in children[1]
         assert 11 in children[1]
         assert 100 in children[10]
-        assert children.get(11) == []  # leaf node
+        assert children[11] == []  # leaf node (defaultdict returns [] for missing keys)
 
     def test_calculate_tree_depth(self, mock_context):
         """Test tree depth calculation."""

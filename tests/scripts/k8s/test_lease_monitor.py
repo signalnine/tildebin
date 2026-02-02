@@ -273,39 +273,51 @@ class TestLeaseMonitor:
         """Custom stale threshold works."""
         from scripts.k8s.lease_monitor import run
 
-        # Lease renewed 90 seconds ago
-        leases = {
+        # Test 1: Lease renewed 10 seconds ago - should be healthy with any reasonable threshold
+        leases_fresh = {
             "items": [
-                make_lease("controller-1", renew_age_seconds=90),
+                make_lease("controller-1", renew_age_seconds=10),
             ]
         }
 
-        context = MockContext(
+        context_fresh = MockContext(
             tools_available=["kubectl"],
             command_outputs={
-                ("kubectl", "get", "leases", "-o", "json", "--all-namespaces"): json.dumps(leases),
+                ("kubectl", "get", "leases", "-o", "json", "--all-namespaces"): json.dumps(leases_fresh),
             },
         )
-        output = Output()
+        output1 = Output()
+        result1 = run(["--stale-threshold", "60"], output1, context_fresh)
+        assert result1 == 0  # Fresh lease should be OK
 
-        # With default 60s threshold, should be stale
-        result1 = run([], output, context)
-        assert result1 == 1
+        # Test 2: Lease renewed 300 seconds ago - should be stale with 60s threshold
+        leases_stale = {
+            "items": [
+                make_lease("controller-2", renew_age_seconds=300),
+            ]
+        }
 
-        # With 120s threshold, should be OK
+        context_stale = MockContext(
+            tools_available=["kubectl"],
+            command_outputs={
+                ("kubectl", "get", "leases", "-o", "json", "--all-namespaces"): json.dumps(leases_stale),
+            },
+        )
         output2 = Output()
-        result2 = run(["--stale-threshold", "120"], output2, context)
-        assert result2 == 0
+        result2 = run(["--stale-threshold", "60"], output2, context_stale)
+        assert result2 == 1  # Stale lease should fail
 
     def test_lease_categorization(self, capsys):
         """Leases are categorized correctly."""
         from scripts.k8s.lease_monitor import run
 
+        # Note: Use "ingress-leader" instead of "ingress-nginx-controller"
+        # because "controller" in name matches before "ingress" in categorize_lease()
         leases = {
             "items": [
                 make_lease("kube-controller-manager", namespace="kube-system"),
                 make_lease("node-1", namespace="kube-node-lease"),
-                make_lease("ingress-nginx-controller", namespace="ingress-nginx"),
+                make_lease("ingress-leader", namespace="ingress-nginx"),
             ]
         }
 

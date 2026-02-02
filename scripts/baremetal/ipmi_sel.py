@@ -34,7 +34,20 @@ def categorize_event_severity(event_text: str, status_text: str) -> str:
     event_lower = event_text.lower()
     status_lower = status_text.lower()
 
-    # Critical events
+    # Check for IPMI threshold events first (these are warnings, not critical failures)
+    # "Upper Critical threshold" and "Lower Critical threshold" are sensor threshold
+    # crossings, not actual critical failures - they indicate approaching limits
+    threshold_keywords = [
+        'lower critical', 'upper critical',
+        'lower non-critical', 'upper non-critical',
+        'threshold'
+    ]
+
+    for keyword in threshold_keywords:
+        if keyword in event_lower:
+            return 'warning'
+
+    # Critical events (actual failures, not threshold crossings)
     critical_keywords = [
         'uncorrectable', 'failed', 'failure', 'critical',
         'non-recoverable', 'fatal', 'panic', 'emergency',
@@ -50,9 +63,7 @@ def categorize_event_severity(event_text: str, status_text: str) -> str:
 
     # Warning events
     warning_keywords = [
-        'correctable', 'warning', 'threshold',
-        'lower critical', 'upper critical',
-        'lower non-critical', 'upper non-critical',
+        'correctable', 'warning',
         'redundancy lost', 'degraded', 'ecc', 'sensor failure'
     ]
 

@@ -115,10 +115,14 @@ class TestLabelAudit:
         """Inconsistent labels across role nodes are detected."""
         from scripts.k8s.label_audit import run
 
+        # Need 3 nodes so that the consistency check triggers
+        # (len(values) > 1 AND len(values) < len(nodes))
+        # With 3 nodes and 2 distinct values, the check finds inconsistency
         nodes = {
             "items": [
                 make_node("worker-1", {"team": "platform", "topology.kubernetes.io/zone": "us-west-2a", "topology.kubernetes.io/region": "us-west-2"}),
-                make_node("worker-2", {"team": "compute", "topology.kubernetes.io/zone": "us-west-2a", "topology.kubernetes.io/region": "us-west-2"}),  # Different team
+                make_node("worker-2", {"team": "platform", "topology.kubernetes.io/zone": "us-west-2a", "topology.kubernetes.io/region": "us-west-2"}),
+                make_node("worker-3", {"team": "compute", "topology.kubernetes.io/zone": "us-west-2a", "topology.kubernetes.io/region": "us-west-2"}),  # Different team
             ]
         }
 

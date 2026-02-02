@@ -252,8 +252,9 @@ class TestDaemonsetHealth:
         nodes = {"items": [make_node("node-1")]}
         daemonsets = {
             "items": [
-                make_daemonset("healthy-ds", desired=1, current=1, ready=1),
-                make_daemonset("unhealthy-ds", desired=1, current=1, ready=0),
+                # All values must match for truly healthy DaemonSet
+                make_daemonset("healthy-ds", desired=1, current=1, ready=1, available=1, updated=1),
+                make_daemonset("unhealthy-ds", desired=1, current=1, ready=0, available=0, updated=1),
             ]
         }
         healthy_pods = {"items": [make_pod("pod-1", daemonset="healthy-ds", ready=True)]}

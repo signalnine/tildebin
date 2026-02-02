@@ -42,7 +42,7 @@ def parse_sensors_output(output: str) -> list[dict[str, Any]]:
 
         # Parse temperature lines
         temp_match = re.match(
-            r'^([^:]+):\s+\+?([0-9.]+)\s*[°]?C\s*(?:\(high = \+?([0-9.]+)[°]?C)?(?:, crit = \+?([0-9.]+)[°]?C\))?',
+            r'^([^:]+):\s+\+?([0-9.]+)\s*[°]?C\s*(?:\(high = \+?([0-9.]+)\s*[°]?C)?(?:, crit = \+?([0-9.]+)\s*[°]?C\))?',
             line
         )
         fan_match = re.match(

@@ -51,6 +51,10 @@ class MockContext:
         if isinstance(output, Exception):
             raise output
 
+        # Allow passing CompletedProcess directly for more control (e.g., non-zero returncode)
+        if isinstance(output, subprocess.CompletedProcess):
+            return output
+
         return subprocess.CompletedProcess(
             cmd,
             returncode=0,

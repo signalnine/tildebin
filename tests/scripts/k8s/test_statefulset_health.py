@@ -23,19 +23,20 @@ class TestStatefulsetHealth:
         """Healthy StatefulSets return exit code 0."""
         from scripts.k8s.statefulset_health import run
 
+        # Fixture has postgres in database namespace
         context = MockContext(
             tools_available=["kubectl"],
             command_outputs={
                 ("kubectl", "get", "statefulsets", "-o", "json", "--all-namespaces"): load_k8s_fixture(
                     "statefulsets_healthy.json"
                 ),
-                ("kubectl", "get", "pods", "-n", "default", "-l", "app.kubernetes.io/name=mysql", "-o", "json"): json.dumps(
+                ("kubectl", "get", "pods", "-n", "database", "-l", "app.kubernetes.io/name=postgres", "-o", "json"): json.dumps(
                     {"items": []}
                 ),
-                ("kubectl", "get", "pods", "-n", "default", "-o", "json"): json.dumps(
+                ("kubectl", "get", "pods", "-n", "database", "-o", "json"): json.dumps(
                     {"items": []}
                 ),
-                ("kubectl", "get", "pvc", "-n", "default", "-o", "json"): json.dumps(
+                ("kubectl", "get", "pvc", "-n", "database", "-o", "json"): json.dumps(
                     {"items": []}
                 ),
             },

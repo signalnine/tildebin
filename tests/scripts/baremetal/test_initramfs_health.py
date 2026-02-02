@@ -43,7 +43,8 @@ class TestInitramfsHealth:
              patch("os.path.exists") as mock_exists, \
              patch("os.listdir") as mock_listdir, \
              patch("os.stat") as mock_stat, \
-             patch("builtins.open", create=True) as mock_open:
+             patch("builtins.open", create=True) as mock_open, \
+             patch("gzip.open", create=True) as mock_gzip_open:
 
             mock_isdir.return_value = True
             mock_glob.side_effect = lambda p: {
@@ -71,6 +72,13 @@ class TestInitramfsHealth:
             mock_file.__exit__ = MagicMock(return_value=False)
             mock_file.read.return_value = b"\x1f\x8b\x08\x00\x00\x00"
             mock_open.return_value = mock_file
+
+            # Mock gzip.open for validation - return valid CPIO header
+            mock_gzip_file = MagicMock()
+            mock_gzip_file.__enter__ = MagicMock(return_value=mock_gzip_file)
+            mock_gzip_file.__exit__ = MagicMock(return_value=False)
+            mock_gzip_file.read.return_value = b"070701"  # CPIO magic
+            mock_gzip_open.return_value = mock_gzip_file
 
             exit_code = initramfs_health.run([], output, ctx)
 

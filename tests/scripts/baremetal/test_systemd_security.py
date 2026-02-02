@@ -56,20 +56,21 @@ class TestSystemdSecurity:
         from scripts.baremetal import systemd_security
         import subprocess
 
-        def mock_run(cmd, **kwargs):
-            if 'security' in cmd and '--help' in cmd:
-                return subprocess.CompletedProcess(cmd, returncode=1, stdout='', stderr='Unknown command')
-            return subprocess.CompletedProcess(cmd, returncode=0, stdout='', stderr='')
-
+        # Return a CompletedProcess with non-zero returncode to simulate
+        # the security subcommand not being available
         ctx = mock_context(
             tools_available=["systemd-analyze"],
             command_outputs={
-                ("systemd-analyze", "security", "--help"): Exception("Command failed"),
+                ("systemd-analyze", "security", "--help"): subprocess.CompletedProcess(
+                    ["systemd-analyze", "security", "--help"],
+                    returncode=1,
+                    stdout="",
+                    stderr="Unknown command 'security'",
+                ),
             }
         )
         output = Output()
 
-        # This will error because the mock context raises exception
         exit_code = systemd_security.run([], output, ctx)
 
         assert exit_code == 2

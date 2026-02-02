@@ -86,8 +86,8 @@ class TestEndpointsliceHealth:
 
         endpointslices = {
             "items": [
-                make_endpointslice("svc-1-abc", ready_count=3),
-                make_endpointslice("svc-2-def", ready_count=2),
+                make_endpointslice("svc-1-abc", service="svc-1", ready_count=3),
+                make_endpointslice("svc-2-def", service="svc-2", ready_count=2),
             ]
         }
         services = {
@@ -247,7 +247,7 @@ class TestEndpointsliceHealth:
 
         endpointslices = {
             "items": [
-                make_endpointslice("svc-abc", namespace="production", ready_count=2),
+                make_endpointslice("svc-abc", namespace="production", service="svc", ready_count=2),
             ]
         }
         services = {"items": [make_service("svc", namespace="production")]}
