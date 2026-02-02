@@ -222,6 +222,7 @@ class TestKdumpAudit:
     def test_json_output_format(self, mock_context, capsys):
         """Test JSON output format."""
         from scripts.baremetal import kdump_audit
+        from io import StringIO
 
         ctx = mock_context(
             tools_available=["systemctl"],
@@ -233,23 +234,26 @@ class TestKdumpAudit:
         )
         output = Output()
 
+        real_open = open
+
+        def mock_open(path, *args, **kwargs):
+            # Only mock specific paths, let real files through
+            if isinstance(path, str) and path.startswith(("/proc/", "/sys/", "/etc/")):
+                content = {
+                    "/proc/cmdline": "root=/dev/sda1 crashkernel=256M",
+                    "/proc/meminfo": "MemTotal:       16384000 kB\n",
+                }.get(path, "")
+                return StringIO(content)
+            return real_open(path, *args, **kwargs)
+
         with patch("os.path.exists") as mock_exists, \
-             patch("builtins.open", create=True) as mock_open, \
+             patch("scripts.baremetal.kdump_audit.open", mock_open), \
              patch("os.stat") as mock_stat, \
              patch("os.access") as mock_access, \
              patch("os.statvfs") as mock_statvfs, \
              patch("glob.glob") as mock_glob:
 
             mock_exists.return_value = True
-
-            def open_side_effect(path, *args, **kwargs):
-                mock_file = MagicMock()
-                mock_file.__enter__ = MagicMock(return_value=mock_file)
-                mock_file.__exit__ = MagicMock(return_value=False)
-                mock_file.read.return_value = ""
-                return mock_file
-
-            mock_open.side_effect = open_side_effect
 
             stat_result = MagicMock()
             stat_result.st_mode = 0o40755

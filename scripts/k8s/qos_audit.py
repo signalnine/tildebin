@@ -290,6 +290,9 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     has_issues = bool(issues["critical_not_guaranteed"] or issues["best_effort"])
 
+    # Calculate totals for summary (before format branches)
+    total = sum(len(pods) for pods in categories.values())
+
     # Output results
     if opts.format == "json":
         result_data = {

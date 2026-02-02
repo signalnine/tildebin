@@ -2,7 +2,7 @@
 
 import json
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from boxctl.core.output import Output
 
@@ -28,34 +28,17 @@ class TestKernelConfig:
         """Returns 0 when all parameters meet recommendations."""
         from scripts.baremetal import kernel_config
 
-        ctx = mock_context(tools_available=[])
+        # Mock file contents for sysctl parameters
+        ctx = mock_context(
+            tools_available=[],
+            file_contents={
+                "/proc/sys/net/ipv4/tcp_syncookies": "1",
+            }
+        )
         output = Output()
 
-        with patch("os.path.exists") as mock_exists, \
-             patch("builtins.open", create=True) as mock_open:
-
+        with patch("os.path.exists") as mock_exists:
             mock_exists.return_value = True
-
-            # Mock sysctl reads to return expected values
-            def open_side_effect(path, *args, **kwargs):
-                mock_file = MagicMock()
-                mock_file.__enter__ = MagicMock(return_value=mock_file)
-                mock_file.__exit__ = MagicMock(return_value=False)
-
-                # Return values that match the baseline
-                values = {
-                    "/proc/sys/net/ipv4/tcp_syncookies": "1",
-                    "/proc/sys/net/ipv4/conf/all/rp_filter": "1",
-                    "/proc/sys/net/ipv4/conf/default/rp_filter": "1",
-                    "/proc/sys/kernel/randomize_va_space": "2",
-                    "/proc/sys/kernel/dmesg_restrict": "1",
-                    "/proc/sys/fs/protected_hardlinks": "1",
-                    "/proc/sys/fs/protected_symlinks": "1",
-                }
-                mock_file.read.return_value = values.get(path, "1")
-                return mock_file
-
-            mock_open.side_effect = open_side_effect
 
             # Test with a specific param to keep it simple
             exit_code = kernel_config.run(
@@ -69,23 +52,17 @@ class TestKernelConfig:
         """Returns 1 when a parameter fails the check."""
         from scripts.baremetal import kernel_config
 
-        ctx = mock_context(tools_available=[])
+        # tcp_syncookies is 0 (should be 1)
+        ctx = mock_context(
+            tools_available=[],
+            file_contents={
+                "/proc/sys/net/ipv4/tcp_syncookies": "0",
+            }
+        )
         output = Output()
 
-        with patch("os.path.exists") as mock_exists, \
-             patch("builtins.open", create=True) as mock_open:
-
+        with patch("os.path.exists") as mock_exists:
             mock_exists.return_value = True
-
-            def open_side_effect(path, *args, **kwargs):
-                mock_file = MagicMock()
-                mock_file.__enter__ = MagicMock(return_value=mock_file)
-                mock_file.__exit__ = MagicMock(return_value=False)
-                # tcp_syncookies is 0 (should be 1)
-                mock_file.read.return_value = "0"
-                return mock_file
-
-            mock_open.side_effect = open_side_effect
 
             exit_code = kernel_config.run(
                 ["--param", "net.ipv4.tcp_syncookies"], output, ctx
@@ -98,23 +75,23 @@ class TestKernelConfig:
         """Test security profile selection."""
         from scripts.baremetal import kernel_config
 
-        ctx = mock_context(tools_available=[])
+        # Provide all security baseline values
+        ctx = mock_context(
+            tools_available=[],
+            file_contents={
+                "/proc/sys/net/ipv4/tcp_syncookies": "1",
+                "/proc/sys/net/ipv4/conf/all/rp_filter": "1",
+                "/proc/sys/net/ipv4/conf/default/rp_filter": "1",
+                "/proc/sys/kernel/randomize_va_space": "2",
+                "/proc/sys/kernel/dmesg_restrict": "1",
+                "/proc/sys/fs/protected_hardlinks": "1",
+                "/proc/sys/fs/protected_symlinks": "1",
+            }
+        )
         output = Output()
 
-        with patch("os.path.exists") as mock_exists, \
-             patch("builtins.open", create=True) as mock_open:
-
+        with patch("os.path.exists") as mock_exists:
             mock_exists.return_value = True
-
-            def open_side_effect(path, *args, **kwargs):
-                mock_file = MagicMock()
-                mock_file.__enter__ = MagicMock(return_value=mock_file)
-                mock_file.__exit__ = MagicMock(return_value=False)
-                mock_file.read.return_value = "1"
-                return mock_file
-
-            mock_open.side_effect = open_side_effect
-
             exit_code = kernel_config.run(["--profile", "security"], output, ctx)
 
         # Security profile should check security-related params
@@ -124,29 +101,19 @@ class TestKernelConfig:
         """Test performance profile selection."""
         from scripts.baremetal import kernel_config
 
-        ctx = mock_context(tools_available=[])
+        ctx = mock_context(
+            tools_available=[],
+            file_contents={
+                "/proc/sys/net/core/somaxconn": "65535",
+                "/proc/sys/fs/file-max": "10000000",
+                "/proc/sys/net/ipv4/tcp_max_syn_backlog": "100000",
+                "/proc/sys/net/core/netdev_max_backlog": "100000",
+            }
+        )
         output = Output()
 
-        with patch("os.path.exists") as mock_exists, \
-             patch("builtins.open", create=True) as mock_open:
-
+        with patch("os.path.exists") as mock_exists:
             mock_exists.return_value = True
-
-            def open_side_effect(path, *args, **kwargs):
-                mock_file = MagicMock()
-                mock_file.__enter__ = MagicMock(return_value=mock_file)
-                mock_file.__exit__ = MagicMock(return_value=False)
-                # Return high values for performance params
-                if "somaxconn" in path:
-                    mock_file.read.return_value = "65535"
-                elif "file-max" in path:
-                    mock_file.read.return_value = "10000000"
-                else:
-                    mock_file.read.return_value = "100000"
-                return mock_file
-
-            mock_open.side_effect = open_side_effect
-
             exit_code = kernel_config.run(["--profile", "performance"], output, ctx)
 
         assert output.data["summary"]["total"] > 0
@@ -155,23 +122,16 @@ class TestKernelConfig:
         """Test JSON output format."""
         from scripts.baremetal import kernel_config
 
-        ctx = mock_context(tools_available=[])
+        ctx = mock_context(
+            tools_available=[],
+            file_contents={
+                "/proc/sys/net/ipv4/tcp_syncookies": "1",
+            }
+        )
         output = Output()
 
-        with patch("os.path.exists") as mock_exists, \
-             patch("builtins.open", create=True) as mock_open:
-
+        with patch("os.path.exists") as mock_exists:
             mock_exists.return_value = True
-
-            def open_side_effect(path, *args, **kwargs):
-                mock_file = MagicMock()
-                mock_file.__enter__ = MagicMock(return_value=mock_file)
-                mock_file.__exit__ = MagicMock(return_value=False)
-                mock_file.read.return_value = "1"
-                return mock_file
-
-            mock_open.side_effect = open_side_effect
-
             exit_code = kernel_config.run(
                 ["--format", "json", "--param", "net.ipv4.tcp_syncookies"],
                 output,
@@ -187,23 +147,16 @@ class TestKernelConfig:
         """Test --show-fixes generates fix commands."""
         from scripts.baremetal import kernel_config
 
-        ctx = mock_context(tools_available=[])
+        ctx = mock_context(
+            tools_available=[],
+            file_contents={
+                "/proc/sys/net/ipv4/tcp_syncookies": "0",  # Wrong value
+            }
+        )
         output = Output()
 
-        with patch("os.path.exists") as mock_exists, \
-             patch("builtins.open", create=True) as mock_open:
-
+        with patch("os.path.exists") as mock_exists:
             mock_exists.return_value = True
-
-            def open_side_effect(path, *args, **kwargs):
-                mock_file = MagicMock()
-                mock_file.__enter__ = MagicMock(return_value=mock_file)
-                mock_file.__exit__ = MagicMock(return_value=False)
-                mock_file.read.return_value = "0"  # Wrong value
-                return mock_file
-
-            mock_open.side_effect = open_side_effect
-
             exit_code = kernel_config.run(
                 ["--show-fixes", "--param", "net.ipv4.tcp_syncookies"],
                 output,

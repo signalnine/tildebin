@@ -151,7 +151,7 @@ sda             10.00   20.00     80.00    160.00     0.00     5.00   0.00  20.0
             }]
         })
 
-        data = output.get_data()
+        data = output.data
         json_str = json.dumps(data)
         parsed = json.loads(json_str)
 

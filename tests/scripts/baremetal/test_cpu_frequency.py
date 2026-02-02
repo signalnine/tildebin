@@ -41,7 +41,7 @@ class TestCpuFrequency:
         result = run([], output, context)
 
         assert result == 2
-        assert output.has_errors()
+        assert bool(output.errors)
 
     def test_analyze_healthy_cpu(self):
         """Test analyze_cpu_status with healthy CPU."""
@@ -152,7 +152,7 @@ class TestCpuFrequency:
             "summary": {"total": 1, "healthy": 1, "warnings": 0}
         })
 
-        data = output.get_data()
+        data = output.data
         json_str = json.dumps(data)
         parsed = json.loads(json_str)
 
@@ -173,6 +173,6 @@ class TestCpuFrequency:
         }
         output.emit(data)
 
-        result_data = output.get_data()
+        result_data = output.data
         assert len(result_data["cpus"]) == 0
         assert result_data["summary"]["warnings"] == 0

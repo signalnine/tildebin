@@ -424,6 +424,9 @@ def run(args: list[str], output: Output, context: Context) -> int:
         or len(categories["no_requests"]) > 0
     )
 
+    # Calculate totals for summary (before format branches)
+    total = len([a for a in analyses if a is not None])
+
     # Output results
     if opts.format == "json":
         result_data = {

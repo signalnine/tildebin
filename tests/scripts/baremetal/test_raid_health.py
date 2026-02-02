@@ -53,7 +53,7 @@ class TestRaidHealth:
         result = run([], output, context)
 
         assert result == 0
-        assert output.has_warnings()
+        assert bool(output.warnings)
 
     def test_healthy_raid1_array(self):
         """Test detection of healthy RAID1 array."""
@@ -69,7 +69,7 @@ unused devices: <none>
         result = run([], output, context)
 
         assert result == 0
-        data = output.get_data()
+        data = output.data
         assert "arrays" in data
         assert len(data["arrays"]) == 1
         assert data["arrays"][0]["status"] == "healthy"
@@ -90,7 +90,7 @@ unused devices: <none>
         result = run([], output, context)
 
         assert result == 1
-        data = output.get_data()
+        data = output.data
         assert len(data["arrays"]) == 1
         assert data["arrays"][0]["status"] == "degraded"
 
@@ -109,7 +109,7 @@ unused devices: <none>
         result = run([], output, context)
 
         assert result == 1
-        data = output.get_data()
+        data = output.data
         assert len(data["arrays"]) == 1
         assert data["arrays"][0]["status"] == "rebuilding"
 
@@ -130,7 +130,7 @@ unused devices: <none>
         result = run([], output, context)
 
         assert result == 0
-        data = output.get_data()
+        data = output.data
         assert len(data["arrays"]) == 2
         assert all(a["status"] == "healthy" for a in data["arrays"])
 
@@ -151,7 +151,7 @@ unused devices: <none>
         result = run(["--warn-only"], output, context)
 
         assert result == 1
-        data = output.get_data()
+        data = output.data
         assert len(data["arrays"]) == 1
         assert data["arrays"][0]["name"] == "md1"
         assert data["arrays"][0]["status"] == "degraded"
@@ -170,7 +170,7 @@ unused devices: <none>
         result = run(["--verbose"], output, context)
 
         assert result == 0
-        data = output.get_data()
+        data = output.data
         assert len(data["arrays"]) == 1
         assert "devices" in data["arrays"][0]
 
@@ -188,7 +188,7 @@ unused devices: <none>
         result = run(["--type", "software"], output, context)
 
         assert result == 0
-        data = output.get_data()
+        data = output.data
         assert len(data["arrays"]) == 1
         assert data["arrays"][0]["type"] == "software"
 
@@ -206,7 +206,7 @@ unused devices: <none>
         result = run(["--format", "json"], output, context)
 
         assert result == 0
-        data = output.get_data()
+        data = output.data
         # Verify data can be serialized to JSON
         json_str = json.dumps(data)
         parsed = json.loads(json_str)

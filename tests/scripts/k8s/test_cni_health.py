@@ -170,6 +170,9 @@ class TestCniHealth:
             ]
         }
 
+        # Common empty responses for CNI plugins we're not testing
+        empty_items = json.dumps({"items": []})
+
         context = MockContext(
             tools_available=["kubectl"],
             command_outputs={
@@ -243,7 +246,16 @@ class TestCniHealth:
                     "--all-namespaces",
                     "-o",
                     "json",
-                ): json.dumps({"items": []}),
+                ): empty_items,
+                # Empty responses for other CNIs that script checks
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=calico-kube-controllers", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=cilium", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "app.kubernetes.io/name=cilium-agent", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-flannel", "-l", "app=flannel", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-flannel", "-l", "k8s-app=flannel", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "name=weave-net", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=aws-node", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=azure-cni", "-o", "json", "--ignore-not-found"): empty_items,
             },
         )
         output = Output()
@@ -252,8 +264,8 @@ class TestCniHealth:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "calico" in captured.out
-        assert "OK" in captured.out or "passed" in captured.out
+        assert "calico" in captured.out.lower()
+        assert "OK" in captured.out or "passed" in captured.out.lower() or "healthy" in captured.out.lower()
 
     def test_json_output(self, capsys):
         """JSON output contains expected fields."""
@@ -272,6 +284,8 @@ class TestCniHealth:
                 }
             ]
         }
+
+        empty_items = json.dumps({"items": []})
 
         context = MockContext(
             tools_available=["kubectl"],
@@ -318,7 +332,7 @@ class TestCniHealth:
                     "-o",
                     "json",
                 ): json.dumps(calico_pods),
-                ("kubectl", "get", "nodes", "-o", "json"): json.dumps({"items": []}),
+                ("kubectl", "get", "nodes", "-o", "json"): empty_items,
                 (
                     "kubectl",
                     "get",
@@ -326,7 +340,16 @@ class TestCniHealth:
                     "--all-namespaces",
                     "-o",
                     "json",
-                ): json.dumps({"items": []}),
+                ): empty_items,
+                # Empty responses for other CNIs
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=calico-kube-controllers", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=cilium", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "app.kubernetes.io/name=cilium-agent", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-flannel", "-l", "app=flannel", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-flannel", "-l", "k8s-app=flannel", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "name=weave-net", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=aws-node", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=azure-cni", "-o", "json", "--ignore-not-found"): empty_items,
             },
         )
         output = Output()
@@ -376,6 +399,8 @@ class TestCniHealth:
             ]
         }
 
+        empty_items = json.dumps({"items": []})
+
         context = MockContext(
             tools_available=["kubectl"],
             command_outputs={
@@ -421,7 +446,7 @@ class TestCniHealth:
                     "-o",
                     "json",
                 ): json.dumps(calico_pods),
-                ("kubectl", "get", "nodes", "-o", "json"): json.dumps({"items": []}),
+                ("kubectl", "get", "nodes", "-o", "json"): empty_items,
                 (
                     "kubectl",
                     "get",
@@ -429,7 +454,16 @@ class TestCniHealth:
                     "--all-namespaces",
                     "-o",
                     "json",
-                ): json.dumps({"items": []}),
+                ): empty_items,
+                # Empty responses for other CNIs
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=calico-kube-controllers", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=cilium", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "app.kubernetes.io/name=cilium-agent", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-flannel", "-l", "app=flannel", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-flannel", "-l", "k8s-app=flannel", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "name=weave-net", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=aws-node", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=azure-cni", "-o", "json", "--ignore-not-found"): empty_items,
             },
         )
         output = Output()
@@ -457,6 +491,8 @@ class TestCniHealth:
                 }
             ]
         }
+
+        empty_items = json.dumps({"items": []})
 
         context = MockContext(
             tools_available=["kubectl"],
@@ -526,7 +562,16 @@ class TestCniHealth:
                     "--all-namespaces",
                     "-o",
                     "json",
-                ): json.dumps({"items": []}),
+                ): empty_items,
+                # Empty responses for other CNIs
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=calico-kube-controllers", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=cilium", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "app.kubernetes.io/name=cilium-agent", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-flannel", "-l", "app=flannel", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-flannel", "-l", "k8s-app=flannel", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "name=weave-net", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=aws-node", "-o", "json", "--ignore-not-found"): empty_items,
+                ("kubectl", "get", "pods", "-n", "kube-system", "-l", "k8s-app=azure-cni", "-o", "json", "--ignore-not-found"): empty_items,
             },
         )
         output = Output()

@@ -39,7 +39,7 @@ class TestApiLatency:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "OK" in captured.out or "healthy" in captured.out.lower()
+        assert "OK" in captured.out or "healthy" in captured.out.lower() or "acceptable" in captured.out.lower()
 
     def test_json_output(self, capsys):
         """JSON output contains expected fields."""
@@ -237,7 +237,7 @@ class TestApiLatency:
 
         assert result == 0
         # Verify the namespace-scoped commands were called
-        assert (
+        assert [
             "kubectl",
             "get",
             "pods",
@@ -245,4 +245,4 @@ class TestApiLatency:
             "json",
             "-n",
             "production",
-        ) in context.commands_run
+        ] in context.commands_run

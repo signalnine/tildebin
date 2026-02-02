@@ -84,7 +84,7 @@ class TestFilesystemUsage:
         result = run(["/nonexistent/path/that/does/not/exist"], output, context)
 
         assert result == 2
-        assert output.has_errors()
+        assert bool(output.errors)
 
     def test_invalid_depth(self):
         """Test error for invalid depth."""
@@ -94,7 +94,7 @@ class TestFilesystemUsage:
         result = run(["/tmp", "--depth", "-1"], output, context)
 
         assert result == 2
-        assert output.has_errors()
+        assert bool(output.errors)
 
     def test_invalid_top(self):
         """Test error for invalid top value."""
@@ -104,7 +104,7 @@ class TestFilesystemUsage:
         result = run(["/tmp", "--top", "0"], output, context)
 
         assert result == 2
-        assert output.has_errors()
+        assert bool(output.errors)
 
     def test_format_json(self):
         """Test JSON output format."""
@@ -120,7 +120,7 @@ class TestFilesystemUsage:
             }]
         })
 
-        data = output.get_data()
+        data = output.data
         json_str = json.dumps(data)
         parsed = json.loads(json_str)
 

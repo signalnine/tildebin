@@ -100,6 +100,7 @@ class TestModuleParams:
     def test_baseline_comparison_match(self, mock_context, tmp_path):
         """Test baseline comparison when parameters match."""
         from scripts.baremetal import module_params
+        from io import StringIO
 
         ctx = mock_context(tools_available=[])
         output = Output()
@@ -109,10 +110,12 @@ class TestModuleParams:
         baseline_file = tmp_path / "baseline.json"
         baseline_file.write_text(json.dumps(baseline))
 
+        real_open = open  # Save reference before patching
+
         with patch("os.path.isdir") as mock_isdir, \
              patch("os.listdir") as mock_listdir, \
              patch("os.path.isfile") as mock_isfile, \
-             patch("builtins.open", create=True) as mock_open:
+             patch("scripts.baremetal.module_params.open", create=True) as mock_open:
 
             def isdir_side_effect(path):
                 return path in [
@@ -134,18 +137,17 @@ class TestModuleParams:
             mock_isfile.return_value = True
 
             def open_side_effect(path, *args, **kwargs):
-                # Handle baseline file
+                # Handle baseline file with real open
                 if str(baseline_file) in str(path):
-                    return open(baseline_file, *args, **kwargs)
+                    return real_open(baseline_file, *args, **kwargs)
 
-                mock_file = MagicMock()
-                mock_file.__enter__ = MagicMock(return_value=mock_file)
-                mock_file.__exit__ = MagicMock(return_value=False)
-                if "io_queue_depth" in path:
-                    mock_file.read.return_value = "1024"
-                else:
-                    mock_file.read.return_value = ""
-                return mock_file
+                # Mock /sys files
+                if isinstance(path, str) and path.startswith("/sys/"):
+                    if "io_queue_depth" in path:
+                        return StringIO("1024")
+                    return StringIO("")
+
+                return real_open(path, *args, **kwargs)
 
             mock_open.side_effect = open_side_effect
 
@@ -159,6 +161,7 @@ class TestModuleParams:
     def test_baseline_comparison_mismatch(self, mock_context, tmp_path):
         """Test baseline comparison when parameters mismatch."""
         from scripts.baremetal import module_params
+        from io import StringIO
 
         ctx = mock_context(tools_available=[])
         output = Output()
@@ -168,10 +171,12 @@ class TestModuleParams:
         baseline_file = tmp_path / "baseline.json"
         baseline_file.write_text(json.dumps(baseline))
 
+        real_open = open  # Save reference before patching
+
         with patch("os.path.isdir") as mock_isdir, \
              patch("os.listdir") as mock_listdir, \
              patch("os.path.isfile") as mock_isfile, \
-             patch("builtins.open", create=True) as mock_open:
+             patch("scripts.baremetal.module_params.open", create=True) as mock_open:
 
             def isdir_side_effect(path):
                 return path in [
@@ -193,17 +198,17 @@ class TestModuleParams:
             mock_isfile.return_value = True
 
             def open_side_effect(path, *args, **kwargs):
+                # Handle baseline file with real open
                 if str(baseline_file) in str(path):
-                    return open(baseline_file, *args, **kwargs)
+                    return real_open(baseline_file, *args, **kwargs)
 
-                mock_file = MagicMock()
-                mock_file.__enter__ = MagicMock(return_value=mock_file)
-                mock_file.__exit__ = MagicMock(return_value=False)
-                if "io_queue_depth" in path:
-                    mock_file.read.return_value = "1024"  # Actual is 1024
-                else:
-                    mock_file.read.return_value = ""
-                return mock_file
+                # Mock /sys files
+                if isinstance(path, str) and path.startswith("/sys/"):
+                    if "io_queue_depth" in path:
+                        return StringIO("1024")  # Actual is 1024
+                    return StringIO("")
+
+                return real_open(path, *args, **kwargs)
 
             mock_open.side_effect = open_side_effect
 

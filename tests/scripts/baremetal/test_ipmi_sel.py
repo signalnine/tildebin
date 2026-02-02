@@ -96,7 +96,7 @@ class TestIpmiSel:
             }
         })
 
-        data = output.get_data()
+        data = output.data
         json_str = json.dumps(data)
         parsed = json.loads(json_str)
 

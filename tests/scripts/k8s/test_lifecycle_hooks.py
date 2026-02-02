@@ -94,7 +94,7 @@ class TestLifecycleHooks:
         assert result == 1
         captured = capsys.readouterr()
         assert "HIGH" in captured.out
-        assert "missing preStop" in captured.out.lower()
+        assert "missing prestop" in captured.out.lower()
 
     def test_prestop_exceeds_grace(self, capsys):
         """preStop sleep exceeding grace period shows HIGH severity."""

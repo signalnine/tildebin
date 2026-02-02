@@ -112,15 +112,18 @@ def sysctl_path_to_file(sysctl_path: str) -> str:
     return "/proc/sys/" + sysctl_path.replace(".", "/")
 
 
-def read_sysctl(sysctl_path: str) -> str | None:
+def read_sysctl(sysctl_path: str, context: Context | None = None) -> str | None:
     """Read current value of a sysctl parameter."""
     file_path = sysctl_path_to_file(sysctl_path)
     try:
-        with open(file_path, "r") as f:
-            value = f.read().strip()
-            # Normalize whitespace for multi-value params like tcp_rmem
-            value = " ".join(value.split())
-            return value
+        if context is not None:
+            value = context.read_file(file_path).strip()
+        else:
+            with open(file_path, "r") as f:
+                value = f.read().strip()
+        # Normalize whitespace for multi-value params like tcp_rmem
+        value = " ".join(value.split())
+        return value
     except FileNotFoundError:
         return None
     except PermissionError:
@@ -165,7 +168,9 @@ def compare_values(current: str | None, expected: str, comparison: str) -> tuple
             return current == expected, "eq"
 
 
-def audit_baseline(baseline: dict, verbose: bool = False) -> dict[str, Any]:
+def audit_baseline(
+    baseline: dict, verbose: bool = False, context: Context | None = None
+) -> dict[str, Any]:
     """Audit current settings against baseline."""
     results = []
     passed = 0
@@ -173,7 +178,7 @@ def audit_baseline(baseline: dict, verbose: bool = False) -> dict[str, Any]:
     skipped = 0
 
     for sysctl_path, (expected, comparison, description) in baseline.items():
-        current = read_sysctl(sysctl_path)
+        current = read_sysctl(sysctl_path, context)
 
         if current is None:
             status = "skipped"
@@ -295,7 +300,7 @@ def run(args: list[str], output: Output, context: Context) -> int:
             return 2
 
     # Run audit
-    audit_result = audit_baseline(baseline, verbose=opts.verbose)
+    audit_result = audit_baseline(baseline, verbose=opts.verbose, context=context)
 
     output.emit(audit_result)
 
