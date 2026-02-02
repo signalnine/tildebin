@@ -1,17 +1,18 @@
 # boxctl
 
-A unified CLI for 181+ baremetal and Kubernetes monitoring scripts.
+A unified CLI for 300+ baremetal and Kubernetes monitoring scripts.
 
 ## Overview
 
 boxctl provides a single interface to discover, run, and manage diagnostic scripts for system administration. Scripts are organized by category and tagged for easy discovery.
 
 **Features:**
-- Unified CLI for all monitoring scripts
+- 315 monitoring scripts (216 baremetal, 93 Kubernetes)
 - Script discovery with search and filtering
-- Consistent output formats (plain, JSON, table)
+- Consistent output formats (plain, JSON)
+- Automatic privilege escalation for root-required scripts
+- 2400+ unit tests with integration test suite
 - Testable design with dependency injection
-- Comprehensive script metadata
 
 ## Quick Start
 
@@ -148,25 +149,35 @@ boxctl lint disk_health
 
 ## Script Categories
 
-### Baremetal (142 scripts)
+### Baremetal (216 scripts)
 
-| Category | Examples |
-|----------|----------|
-| `baremetal/disk` | disk_health, disk_space_forecaster, disk_io_latency |
-| `baremetal/memory` | memory_pressure_monitor, oom_killer_tracker |
-| `baremetal/cpu` | cpu_steal_monitor, scheduler_latency |
-| `baremetal/network` | network_connection_tracker, packet_loss_monitor |
-| `baremetal/process` | process_ancestry_tree, zombie_process_hunter |
-| `baremetal/security` | setuid_scanner, open_port_audit |
+| Category | Count | Examples |
+|----------|-------|----------|
+| `baremetal/network` | 30 | tcp_connection_monitor, arp_table_monitor, ethtool_audit |
+| `baremetal/disk` | 29 | disk_health, disk_io_latency, nvme_health, zfs_health |
+| `baremetal/security` | 25 | kernel_hardening_audit, ssh_host_key_audit, auditd_health |
+| `baremetal/memory` | 16 | memory_fragmentation, oom_risk_analyzer, hugepage_monitor |
+| `baremetal/kernel` | 14 | kernel_taint, kernel_module_audit, dmesg_analyzer |
+| `baremetal/process` | 14 | process_tree, defunct_parent_analyzer, fd_exhaustion_monitor |
+| `baremetal/storage` | 13 | lvm_health, btrfs_health, multipath_health |
+| `baremetal/hardware` | 12 | ipmi_sensor, hardware_temperature, pci_health |
+| `baremetal/cpu` | 10 | cpu_usage, cpu_steal_monitor, context_switch_monitor |
+| `baremetal/systemd` | 9 | systemd_service_monitor, systemd_timer_monitor |
+| `baremetal/system` | 10 | uptime, load_average, entropy_monitor |
+| `baremetal/boot` | 6 | boot_perf, efi_secure_boot, initramfs_health |
 
-### Kubernetes (39 scripts)
+### Kubernetes (93 scripts)
 
-| Category | Examples |
-|----------|----------|
-| `k8s/pods` | pod_resource_analyzer, pending_pod_debugger |
-| `k8s/nodes` | node_capacity, node_resource_fragmentation |
-| `k8s/resources` | resource_quota_analyzer, limit_range_audit |
-| `k8s/network` | network_policy_analyzer, service_endpoint_health |
+| Category | Count | Examples |
+|----------|-------|----------|
+| `k8s/workloads` | 10 | deployment_status, statefulset_health, daemonset_health |
+| `k8s/security` | 10 | pod_security_audit, rbac_analyzer, secret_audit |
+| `k8s/nodes` | 9 | node_health, node_capacity, node_pressure |
+| `k8s/resources` | 9 | resource_quota_auditor, limit_range_audit |
+| `k8s/networking` | 8 | service_health, ingress_health, network_policy_analyzer |
+| `k8s/cluster` | 8 | api_latency, etcd_health, control_plane_health |
+| `k8s/storage` | 8 | pv_health, pvc_analyzer, storage_class_audit |
+| `k8s/pods` | 5 | pending_pod_analyzer, pod_disruption_budget |
 
 ## Exit Codes
 
@@ -206,16 +217,53 @@ DISK       STATUS   TEMP   HOURS
 /dev/sdb   HEALTHY  34C    8,901
 ```
 
-## Documentation
+## Installation
 
-- [CLI Reference](docs/cli-reference.md) - Complete command documentation
-- [Writing Scripts](docs/writing-scripts.md) - Guide for adding new scripts
-- [Architecture](docs/architecture.md) - System design overview
+```bash
+# Clone the repository
+git clone https://github.com/signalnine/boxctl.git
+cd boxctl
+
+# Install in development mode
+pip install -e .
+
+# Or just run directly
+PYTHONPATH=/path/to/boxctl python3 -m boxctl doctor
+```
+
+## Testing
+
+```bash
+# Run all unit tests (2400+)
+make test
+
+# Run integration tests (requires real hardware/cluster)
+make test-integration
+
+# Run specific test category
+make test-baremetal
+make test-k8s
+```
+
+## Required Tools
+
+The `doctor` command shows which tools are available:
+
+```bash
+boxctl doctor
+```
+
+Common tools by category:
+- **Disk**: smartctl, nvme, lsblk, btrfs, zpool
+- **Network**: ss, ip, ethtool, iptables
+- **Hardware**: ipmitool, sensors, dmidecode
+- **Kubernetes**: kubectl
+- **Security**: auditctl, openssl
 
 ## Requirements
 
 - Python 3.10+
-- Scripts may require additional tools (smartctl, kubectl, etc.)
+- Scripts check for required tools and exit with code 2 if missing
 
 ## License
 
