@@ -1,5 +1,6 @@
 """Script execution."""
 
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -72,7 +73,12 @@ def run_script(
         cmd.extend(args)
 
     if use_sudo:
-        cmd = ["sudo"] + cmd
+        # Pass PYTHONPATH explicitly to sudo to preserve imports
+        pythonpath = os.environ.get("PYTHONPATH", "")
+        if pythonpath:
+            cmd = ["sudo", f"PYTHONPATH={pythonpath}"] + cmd
+        else:
+            cmd = ["sudo"] + cmd
 
     if context is not None:
         # Use provided context (for testing)
@@ -101,6 +107,7 @@ def run_script(
             capture_output=True,
             text=True,
             timeout=timeout,
+            env=os.environ,
         )
         return ScriptResult(
             script_name=script_path.name,
