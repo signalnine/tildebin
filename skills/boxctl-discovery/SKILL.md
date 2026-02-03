@@ -19,10 +19,10 @@ Find relevant monitoring scripts from boxctl's 309-script library before running
 ## Workflow
 
 ```bash
-# 1. Search by symptoms/tags
-boxctl search --tags cpu,load        # For load issues
-boxctl search --tags disk,health     # For disk issues
-boxctl search --tags pod,crash       # For k8s issues
+# 1. Search by keywords or list by tags
+boxctl search "cpu load"             # Search by keywords
+boxctl list --tag cpu                # List by tag
+boxctl list --category baremetal/disk  # List by category
 
 # 2. Show requirements for top candidates
 boxctl show <script>                 # Check privilege, tools needed
