@@ -425,6 +425,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         for i in issues
     )
 
+    output.render(opts.format, "Monitor kernel live patching status for security compliance")
+
     return 1 if has_warnings else 0
 
 

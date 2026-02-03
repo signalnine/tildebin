@@ -295,13 +295,21 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Determine exit code
     if opts.require_lsm and primary_lsm == "none":
+
+        output.render(opts.format, "Monitor Linux Security Module (LSM) status")
         return 1
 
     if overall_status == "healthy":
+
+        output.render(opts.format, "Monitor Linux Security Module (LSM) status")
         return 0
     elif overall_status in ["warning", "critical"]:
+
+        output.render(opts.format, "Monitor Linux Security Module (LSM) status")
         return 1
     else:
+
+        output.render(opts.format, "Monitor Linux Security Module (LSM) status")
         return 2
 
 

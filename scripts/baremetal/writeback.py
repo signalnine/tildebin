@@ -313,19 +313,27 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.warn_pct < 0 or opts.warn_pct > 100:
         output.error('--warn-pct must be between 0 and 100')
+
+        output.render(opts.format, "Monitor kernel writeback cache behavior and dirty page pressure")
         return 2
 
     if opts.crit_pct < 0 or opts.crit_pct > 100:
         output.error('--crit-pct must be between 0 and 100')
+
+        output.render(opts.format, "Monitor kernel writeback cache behavior and dirty page pressure")
         return 2
 
     if opts.warn_pct > opts.crit_pct:
         output.error('--warn-pct cannot exceed --crit-pct')
+
+        output.render(opts.format, "Monitor kernel writeback cache behavior and dirty page pressure")
         return 2
 
     # Check for required data sources
     if not context.file_exists('/proc/meminfo'):
         output.error('/proc/meminfo not available')
+
+        output.render(opts.format, "Monitor kernel writeback cache behavior and dirty page pressure")
         return 2
 
     # Gather data
@@ -336,6 +344,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not meminfo:
         output.error('Cannot read memory information')
+
+        output.render(opts.format, "Monitor kernel writeback cache behavior and dirty page pressure")
         return 2
 
     # Analyze
@@ -367,12 +377,18 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit code
     if result['status'] == 'critical':
+
+        output.render(opts.format, "Monitor kernel writeback cache behavior and dirty page pressure")
         return 1
     elif result['status'] == 'warning':
         return 1
     elif result['status'] == 'error':
+
+        output.render(opts.format, "Monitor kernel writeback cache behavior and dirty page pressure")
         return 2
     else:
+
+        output.render(opts.format, "Monitor kernel writeback cache behavior and dirty page pressure")
         return 0
 
 

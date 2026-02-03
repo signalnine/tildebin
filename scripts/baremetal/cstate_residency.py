@@ -207,6 +207,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not check_cpuidle_available(context):
         output.error("CPU idle state interface not available")
         output.error("Requires kernel CONFIG_CPU_IDLE and intel_idle or acpi_idle driver")
+
+        output.render(opts.format, "Monitor CPU C-state residency for power management analysis")
         return 2
 
     # Get driver and governor info
@@ -217,6 +219,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     cpu_count = get_cpu_count(context)
     if cpu_count == 0:
         output.error("Could not determine CPU count")
+
+        output.render(opts.format, "Monitor CPU C-state residency for power management analysis")
         return 2
 
     # Gather C-state information for all CPUs
@@ -228,6 +232,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not cpu_data:
         output.error("Could not read C-state information")
+
+        output.render(opts.format, "Monitor CPU C-state residency for power management analysis")
         return 2
 
     # Calculate residency percentages
@@ -271,6 +277,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{len(issues)} power efficiency issues")
     else:
         output.set_summary(f"{len(cpu_data)} CPUs, {driver} driver")
+
+    output.render(opts.format, "Monitor CPU C-state residency for power management analysis")
 
     return 1 if issues else 0
 

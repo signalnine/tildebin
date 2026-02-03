@@ -368,6 +368,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for zpool tool
     if not context.check_tool("zpool"):
         output.error("zpool not found. Install zfsutils-linux package.")
+
+        output.render(opts.format, "Monitor ZFS pool health and configuration")
         return 2
 
     # Get pool list
@@ -375,11 +377,15 @@ def run(args: list[str], output: Output, context: Context) -> int:
         pools = get_pool_list(context)
     except Exception as e:
         output.error(f"Failed to list ZFS pools: {e}")
+
+        output.render(opts.format, "Monitor ZFS pool health and configuration")
         return 2
 
     if not pools:
         output.emit({"pools": [], "issues": []})
         output.set_summary("No ZFS pools found")
+
+        output.render(opts.format, "Monitor ZFS pool health and configuration")
         return 0
 
     # Gather pool data
@@ -431,10 +437,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return exit code
     if any(i["severity"] == "CRITICAL" for i in issues):
+
+        output.render(opts.format, "Monitor ZFS pool health and configuration")
         return 1
     elif issues:
+
+        output.render(opts.format, "Monitor ZFS pool health and configuration")
         return 1
     else:
+
+        output.render(opts.format, "Monitor ZFS pool health and configuration")
         return 0
 
 

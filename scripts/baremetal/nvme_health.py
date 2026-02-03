@@ -285,11 +285,15 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.temp_warn >= opts.temp_crit:
         output.error("--temp-warn must be less than --temp-crit")
+
+        output.render(opts.format, "Monitor NVMe drive health and performance metrics")
         return 2
 
     # Check for nvme-cli
     if not context.check_tool("nvme"):
         output.error("nvme-cli not found. Install nvme-cli package.")
+
+        output.render(opts.format, "Monitor NVMe drive health and performance metrics")
         return 2
 
     # Get devices to check
@@ -309,6 +313,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             "drives": []
         })
         output.set_summary("No NVMe devices found")
+
+        output.render(opts.format, "Monitor NVMe drive health and performance metrics")
         return 0
 
     # Check each device
@@ -364,7 +370,11 @@ def run(args: list[str], output: Output, context: Context) -> int:
     has_warning = any(r["status"] == "warning" for r in results)
 
     if has_critical or has_warning:
+
+        output.render(opts.format, "Monitor NVMe drive health and performance metrics")
         return 1
+
+    output.render(opts.format, "Monitor NVMe drive health and performance metrics")
     return 0
 
 

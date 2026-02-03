@@ -188,6 +188,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for systemctl
     if not context.check_tool("systemctl"):
         output.error("systemctl not found. This system may not use systemd.")
+
+        output.render(opts.format, "Monitor systemd service health and detect failed or degraded services")
         return 2
 
     has_issues = False
@@ -249,6 +251,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{total_issues} service issues detected")
     else:
         output.set_summary("All services healthy")
+
+    output.render(opts.format, "Monitor systemd service health and detect failed or degraded services")
 
     return 1 if has_issues else 0
 

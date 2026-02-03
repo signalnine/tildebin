@@ -178,6 +178,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for openssl
     if not context.check_tool("openssl"):
         output.error("openssl not found. Install openssl package.")
+
+        output.render(opts.format, "Scan SSL/TLS certificates and check expiration status")
         return 2
 
     # Determine paths to scan
@@ -189,6 +191,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not cert_files:
         output.emit({"certificates": [], "summary": {"total": 0, "expired": 0, "warning": 0, "valid": 0}})
         output.set_summary("No certificates found")
+
+        output.render(opts.format, "Scan SSL/TLS certificates and check expiration status")
         return 0
 
     # Analyze each certificate
@@ -239,6 +243,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     output.set_summary(f"{valid} valid, {expired} expired, {warning + critical} expiring soon")
 
+
+    output.render(opts.format, "Scan SSL/TLS certificates and check expiration status")
     return 1 if has_issues else 0
 
 

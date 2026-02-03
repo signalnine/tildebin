@@ -173,6 +173,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for /proc/mdstat
     if not context.file_exists("/proc/mdstat"):
         output.error("/proc/mdstat not found. Software RAID may not be configured.")
+
+        output.render(opts.format, "Monitor RAID array rebuild/resync progress with time estimation")
         return 2
 
     # Parse mdstat
@@ -180,6 +182,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         content = context.read_file("/proc/mdstat")
     except (IOError, OSError) as e:
         output.error(f"Unable to read /proc/mdstat: {e}")
+
+        output.render(opts.format, "Monitor RAID array rebuild/resync progress with time estimation")
         return 2
 
     arrays = parse_mdstat(content)
@@ -224,6 +228,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     has_degraded = any(a.get("degraded") for a in arrays)
 
     if has_rebuilds or has_degraded:
+
+        output.render(opts.format, "Monitor RAID array rebuild/resync progress with time estimation")
         return 1
     else:
         return 0

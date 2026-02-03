@@ -226,12 +226,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for cryptsetup
     if not context.check_tool('cryptsetup'):
         output.error("cryptsetup not found. Install cryptsetup package.")
+
+        output.render(opts.format, "Check disk encryption status for LUKS/dm-crypt volumes")
         return 2
 
     # Get block devices
     devices = get_block_devices(context)
     if not devices:
         output.error("No block devices found")
+
+        output.render(opts.format, "Check disk encryption status for LUKS/dm-crypt volumes")
         return 2
 
     # Analyze encryption status
@@ -267,6 +271,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{unencrypted_data} unencrypted data partition(s)")
     else:
         output.set_summary(f"{encrypted_count} encrypted, no unencrypted data")
+
+    output.render(opts.format, "Check disk encryption status for LUKS/dm-crypt volumes")
 
     return 1 if has_issues else 0
 

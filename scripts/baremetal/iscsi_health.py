@@ -206,17 +206,23 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for iscsiadm
     if not context.check_tool("iscsiadm"):
         output.error("iscsiadm not found. Install open-iscsi package.")
+
+        output.render(opts.format, "Monitor iSCSI session health and connectivity")
         return 2
 
     # Get sessions
     sessions = get_iscsi_sessions(context)
     if sessions is None:
         output.error("Failed to get iSCSI sessions")
+
+        output.render(opts.format, "Monitor iSCSI session health and connectivity")
         return 2
 
     if not sessions:
         output.emit({"sessions": [], "issues": []})
         output.set_summary("No active iSCSI sessions")
+
+        output.render(opts.format, "Monitor iSCSI session health and connectivity")
         return 0
 
     # Analyze each session
@@ -255,6 +261,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     healthy = len(sessions) - len(set(i["target"] for i in all_issues))
     output.set_summary(f"{healthy}/{len(sessions)} sessions healthy")
 
+
+    output.render(opts.format, "Monitor iSCSI session health and connectivity")
     return 1 if all_issues else 0
 
 

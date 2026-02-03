@@ -251,6 +251,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for smartctl
     if not context.check_tool('smartctl'):
         output.error("smartctl not found. Install smartmontools package.")
+
+        output.render(opts.format, "Monitor disk sector health metrics to predict disk failure")
         return 2
 
     # Get disks to check
@@ -294,6 +296,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{issues_count}/{len(results)} disks with sector issues")
     else:
         output.set_summary(f"{len(results)} disks healthy")
+
+    output.render(opts.format, "Monitor disk sector health metrics to predict disk failure")
 
     return 1 if issues_count > 0 else 0
 

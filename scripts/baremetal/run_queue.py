@@ -298,6 +298,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if stat_data is None and loadavg_data is None:
         output.error("Unable to read scheduler statistics from /proc")
+
+        output.render(opts.format, "Monitor per-CPU run queue depth and scheduler statistics")
         return 2
 
     # Set thresholds
@@ -350,6 +352,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"WARNING: {len(analysis['warnings'])} warning(s)")
     else:
         output.set_summary(f"Healthy (queue depth: {analysis['avg_queue_depth']:.2f})")
+
+    output.render(opts.format, "Monitor per-CPU run queue depth and scheduler statistics")
 
     return 1 if analysis['issues'] else 0
 

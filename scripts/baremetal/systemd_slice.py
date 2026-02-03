@@ -348,15 +348,21 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate arguments
     if opts.warn_psi < 0 or opts.warn_psi > 100:
         output.error("--warn-psi must be between 0 and 100")
+
+        output.render(opts.format, "Monitor systemd slice resource usage")
         return 2
     if opts.warn_memory < 0 or opts.warn_memory > 100:
         output.error("--warn-memory must be between 0 and 100")
+
+        output.render(opts.format, "Monitor systemd slice resource usage")
         return 2
 
     # Find cgroup v2 base
     cgroup_base = get_cgroup_v2_base(context)
     if not cgroup_base:
         output.error("cgroup v2 not available (requires unified hierarchy)")
+
+        output.render(opts.format, "Monitor systemd slice resource usage")
         return 2
 
     # Discover and gather slice info
@@ -368,6 +374,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             'slices': []
         })
         output.set_summary("No systemd slices found")
+
+        output.render(opts.format, "Monitor systemd slice resource usage")
         return 0
 
     # Gather info for each slice
@@ -391,6 +399,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             'slices': []
         })
         output.set_summary("No readable systemd slices")
+
+        output.render(opts.format, "Monitor systemd slice resource usage")
         return 0
 
     # Build output
@@ -421,6 +431,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     else:
         output.set_summary(f"{len(slices)} slices within normal parameters")
 
+
+    output.render(opts.format, "Monitor systemd slice resource usage")
     return 1 if warning_count > 0 else 0
 
 

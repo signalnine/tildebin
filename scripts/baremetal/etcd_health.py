@@ -334,6 +334,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check etcdctl availability
     if not context.check_tool("etcdctl"):
         output.error("etcdctl not found. Install etcd: https://etcd.io/docs/latest/install/")
+
+        output.render(opts.format, "Monitor etcd cluster health and performance")
         return 2
 
     # Gather health data
@@ -385,6 +387,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             f"etcd healthy: {analysis['healthy_members']}/{analysis['member_count']} members, "
             f"{db_size_mb:.0f}MB"
         )
+
+    output.render(opts.format, "Monitor etcd cluster health and performance")
 
     return 1 if issues else 0
 

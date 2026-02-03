@@ -299,6 +299,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     online_cpus = get_online_cpus(context)
     if not online_cpus:
         output.error("Cannot determine online CPUs")
+
+        output.render(opts.format, "Audit CPU isolation configuration for latency-sensitive workloads")
         return 2
 
     # Get isolation configuration
@@ -351,6 +353,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit code
     if analysis['issues'] or analysis['warnings']:
+
+        output.render(opts.format, "Audit CPU isolation configuration for latency-sensitive workloads")
         return 1
     return 0
 

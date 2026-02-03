@@ -269,15 +269,23 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.direct_reclaim < 0:
         output.error('--direct-reclaim must be non-negative')
+
+        output.render(opts.format, "Monitor kernel memory reclamation activity and detect memory pressure")
         return 2
     if opts.allocstall < 0:
         output.error('--allocstall must be non-negative')
+
+        output.render(opts.format, "Monitor kernel memory reclamation activity and detect memory pressure")
         return 2
     if opts.efficiency < 0 or opts.efficiency > 100:
         output.error('--efficiency must be between 0 and 100')
+
+        output.render(opts.format, "Monitor kernel memory reclamation activity and detect memory pressure")
         return 2
     if opts.compact_stall < 0:
         output.error('--compact-stall must be non-negative')
+
+        output.render(opts.format, "Monitor kernel memory reclamation activity and detect memory pressure")
         return 2
 
     thresholds = {
@@ -293,6 +301,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         meminfo = read_proc_meminfo(context)
     except RuntimeError as e:
         output.error(str(e))
+
+        output.render(opts.format, "Monitor kernel memory reclamation activity and detect memory pressure")
         return 2
 
     # Calculate metrics
@@ -351,6 +361,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Determine exit code
     if has_critical or has_warning:
+
+        output.render(opts.format, "Monitor kernel memory reclamation activity and detect memory pressure")
         return 1
     return 0
 

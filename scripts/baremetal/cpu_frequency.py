@@ -208,12 +208,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if cpufreq is available
     if not context.file_exists('/sys/devices/system/cpu/cpu0/cpufreq'):
         output.error("CPU frequency scaling interface not available")
+
+        output.render(opts.format, "Monitor CPU frequency scaling and governor settings")
         return 2
 
     # Get CPU count
     cpu_count = get_cpu_count(context)
     if cpu_count == 0:
         output.error("Could not determine CPU count")
+
+        output.render(opts.format, "Monitor CPU frequency scaling and governor settings")
         return 2
 
     # Gather CPU information
@@ -230,6 +234,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not cpu_data:
         output.error("Could not read CPU frequency information")
+
+        output.render(opts.format, "Monitor CPU frequency scaling and governor settings")
         return 2
 
     # Count status
@@ -276,6 +282,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     output.set_summary(f"{ok_cpus}/{total_cpus} CPUs healthy, driver: {driver}")
 
     # Exit with code 1 if any warnings
+
+    output.render(opts.format, "Monitor CPU frequency scaling and governor settings")
     return 1 if warn_cpus > 0 else 0
 
 

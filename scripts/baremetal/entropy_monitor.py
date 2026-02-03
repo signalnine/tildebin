@@ -176,23 +176,33 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.warn < 0:
         output.error("--warn must be positive")
+
+        output.render(opts.format, "Monitor system entropy pool levels")
         return 2
     if opts.crit < 0:
         output.error("--crit must be positive")
+
+        output.render(opts.format, "Monitor system entropy pool levels")
         return 2
     if opts.crit >= opts.warn:
         output.error("--crit must be less than --warn")
+
+        output.render(opts.format, "Monitor system entropy pool levels")
         return 2
 
     # Check if /proc filesystem available
     if not context.file_exists(RANDOM_BASE):
         output.error(f"{RANDOM_BASE} not found (non-Linux system?)")
+
+        output.render(opts.format, "Monitor system entropy pool levels")
         return 2
 
     # Get entropy stats
     stats = get_entropy_stats(context)
     if stats is None:
         output.error("Could not read entropy information")
+
+        output.render(opts.format, "Monitor system entropy pool levels")
         return 2
 
     # Get RNG info if verbose
@@ -235,6 +245,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     has_warning = any(i["severity"] == "WARNING" for i in issues)
 
     if has_critical or has_warning:
+
+        output.render(opts.format, "Monitor system entropy pool levels")
         return 1
 
     return 0

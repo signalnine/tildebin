@@ -238,6 +238,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for systemctl
     if not context.check_tool("systemctl"):
         output.error("systemctl not found. This system may not use systemd.")
+
+        output.render(opts.format, "Monitor systemd timer health and identify missed or failed timers")
         return 2
 
     # Validate max-age if provided
@@ -254,6 +256,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not timers:
         output.emit({"timers": [], "summary": {"total": 0, "healthy": 0, "with_issues": 0}})
         output.set_summary("No systemd timers found")
+
+        output.render(opts.format, "Monitor systemd timer health and identify missed or failed timers")
         return 0
 
     results = [analyze_timer(t, context, max_age=max_age) for t in timers]
@@ -294,6 +298,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     else:
         output.set_summary(f"All {len(results)} timers healthy")
 
+
+    output.render(opts.format, "Monitor systemd timer health and identify missed or failed timers")
     return 1 if has_issues else 0
 
 

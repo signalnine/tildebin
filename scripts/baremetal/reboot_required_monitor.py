@@ -272,12 +272,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for uname (basic requirement)
     if not context.check_tool("uname"):
         output.error("uname not found - basic Linux tools required")
+
+        output.render(opts.format, "Monitor system reboot requirements")
         return 2
 
     # Gather system information
     running_kernel = get_running_kernel(context)
     if not running_kernel:
         output.error("Could not determine running kernel version")
+
+        output.render(opts.format, "Monitor system reboot requirements")
         return 2
 
     installed_kernels = get_installed_kernels(context)
@@ -315,6 +319,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit code based on status
     if analysis["reboot_required"] or analysis["reboot_recommended"]:
+
+        output.render(opts.format, "Monitor system reboot requirements")
         return 1
     return 0
 

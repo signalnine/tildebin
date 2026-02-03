@@ -326,6 +326,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             }
         })
         output.set_summary("binfmt_misc not enabled - no handlers to audit")
+
+        output.render(opts.format, "Audit binfmt_misc binary format handlers for security")
         return 0
 
     # Get all entries
@@ -358,7 +360,11 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit code
     if analysis['issues'] or analysis['warnings']:
+
+        output.render(opts.format, "Audit binfmt_misc binary format handlers for security")
         return 1
+
+    output.render(opts.format, "Audit binfmt_misc binary format handlers for security")
     return 0
 
 

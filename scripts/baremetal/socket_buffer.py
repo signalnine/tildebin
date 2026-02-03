@@ -289,17 +289,25 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.warn < 0 or opts.warn > 100:
         output.error("--warn must be 0-100")
+
+        output.render(opts.format, "Monitor socket buffer usage and memory pressure")
         return 2
     if opts.crit < 0 or opts.crit > 100:
         output.error("--crit must be 0-100")
+
+        output.render(opts.format, "Monitor socket buffer usage and memory pressure")
         return 2
     if opts.warn >= opts.crit:
         output.error("--warn must be less than --crit")
+
+        output.render(opts.format, "Monitor socket buffer usage and memory pressure")
         return 2
 
     # Check for /proc filesystem
     if not context.file_exists(PROC_PATHS['sockstat']):
         output.error("/proc/net/sockstat not available")
+
+        output.render(opts.format, "Monitor socket buffer usage and memory pressure")
         return 2
 
     # Collect data
@@ -310,6 +318,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not stats:
         output.warning("No socket statistics found")
         output.emit({'protocols': {}, 'issues': [], 'warnings': []})
+
+        output.render(opts.format, "Monitor socket buffer usage and memory pressure")
         return 1
 
     # Analyze
@@ -344,7 +354,11 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return exit code
     if analysis['issues'] or analysis['warnings']:
+
+        output.render(opts.format, "Monitor socket buffer usage and memory pressure")
         return 1
+
+    output.render(opts.format, "Monitor socket buffer usage and memory pressure")
     return 0
 
 

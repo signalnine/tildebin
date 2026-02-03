@@ -184,10 +184,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate arguments
     if opts.hours <= 0:
         output.error("Hours must be a positive number")
+
+        output.render(opts.format, "Monitor failed login attempts for brute-force detection")
         return 2
 
     if opts.threshold <= 0:
         output.error("Threshold must be a positive number")
+
+        output.render(opts.format, "Monitor failed login attempts for brute-force detection")
         return 2
 
     # Find auth log file
@@ -201,6 +205,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not log_file:
         output.error("Could not find auth log file. Specify with --log-file")
+
+        output.render(opts.format, "Monitor failed login attempts for brute-force detection")
         return 2
 
     # Read and parse log
@@ -208,9 +214,13 @@ def run(args: list[str], output: Output, context: Context) -> int:
         content = context.read_file(log_file)
     except PermissionError:
         output.error(f"Permission denied reading {log_file}")
+
+        output.render(opts.format, "Monitor failed login attempts for brute-force detection")
         return 2
     except FileNotFoundError:
         output.error(f"Log file not found: {log_file}")
+
+        output.render(opts.format, "Monitor failed login attempts for brute-force detection")
         return 2
 
     failed_logins = parse_auth_log(content, opts.hours, ignore_time=opts.all)
@@ -245,6 +255,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary("No failed login attempts detected")
 
     # Return 1 if brute force detected
+
+    output.render(opts.format, "Monitor failed login attempts for brute-force detection")
     return 1 if brute_force_ips else 0
 
 

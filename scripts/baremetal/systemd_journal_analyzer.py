@@ -197,10 +197,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for required tools
     if not context.check_tool("journalctl"):
         output.error("journalctl not found. This system may not use systemd.")
+
+        output.render(opts.format, "Analyze systemd journal for service failures and error patterns")
         return 2
 
     if not context.check_tool("systemctl"):
         output.error("systemctl not found. This system may not use systemd.")
+
+        output.render(opts.format, "Analyze systemd journal for service failures and error patterns")
         return 2
 
     # Gather data
@@ -280,6 +284,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{warning_count} warnings found")
     else:
         output.set_summary("No journal issues found")
+
+    output.render(opts.format, "Analyze systemd journal for service failures and error patterns")
 
     return 1 if (has_critical or has_warnings) else 0
 

@@ -247,6 +247,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for journalctl
     if not context.check_tool("journalctl"):
         output.error("journalctl not found. This script requires systemd journald.")
+
+        output.render(opts.format, "Analyze boot issues from journald logs")
         return 2
 
     # Parse checks
@@ -255,6 +257,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     invalid_checks = requested_checks - available_checks
     if invalid_checks:
         output.error(f"Invalid checks: {', '.join(invalid_checks)}")
+
+        output.render(opts.format, "Analyze boot issues from journald logs")
         return 2
 
     # Get boot list
@@ -265,6 +269,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not boots:
         output.error("No boots found in journal")
+
+        output.render(opts.format, "Analyze boot issues from journald logs")
         return 2
 
     # Analyze each boot
@@ -290,6 +296,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{total_issues} boot issues ({total_critical} critical, {total_warnings} warnings)")
     else:
         output.set_summary("No boot issues detected")
+
+    output.render(opts.format, "Analyze boot issues from journald logs")
 
     return 1 if total_issues > 0 else 0
 

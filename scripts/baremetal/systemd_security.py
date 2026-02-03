@@ -153,12 +153,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for systemd-analyze
     if not context.check_tool("systemd-analyze"):
         output.error("systemd-analyze not found")
+
+        output.render(opts.format, "Scan systemd service units for security configuration issues")
         return 2
 
     # Check if security subcommand is available
     result = context.run(['systemd-analyze', 'security', '--help'], check=False)
     if result.returncode != 0:
         output.error("systemd-analyze security not available (requires systemd 239+)")
+
+        output.render(opts.format, "Scan systemd service units for security configuration issues")
         return 2
 
     # Handle single service analysis
@@ -186,18 +190,24 @@ def run(args: list[str], output: Output, context: Context) -> int:
         else:
             output.set_summary(f"{opts.service}: analysis failed")
 
+        output.render(opts.format, "Scan systemd service units for security configuration issues")
+
         return 0 if analysis['exposure'] is not None and analysis['exposure'] <= opts.threshold else 1
 
     # Get all service security scores
     result = context.run(['systemd-analyze', 'security', '--no-pager'], check=False)
     if result.returncode != 0:
         output.error("Failed to run systemd-analyze security")
+
+        output.render(opts.format, "Scan systemd service units for security configuration issues")
         return 2
 
     services = parse_security_overview(result.stdout)
 
     if not services:
         output.error("No services found to analyze")
+
+        output.render(opts.format, "Scan systemd service units for security configuration issues")
         return 1
 
     # Filter and sort services
@@ -227,6 +237,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"All {len(services)} services within threshold")
 
     # Exit code based on threshold
+
+    output.render(opts.format, "Scan systemd service units for security configuration issues")
     return 1 if services_above_threshold else 0
 
 

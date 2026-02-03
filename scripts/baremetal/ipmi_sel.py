@@ -180,6 +180,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if ipmitool is available
     if not context.check_tool("ipmitool"):
         output.error("ipmitool not found. Install ipmitool package.")
+
+        output.render(opts.format, "Monitor IPMI System Event Log for hardware errors")
         return 2
 
     # Get SEL info if verbose
@@ -203,6 +205,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             return 2
     except Exception as e:
         output.error(f"Failed to run ipmitool: {e}")
+
+        output.render(opts.format, "Monitor IPMI System Event Log for hardware errors")
         return 2
 
     # Parse entries
@@ -244,6 +248,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return 1 if any issues
     has_issues = critical > 0 or warning > 0
+
+    output.render(opts.format, "Monitor IPMI System Event Log for hardware errors")
     return 1 if has_issues else 0
 
 

@@ -194,6 +194,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for FC sysfs
     if not context.file_exists("/sys/class/fc_host"):
         output.error("No Fibre Channel HBAs found (/sys/class/fc_host not present)")
+
+        output.render(opts.format, "Monitor Fibre Channel HBA health for SAN environments")
         return 2
 
     # Gather data
@@ -202,6 +204,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # If no hosts found, exit with error
     if not hosts:
         output.error("No Fibre Channel HBAs found")
+
+        output.render(opts.format, "Monitor Fibre Channel HBA health for SAN environments")
         return 2
 
     # Analyze health
@@ -237,6 +241,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Determine exit code
     has_issues = any(i["severity"] in ("ERROR", "WARNING") for i in issues)
+
+    output.render(opts.format, "Monitor Fibre Channel HBA health for SAN environments")
     return 1 if has_issues else 0
 
 

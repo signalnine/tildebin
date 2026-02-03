@@ -421,6 +421,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for btrfs tool
     if not context.check_tool("btrfs"):
         output.error("btrfs not found. Install btrfs-progs package.")
+
+        output.render(opts.format, "Monitor BTRFS filesystem health and configuration")
         return 2
 
     # Get list of BTRFS filesystems
@@ -428,11 +430,15 @@ def run(args: list[str], output: Output, context: Context) -> int:
         filesystems = get_btrfs_filesystems(context)
     except Exception as e:
         output.error(f"Failed to list BTRFS filesystems: {e}")
+
+        output.render(opts.format, "Monitor BTRFS filesystem health and configuration")
         return 2
 
     if not filesystems:
         output.emit({"filesystems": [], "issues": []})
         output.set_summary("No BTRFS filesystems found")
+
+        output.render(opts.format, "Monitor BTRFS filesystem health and configuration")
         return 0
 
     # Gather data for each filesystem
@@ -486,10 +492,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return exit code
     if any(i["severity"] == "CRITICAL" for i in issues):
+
+        output.render(opts.format, "Monitor BTRFS filesystem health and configuration")
         return 1
     elif issues:
+
+        output.render(opts.format, "Monitor BTRFS filesystem health and configuration")
         return 1
     else:
+
+        output.render(opts.format, "Monitor BTRFS filesystem health and configuration")
         return 0
 
 

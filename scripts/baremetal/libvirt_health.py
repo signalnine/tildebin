@@ -267,12 +267,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for virsh tool
     if not context.check_tool("virsh"):
         output.error("virsh not found. Install libvirt-clients package.")
+
+        output.render(opts.format, "Monitor libvirt/KVM hypervisor and VM health")
         return 2
 
     # Check if libvirt is running
     running, _ = check_libvirt_running(context)
     if not running:
         output.error("Cannot connect to libvirt daemon.")
+
+        output.render(opts.format, "Monitor libvirt/KVM hypervisor and VM health")
         return 2
 
     # Gather information
@@ -347,10 +351,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit code
     if status == "critical":
+
+        output.render(opts.format, "Monitor libvirt/KVM hypervisor and VM health")
         return 1
     elif status == "warning":
         return 1
     else:
+
+        output.render(opts.format, "Monitor libvirt/KVM hypervisor and VM health")
         return 0
 
 

@@ -249,6 +249,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check dependencies for ICMP mode
     if not opts.tcp and not context.check_tool('ping'):
         output.error('ping command not available. Use --tcp for TCP probes')
+
+        output.render(opts.format, "Monitor network latency to configured peers and gateways")
         return 2
 
     # Probe all targets
@@ -303,6 +305,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Determine exit code
     if crit_count > 0 or warn_count > 0:
+
+        output.render(opts.format, "Monitor network latency to configured peers and gateways")
         return 1
     return 0
 

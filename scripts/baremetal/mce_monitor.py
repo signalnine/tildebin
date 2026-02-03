@@ -296,6 +296,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             "issues": [],
         })
         output.set_summary("No MCE issues detected")
+
+        output.render(opts.format, "Monitor Machine Check Exceptions (MCE) for hardware faults")
         return 0
 
     # Build output data
@@ -332,12 +334,18 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Set summary
     if analysis["status"] == "CRITICAL":
         output.set_summary(f"CRITICAL: {len(analysis['issues'])} MCE issue(s) detected")
+
+        output.render(opts.format, "Monitor Machine Check Exceptions (MCE) for hardware faults")
         return 1
     elif analysis["status"] == "WARNING":
         output.set_summary(f"WARNING: {len(analysis['issues'])} MCE issue(s) detected")
+
+        output.render(opts.format, "Monitor Machine Check Exceptions (MCE) for hardware faults")
         return 1
     else:
         output.set_summary(f"MCE monitoring OK ({analysis['summary']['cpus_monitored']} CPUs)")
+
+        output.render(opts.format, "Monitor Machine Check Exceptions (MCE) for hardware faults")
         return 0
 
 

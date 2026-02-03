@@ -206,6 +206,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for smartctl
     if not context.check_tool("smartctl"):
         output.error("smartctl not found. Install smartmontools package.")
+
+        output.render(opts.format, "Predict disk failure risk using SMART attribute analysis")
         return 2
 
     # Get disk list
@@ -220,6 +222,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not disks:
         output.error("No disks found")
+
+        output.render(opts.format, "Predict disk failure risk using SMART attribute analysis")
         return 2
 
     # Analyze disks
@@ -274,6 +278,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     medium = sum(1 for r in results if r["risk_level"] == "MEDIUM")
     high = sum(1 for r in results if r["risk_level"] == "HIGH")
     output.set_summary(f"minimal={minimal}, low={low}, medium={medium}, high={high}")
+
+    output.render(opts.format, "Predict disk failure risk using SMART attribute analysis")
 
     return 1 if has_warnings else 0
 

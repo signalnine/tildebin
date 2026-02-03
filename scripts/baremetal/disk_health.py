@@ -88,6 +88,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for smartctl
     if not context.check_tool("smartctl"):
         output.error("smartctl not found. Install smartmontools package.")
+
+        output.render(opts.format, "Check disk health using SMART attributes")
         return 2
 
     # Get disk list
@@ -95,11 +97,15 @@ def run(args: list[str], output: Output, context: Context) -> int:
         disks = get_disk_list(context)
     except Exception as e:
         output.error(f"Failed to list disks: {e}")
+
+        output.render(opts.format, "Check disk health using SMART attributes")
         return 2
 
     if not disks:
         output.warning("No disks found")
         output.emit({"disks": []})
+
+        output.render(opts.format, "Check disk health using SMART attributes")
         return 1
 
     # Check each disk
@@ -125,6 +131,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     failed = sum(1 for r in results if r["status"] == "FAILED")
     output.set_summary(f"{passed} healthy, {failed} failing")
 
+
+    output.render(opts.format, "Check disk health using SMART attributes")
     return 1 if has_issues else 0
 
 

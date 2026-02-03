@@ -243,6 +243,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         passwd_content = context.read_file('/etc/passwd')
     except (FileNotFoundError, PermissionError) as e:
         output.error(f"Cannot read /etc/passwd: {e}")
+
+        output.render(opts.format, "Audit SSH authorized_keys files for security issues")
         return 2
 
     # Parse passwd and find authorized_keys files
@@ -260,6 +262,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if opts.user and not users_to_check:
         output.error(f"User '{opts.user}' not found")
+
+        output.render(opts.format, "Audit SSH authorized_keys files for security issues")
         return 2
 
     # Audit each user's authorized_keys
@@ -331,6 +335,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return 1 if any critical or warning issues
     if critical_count > 0 or warning_count > 0:
+
+        output.render(opts.format, "Audit SSH authorized_keys files for security issues")
         return 1
     return 0
 

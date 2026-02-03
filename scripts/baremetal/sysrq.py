@@ -225,6 +225,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate expected value
     if opts.expected is not None and (opts.expected < 0 or opts.expected > 511):
         output.error("Expected value must be between 0 and 511")
+
+        output.render(opts.format, "Monitor Magic SysRq key configuration")
         return 2
 
     # Read SysRq value
@@ -233,12 +235,18 @@ def run(args: list[str], output: Output, context: Context) -> int:
         sysrq_value = int(sysrq_content.strip())
     except FileNotFoundError:
         output.error("/proc/sys/kernel/sysrq not found - SysRq may not be compiled into kernel")
+
+        output.render(opts.format, "Monitor Magic SysRq key configuration")
         return 2
     except ValueError:
         output.error("Unable to parse SysRq value")
+
+        output.render(opts.format, "Monitor Magic SysRq key configuration")
         return 2
     except PermissionError:
         output.error("Permission denied reading /proc/sys/kernel/sysrq")
+
+        output.render(opts.format, "Monitor Magic SysRq key configuration")
         return 2
 
     # Decode and analyze
@@ -297,6 +305,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     has_warnings = bool(warnings)
 
     if has_issues or has_warnings:
+
+        output.render(opts.format, "Monitor Magic SysRq key configuration")
         return 1
     return 0
 

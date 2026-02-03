@@ -333,6 +333,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if opts.timeout <= 0:
         output.error("Timeout must be a positive number")
+
+        output.render(opts.format, "Monitor DNS resolver configuration and health")
         return 2
 
     # Read resolv.conf
@@ -392,6 +394,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"DNS WARNING: {reachable}/{total_ns} nameservers reachable")
     else:
         output.set_summary(f"DNS healthy: {reachable}/{total_ns} nameservers reachable")
+
+    output.render(opts.format, "Monitor DNS resolver configuration and health")
 
     return 1 if critical_issues else 0
 

@@ -182,6 +182,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if /sys/block exists
     if not context.file_exists("/sys/block"):
         output.error("/sys/block not found (not a Linux system?)")
+
+        output.render(opts.format, "Monitor block device error statistics from /sys/block")
         return 2
 
     # Get devices to check
@@ -192,6 +194,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not devices:
         output.error("No block devices found")
+
+        output.render(opts.format, "Monitor block device error statistics from /sys/block")
         return 2
 
     # Collect statistics
@@ -229,6 +233,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not results and not opts.warn_only:
         output.error("No valid device statistics collected")
+
+        output.render(opts.format, "Monitor block device error statistics from /sys/block")
         return 2
 
     # Emit results
@@ -247,6 +253,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         elif result["status"] == "warning":
             for issue in result["issues"]:
                 output.warning(f"{result['device']}: {issue}")
+
+    output.render(opts.format, "Monitor block device error statistics from /sys/block")
 
     return 1 if has_issues else 0
 

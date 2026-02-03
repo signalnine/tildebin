@@ -225,6 +225,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for auditctl
     if not context.check_tool("auditctl"):
         output.error("auditctl not found. Install audit tools package.")
+
+        output.render(opts.format, "Monitor Linux audit daemon health and configuration")
         return 2
 
     # Gather information
@@ -293,6 +295,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{critical} critical, {warnings} warnings")
     else:
         output.set_summary("audit daemon healthy")
+
+    output.render(opts.format, "Monitor Linux audit daemon health and configuration")
 
     return 1 if has_issues else 0
 

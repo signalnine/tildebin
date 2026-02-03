@@ -163,6 +163,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for ipmitool
     if not context.check_tool("ipmitool"):
         output.error("ipmitool not found. Install ipmitool package.")
+
+        output.render(opts.format, "Monitor IPMI sensor readings")
         return 2
 
     # Get sensor readings
@@ -171,10 +173,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
         sensor_output = result.stdout
     except Exception as e:
         output.error(f"Failed to run ipmitool: {e}")
+
+        output.render(opts.format, "Monitor IPMI sensor readings")
         return 2
 
     if not sensor_output.strip():
         output.error("No sensor data available. Check IPMI/BMC access.")
+
+        output.render(opts.format, "Monitor IPMI sensor readings")
         return 2
 
     # Parse sensors
@@ -186,6 +192,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not sensors:
         output.error("No sensor data available. Check IPMI/BMC access.")
+
+        output.render(opts.format, "Monitor IPMI sensor readings")
         return 2
 
     # Filter by type if specified
@@ -232,6 +240,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return code
     if critical_count > 0 or warning_count > 0:
+
+        output.render(opts.format, "Monitor IPMI sensor readings")
         return 1
 
     return 0

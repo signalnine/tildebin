@@ -235,9 +235,13 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.dirty_warn >= opts.dirty_crit:
         output.error("--dirty-warn must be less than --dirty-crit")
+
+        output.render(opts.format, "Monitor page cache usage and dirty page pressure")
         return 2
     if opts.avail_crit >= opts.avail_warn:
         output.error("--avail-crit must be less than --avail-warn")
+
+        output.render(opts.format, "Monitor page cache usage and dirty page pressure")
         return 2
 
     thresholds = {
@@ -251,6 +255,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     meminfo = read_meminfo(context)
     if not meminfo:
         output.error("/proc/meminfo not available")
+
+        output.render(opts.format, "Monitor page cache usage and dirty page pressure")
         return 2
 
     vmstat = read_vmstat(context)
@@ -300,12 +306,18 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if has_critical:
         output.set_summary(f"Critical: {issues[0]['message']}")
+
+        output.render(opts.format, "Monitor page cache usage and dirty page pressure")
         return 1
     elif has_warning:
         output.set_summary(f"Warning: {len(issues)} issue(s) detected")
+
+        output.render(opts.format, "Monitor page cache usage and dirty page pressure")
         return 1
     else:
         output.set_summary(f"Page cache healthy, {stats['dirty_ratio']:.1f}% dirty")
+
+        output.render(opts.format, "Monitor page cache usage and dirty page pressure")
         return 0
 
 

@@ -175,19 +175,27 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate arguments
     if opts.top < 0:
         output.error("--top must be non-negative")
+
+        output.render(opts.format, "Monitor per-process swap usage to identify swap pressure sources")
         return 2
 
     if opts.swap_threshold < 0:
         output.error("--swap-threshold must be non-negative")
+
+        output.render(opts.format, "Monitor per-process swap usage to identify swap pressure sources")
         return 2
 
     if opts.ratio_threshold < 0 or opts.ratio_threshold > 100:
         output.error("--ratio-threshold must be 0-100")
+
+        output.render(opts.format, "Monitor per-process swap usage to identify swap pressure sources")
         return 2
 
     # Check for /proc filesystem
     if not os.path.isdir('/proc'):
         output.error("/proc filesystem not available")
+
+        output.render(opts.format, "Monitor per-process swap usage to identify swap pressure sources")
         return 2
 
     # Scan processes
@@ -238,6 +246,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{len(high_swap)} high swap, {len(high_ratio)} thrashing candidates")
     else:
         output.set_summary(f"{len(processes)} processes using swap, none above thresholds")
+
+    output.render(opts.format, "Monitor per-process swap usage to identify swap pressure sources")
 
     return 1 if (high_swap or high_ratio) else 0
 

@@ -301,6 +301,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for drbdadm
     if not context.check_tool("drbdadm"):
         output.error("drbdadm not found. Install drbd-utils package.")
+
+        output.render(opts.format, "Monitor DRBD replication health and synchronization status")
         return 2
 
     # Get DRBD resources
@@ -309,6 +311,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not resources:
         output.emit({"resources": [], "issues": []})
         output.set_summary("No DRBD resources configured")
+
+        output.render(opts.format, "Monitor DRBD replication health and synchronization status")
         return 0
 
     # Analyze for issues
@@ -344,6 +348,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Determine exit code (only CRITICAL and WARNING count)
     has_issues = any(i["severity"] in ("CRITICAL", "WARNING") for i in issues)
+
+    output.render(opts.format, "Monitor DRBD replication health and synchronization status")
     return 1 if has_issues else 0
 
 

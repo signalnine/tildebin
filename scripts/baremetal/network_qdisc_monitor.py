@@ -302,26 +302,40 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.drop_warn < 0 or opts.drop_crit < 0:
         output.error('Drop thresholds must be non-negative')
+
+        output.render(opts.format, "Monitor network qdisc statistics for packet drops and congestion")
         return 2
     if opts.drop_warn > 100 or opts.drop_crit > 100:
         output.error('Drop thresholds cannot exceed 100%%')
+
+        output.render(opts.format, "Monitor network qdisc statistics for packet drops and congestion")
         return 2
     if opts.drop_warn > opts.drop_crit:
         output.error('Drop warning threshold cannot exceed critical')
+
+        output.render(opts.format, "Monitor network qdisc statistics for packet drops and congestion")
         return 2
     if opts.backlog_warn < 0 or opts.backlog_crit < 0:
         output.error('Backlog thresholds must be non-negative')
+
+        output.render(opts.format, "Monitor network qdisc statistics for packet drops and congestion")
         return 2
     if opts.backlog_warn > opts.backlog_crit:
         output.error('Backlog warning threshold cannot exceed critical')
+
+        output.render(opts.format, "Monitor network qdisc statistics for packet drops and congestion")
         return 2
     if opts.min_packets < 0:
         output.error('Minimum packets must be non-negative')
+
+        output.render(opts.format, "Monitor network qdisc statistics for packet drops and congestion")
         return 2
 
     # Check if tc command is available
     if not context.check_tool('tc'):
         output.error('tc command not found. Install iproute2 package')
+
+        output.render(opts.format, "Monitor network qdisc statistics for packet drops and congestion")
         return 2
 
     # Get qdisc statistics
@@ -344,6 +358,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             }
         })
         output.set_summary('No qdisc statistics available')
+
+        output.render(opts.format, "Monitor network qdisc statistics for packet drops and congestion")
         return 0
 
     # Analyze qdiscs
@@ -403,7 +419,11 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit based on findings
     if issues['critical'] or issues['warning']:
+
+        output.render(opts.format, "Monitor network qdisc statistics for packet drops and congestion")
         return 1
+
+    output.render(opts.format, "Monitor network qdisc statistics for packet drops and congestion")
     return 0
 
 

@@ -249,17 +249,23 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if this is an EFI system
     if not check_efi_system(context):
         output.error("System is not booted in EFI mode")
+
+        output.render(opts.format, "Audit EFI/UEFI boot configuration")
         return 2
 
     # Check for efibootmgr
     if not context.check_tool("efibootmgr"):
         output.error("efibootmgr not found. Install with: apt-get install efibootmgr")
+
+        output.render(opts.format, "Audit EFI/UEFI boot configuration")
         return 2
 
     # Run efibootmgr
     result = context.run(["efibootmgr", "-v"], check=False)
     if result.returncode != 0:
         output.error(f"efibootmgr failed: {result.stderr}")
+
+        output.render(opts.format, "Audit EFI/UEFI boot configuration")
         return 2
 
     # Parse output
@@ -298,6 +304,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit code based on findings
     has_warnings = any(i["severity"] in ["WARNING", "CRITICAL"] for i in issues)
+
+    output.render(opts.format, "Audit EFI/UEFI boot configuration")
     return 1 if has_warnings else 0
 
 

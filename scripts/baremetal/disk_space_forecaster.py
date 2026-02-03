@@ -174,6 +174,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if not 0 < opts.warn_pct < opts.crit_pct <= 100:
         output.error("Invalid thresholds: warn-pct must be < crit-pct and both in 0-100")
+
+        output.render(opts.format, "Forecast disk space exhaustion based on usage levels")
         return 2
 
     # Get filesystem usage via df command
@@ -188,6 +190,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         df_output = result.stdout
     except Exception as e:
         output.error(f"Failed to run df: {e}")
+
+        output.render(opts.format, "Forecast disk space exhaustion based on usage levels")
         return 2
 
     # Parse df output
@@ -195,6 +199,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not filesystems:
         output.error("No filesystems found")
+
+        output.render(opts.format, "Forecast disk space exhaustion based on usage levels")
         return 2
 
     # Filter to specific mount if requested
@@ -241,6 +247,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     warning_count = output_data["summary"]["warning"]
     ok_count = output_data["summary"]["ok"]
     output.set_summary(f"{ok_count} healthy, {warning_count} warning, {critical_count} critical")
+
+    output.render(opts.format, "Forecast disk space exhaustion based on usage levels")
 
     return 1 if (has_critical or has_warning) else 0
 

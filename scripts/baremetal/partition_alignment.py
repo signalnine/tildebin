@@ -316,6 +316,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for lsblk
     if not context.check_tool("lsblk"):
         output.error("lsblk not found")
+
+        output.render(opts.format, "Check disk partition alignment for optimal performance")
         return 2
 
     # Get devices to check
@@ -328,6 +330,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not devices:
         output.warning("No block devices found")
         output.emit({'devices': []})
+
+        output.render(opts.format, "Check disk partition alignment for optimal performance")
         return 1
 
     # Analyze devices
@@ -350,9 +354,13 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if has_issues:
         misaligned_count = total_count - aligned_count
         output.set_summary(f"{misaligned_count} device(s) with alignment issues")
+
+        output.render(opts.format, "Check disk partition alignment for optimal performance")
         return 1
     else:
         output.set_summary(f"All {total_count} device(s) properly aligned")
+
+        output.render(opts.format, "Check disk partition alignment for optimal performance")
         return 0
 
 

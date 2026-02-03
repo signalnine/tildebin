@@ -275,6 +275,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for uname (basic requirement)
     if not context.check_tool("uname"):
         output.error("uname not found - basic Linux tools required")
+
+        output.render(opts.format, "Collect firmware version inventory from system")
         return 2
 
     # Collect inventory
@@ -313,6 +315,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     has_system = has_data(inventory.get("system"))
 
     if not has_bios and not has_system:
+
+        output.render(opts.format, "Collect firmware version inventory from system")
         return 1
 
     return 0

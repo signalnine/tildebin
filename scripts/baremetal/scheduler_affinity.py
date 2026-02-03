@@ -279,6 +279,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for procfs
     if not os.path.exists('/proc'):
         output.error("/proc filesystem not found")
+
+        output.render(opts.format, "Audit CPU affinity and scheduler policy configuration")
         return 2
 
     # Get isolated CPUs
@@ -300,6 +302,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             'issues': [],
         })
         output.set_summary("No processes found matching criteria")
+
+        output.render(opts.format, "Audit CPU affinity and scheduler policy configuration")
         return 0
 
     # Analyze issues
@@ -344,6 +348,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     else:
         output.set_summary(f"No issues, {len(rt_processes)} RT processes")
 
+
+    output.render(opts.format, "Audit CPU affinity and scheduler policy configuration")
     return 1 if has_warnings else 0
 
 

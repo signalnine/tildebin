@@ -216,6 +216,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.warn >= opts.crit:
         output.error("Warning threshold must be less than critical threshold")
+
+        output.render(opts.format, "Monitor disk I/O queue depths to detect storage bottlenecks")
         return 2
 
     # Get block devices
@@ -223,6 +225,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not devices:
         output.error("No block devices found")
+
+        output.render(opts.format, "Monitor disk I/O queue depths to detect storage bottlenecks")
         return 2
 
     # Analyze each device
@@ -250,6 +254,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not results and not opts.warn_only:
         output.error("No device statistics available")
+
+        output.render(opts.format, "Monitor disk I/O queue depths to detect storage bottlenecks")
         return 2
 
     # Build output
@@ -268,6 +274,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     output.set_summary(
         f"{summary_data['ok']} ok, {summary_data['warning']} warning, {summary_data['critical']} critical"
     )
+
+    output.render(opts.format, "Monitor disk I/O queue depths to detect storage bottlenecks")
 
     return 1 if has_issues else 0
 

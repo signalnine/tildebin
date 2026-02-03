@@ -237,6 +237,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     else:
         output.set_summary("kdump healthy, no crashes found")
 
+    output.render(opts.format, "Monitor kernel crash dumps and kdump configuration")
+
     return 1 if issues else 0
 
 

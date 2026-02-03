@@ -208,6 +208,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for required tools
     if not context.check_tool(pkg_mgr):
         output.error(f"{pkg_mgr} not found in PATH")
+
+        output.render(opts.format, "Audit system packages for pending security updates")
         return 2
 
     # Get security updates
@@ -219,6 +221,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         updates, errors = get_yum_security_updates(context)
     else:
         output.error(f"Unsupported package manager: {pkg_mgr}")
+
+        output.render(opts.format, "Audit system packages for pending security updates")
         return 2
 
     # Categorize by severity
@@ -241,16 +245,24 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Determine exit code
     if errors:
+
+        output.render(opts.format, "Audit system packages for pending security updates")
         return 1
 
     if not updates:
+
+        output.render(opts.format, "Audit system packages for pending security updates")
         return 0
 
     if opts.critical_only:
         if categories["critical"] > 0 or categories["important"] > 0:
             return 1
+
+        output.render(opts.format, "Audit system packages for pending security updates")
         return 0
 
+
+    output.render(opts.format, "Audit system packages for pending security updates")
     return 1
 
 

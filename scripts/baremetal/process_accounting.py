@@ -213,11 +213,15 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if opts.top < 1:
         output.error("--top must be at least 1")
+
+        output.render(opts.format, "Monitor process resource accounting from /proc")
         return 2
 
     # Check /proc availability
     if not context.file_exists('/proc'):
         output.error("/proc filesystem not available")
+
+        output.render(opts.format, "Monitor process resource accounting from /proc")
         return 2
 
     # Gather process information
@@ -236,6 +240,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not processes:
         output.error("Could not read any process information")
+
+        output.render(opts.format, "Monitor process resource accounting from /proc")
         return 2
 
     # Filter processes
@@ -302,9 +308,13 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Set summary
     if warnings:
         output.set_summary(f"{len(warnings)} process(es) exceed warning thresholds")
+
+        output.render(opts.format, "Monitor process resource accounting from /proc")
         return 1
     else:
         output.set_summary(f"Top {len(top_processes)} processes by {opts.sort}")
+
+        output.render(opts.format, "Monitor process resource accounting from /proc")
         return 0
 
 

@@ -107,24 +107,34 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate path
     if not os.path.exists(opts.path):
         output.error(f"Path does not exist: {opts.path}")
+
+        output.render(opts.format, "Track filesystem usage and identify large directories")
         return 2
 
     if not os.path.isdir(opts.path):
         output.error(f"Path is not a directory: {opts.path}")
+
+        output.render(opts.format, "Track filesystem usage and identify large directories")
         return 2
 
     # Validate arguments
     if opts.depth < 0:
         output.error("--depth must be >= 0")
+
+        output.render(opts.format, "Track filesystem usage and identify large directories")
         return 2
 
     if opts.top < 1:
         output.error("--top must be >= 1")
+
+        output.render(opts.format, "Track filesystem usage and identify large directories")
         return 2
 
     # Check for du command
     if not context.check_tool("du"):
         output.error("du command not found. Please install coreutils.")
+
+        output.render(opts.format, "Track filesystem usage and identify large directories")
         return 2
 
     # Run du command
@@ -174,10 +184,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
         })
 
         output.set_summary(f"Scanned {len(entries)} directories under {opts.path}")
+
+        output.render(opts.format, "Track filesystem usage and identify large directories")
         return 0
 
     except Exception as e:
         output.error(f"Failed to scan filesystem: {e}")
+
+        output.render(opts.format, "Track filesystem usage and identify large directories")
         return 1
 
 

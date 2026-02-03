@@ -282,6 +282,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         mounts = parse_proc_mounts(context)
     except RuntimeError as e:
         output.error(str(e))
+
+        output.render(opts.format, "Audit filesystem mount options for security compliance")
         return 2
 
     # Run audit
@@ -324,6 +326,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     )
 
     # Exit based on compliance
+
+    output.render(opts.format, "Audit filesystem mount options for security compliance")
     return 1 if summary['non_compliant'] > 0 else 0
 
 

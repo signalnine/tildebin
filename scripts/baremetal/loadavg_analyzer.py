@@ -196,23 +196,33 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.warn < 0:
         output.error('--warn must be non-negative')
+
+        output.render(opts.format, "Analyze system load average and CPU scheduling pressure")
         return 2
     if opts.crit < 0:
         output.error('--crit must be non-negative')
+
+        output.render(opts.format, "Analyze system load average and CPU scheduling pressure")
         return 2
     if opts.crit < opts.warn:
         output.error('--crit must be >= --warn')
+
+        output.render(opts.format, "Analyze system load average and CPU scheduling pressure")
         return 2
 
     # Check if we can read /proc
     if not context.file_exists('/proc/loadavg'):
         output.error('/proc/loadavg not available')
+
+        output.render(opts.format, "Analyze system load average and CPU scheduling pressure")
         return 2
 
     # Get load average
     loadavg = get_loadavg(context)
     if loadavg is None:
         output.error('Unable to read load average')
+
+        output.render(opts.format, "Analyze system load average and CPU scheduling pressure")
         return 2
 
     # Get CPU count
@@ -261,6 +271,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return exit code
     if analysis['status'] in ['critical', 'warning']:
+
+        output.render(opts.format, "Analyze system load average and CPU scheduling pressure")
         return 1
     return 0
 

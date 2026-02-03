@@ -256,6 +256,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for systemctl
     if not context.check_tool('systemctl'):
         output.error('systemctl not found. This tool requires systemd.')
+
+        output.render(opts.format, "Detect systemd unit files with local overrides or modifications")
         return 2
 
     # Get units to check
@@ -267,6 +269,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not units:
         output.emit({'units': [], 'message': 'No units found'})
         output.set_summary('No units found')
+
+        output.render(opts.format, "Detect systemd unit files with local overrides or modifications")
         return 0
 
     # Analyze each unit
@@ -306,6 +310,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     output.set_summary(f'{total} units checked: {drift_count} with drift, {clean_count} clean')
 
     # Return 1 if drift detected
+
+    output.render(opts.format, "Detect systemd unit files with local overrides or modifications")
     return 1 if drift_count > 0 else 0
 
 

@@ -132,6 +132,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if sensors command is available
     if not context.check_tool("sensors"):
         output.error("sensors command not found. Install lm-sensors package.")
+
+        output.render(opts.format, "Monitor hardware temperature sensors using lm-sensors")
         return 2
 
     # Run sensors command
@@ -139,6 +141,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         result = context.run(['sensors'], check=True)
     except Exception as e:
         output.error(f"Failed to run sensors: {e}")
+
+        output.render(opts.format, "Monitor hardware temperature sensors using lm-sensors")
         return 2
 
     # Parse output
@@ -147,6 +151,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not sensors:
         output.warning("No sensors found. Run 'sensors-detect' to configure.")
         output.emit({"sensors": []})
+
+        output.render(opts.format, "Monitor hardware temperature sensors using lm-sensors")
         return 0
 
     # Filter for warn-only mode
@@ -173,6 +179,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return 1 if any issues
     has_issues = warning > 0 or critical > 0
+
+    output.render(opts.format, "Monitor hardware temperature sensors using lm-sensors")
     return 1 if has_issues else 0
 
 

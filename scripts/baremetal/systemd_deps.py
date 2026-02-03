@@ -241,6 +241,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if systemctl is available
     if not context.check_tool("systemctl"):
         output.error("systemctl not found. This script requires systemd.")
+
+        output.render(opts.format, "Analyze systemd unit dependencies for issues")
         return 2
 
     # Determine which units to analyze
@@ -273,6 +275,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             'units': []
         })
         output.set_summary("No units to analyze")
+
+        output.render(opts.format, "Analyze systemd unit dependencies for issues")
         return 0
 
     # Analyze each unit
@@ -323,6 +327,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit based on findings
     has_issues = any(r['issues'] for r in results)
+
+    output.render(opts.format, "Analyze systemd unit dependencies for issues")
     return 1 if has_issues else 0
 
 

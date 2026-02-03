@@ -272,6 +272,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not devices:
         output.warning("No SSDs found")
         output.emit({"devices": [], "fstrim_timer_enabled": fstrim_enabled})
+
+        output.render(opts.format, "Monitor TRIM/discard support status for SSDs and NVMe drives")
         return 0
 
     # Analyze devices
@@ -297,6 +299,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     warning_count = sum(1 for r in results if r["status"] == "WARNING")
     output.set_summary(f"fstrim={fstrim_enabled}, {ok_count} ok, {warning_count} warnings")
 
+
+    output.render(opts.format, "Monitor TRIM/discard support status for SSDs and NVMe drives")
     return 1 if has_issues else 0
 
 

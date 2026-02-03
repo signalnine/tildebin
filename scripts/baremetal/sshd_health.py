@@ -205,6 +205,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if sshd is installed
     if not context.check_tool("sshd"):
         output.error("sshd not found. Install openssh-server package.")
+
+        output.render(opts.format, "Monitor SSH daemon health, configuration, and connection limits")
         return 2
 
     # Check if sshd is running
@@ -223,6 +225,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         )
         output.emit(result)
         output.error("sshd daemon is not running")
+
+        output.render(opts.format, "Monitor SSH daemon health, configuration, and connection limits")
         return 2
 
     # Get config and connections
@@ -260,6 +264,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     has_issues = any(
         i["severity"] in ("warning", "critical") for i in result["issues"]
     )
+
+    output.render(opts.format, "Monitor SSH daemon health, configuration, and connection limits")
     return 1 if has_issues else 0
 
 

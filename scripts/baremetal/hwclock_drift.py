@@ -202,15 +202,21 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.warn_threshold <= 0 or opts.crit_threshold <= 0:
         output.error("Thresholds must be positive numbers")
+
+        output.render(opts.format, "Monitor hardware clock (RTC) drift against system time")
         return 2
 
     if opts.warn_threshold >= opts.crit_threshold:
         output.error("Warning threshold must be less than critical threshold")
+
+        output.render(opts.format, "Monitor hardware clock (RTC) drift against system time")
         return 2
 
     # Check if hwclock is available
     if not context.check_tool("hwclock"):
         output.error("hwclock command not found. Install util-linux package.")
+
+        output.render(opts.format, "Monitor hardware clock (RTC) drift against system time")
         return 2
 
     # Run hwclock to get hardware clock time
@@ -227,6 +233,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         hwclock_data = parse_hwclock_output(result.stdout, result.stderr)
     except Exception as e:
         output.error(f"Failed to run hwclock: {e}")
+
+        output.render(opts.format, "Monitor hardware clock (RTC) drift against system time")
         return 2
 
     # Get additional RTC info from sysfs
@@ -263,15 +271,23 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Set summary
     if status == "CRITICAL":
         output.set_summary(f"CRITICAL: RTC drift {format_drift(drift)}")
+
+        output.render(opts.format, "Monitor hardware clock (RTC) drift against system time")
         return 1
     elif status == "WARNING":
         output.set_summary(f"WARNING: RTC drift {format_drift(drift)}")
+
+        output.render(opts.format, "Monitor hardware clock (RTC) drift against system time")
         return 1
     elif status == "UNKNOWN":
         output.set_summary("Could not determine RTC drift")
+
+        output.render(opts.format, "Monitor hardware clock (RTC) drift against system time")
         return 1
     else:
         output.set_summary(f"RTC drift {format_drift(drift)} (within threshold)")
+
+        output.render(opts.format, "Monitor hardware clock (RTC) drift against system time")
         return 0
 
 

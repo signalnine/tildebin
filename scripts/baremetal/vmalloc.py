@@ -243,22 +243,30 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.warn_pct >= opts.crit_pct:
         output.error('--warn-pct must be less than --crit-pct')
+
+        output.render(opts.format, "Monitor kernel vmalloc memory usage to detect exhaustion before failures")
         return 2
 
     # Check if /proc/meminfo exists
     if not context.file_exists('/proc/meminfo'):
         output.error('/proc/meminfo not found (not a Linux system?)')
+
+        output.render(opts.format, "Monitor kernel vmalloc memory usage to detect exhaustion before failures")
         return 2
 
     # Get vmalloc info
     info = get_vmalloc_info(context)
     if info is None:
         output.error('Could not read vmalloc information')
+
+        output.render(opts.format, "Monitor kernel vmalloc memory usage to detect exhaustion before failures")
         return 2
 
     # Check if VmallocTotal is available
     if info['total_kb'] == 0:
         output.error('VmallocTotal not found in /proc/meminfo')
+
+        output.render(opts.format, "Monitor kernel vmalloc memory usage to detect exhaustion before failures")
         return 2
 
     # Analyze top consumers if we have detailed info
@@ -298,6 +306,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     )
 
     # Exit with appropriate code
+
+    output.render(opts.format, "Monitor kernel vmalloc memory usage to detect exhaustion before failures")
     return 1 if status in ('warning', 'critical') else 0
 
 

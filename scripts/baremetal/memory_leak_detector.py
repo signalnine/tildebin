@@ -236,18 +236,26 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate arguments
     if opts.duration <= 0:
         output.error('Duration must be positive')
+
+        output.render(opts.format, "Detect potential memory leaks by monitoring process memory growth")
         return 2
 
     if opts.duration > 3600:
         output.error('Duration cannot exceed 3600 seconds (1 hour)')
+
+        output.render(opts.format, "Detect potential memory leaks by monitoring process memory growth")
         return 2
 
     if opts.interval <= 0:
         output.error('Interval must be positive')
+
+        output.render(opts.format, "Detect potential memory leaks by monitoring process memory growth")
         return 2
 
     if opts.interval > opts.duration:
         output.error('Interval cannot exceed duration')
+
+        output.render(opts.format, "Detect potential memory leaks by monitoring process memory growth")
         return 2
 
     # Parse PID list
@@ -262,6 +270,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check /proc availability
     if not context.file_exists('/proc'):
         output.error('/proc filesystem not available')
+
+        output.render(opts.format, "Detect potential memory leaks by monitoring process memory growth")
         return 2
 
     # Collect samples
@@ -278,6 +288,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if len(all_samples) < 2:
         output.error('Insufficient samples collected')
+
+        output.render(opts.format, "Detect potential memory leaks by monitoring process memory growth")
         return 2
 
     # Analyze for memory growth
@@ -311,6 +323,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit based on findings
     if issues:
+
+        output.render(opts.format, "Detect potential memory leaks by monitoring process memory growth")
         return 1
     return 0
 

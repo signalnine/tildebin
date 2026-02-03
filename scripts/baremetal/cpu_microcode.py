@@ -212,9 +212,13 @@ def run(args: list[str], output: Output, context: Context) -> int:
         cpuinfo = context.read_file('/proc/cpuinfo')
     except FileNotFoundError:
         output.error("/proc/cpuinfo not found. This script requires a Linux system.")
+
+        output.render(opts.format, "Monitor CPU microcode versions for security and consistency")
         return 2
     except OSError as e:
         output.error(f"Cannot read /proc/cpuinfo: {e}")
+
+        output.render(opts.format, "Monitor CPU microcode versions for security and consistency")
         return 2
 
     # Parse CPU information
@@ -222,6 +226,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not cpus:
         output.error("No CPU information available")
+
+        output.render(opts.format, "Monitor CPU microcode versions for security and consistency")
         return 2
 
     # Analyze microcode
@@ -262,6 +268,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit code
     if has_critical or has_warnings:
+
+        output.render(opts.format, "Monitor CPU microcode versions for security and consistency")
         return 1
     return 0
 

@@ -128,6 +128,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for ipmitool
     if not context.check_tool("ipmitool"):
         output.error("ipmitool not found. Install ipmitool package.")
+
+        output.render(opts.format, "Monitor Power Supply Unit health via IPMI")
         return 2
 
     # Get PSU sensors
@@ -209,6 +211,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return code
     if summary["critical"] > 0 or summary["warning"] > 0:
+
+        output.render(opts.format, "Monitor Power Supply Unit health via IPMI")
         return 1
 
     return 0

@@ -327,6 +327,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for /boot (basic Linux check)
     if not context.file_exists("/boot"):
         output.error("/boot not found - requires Linux")
+
+        output.render(opts.format, "Audit GRUB bootloader configuration for security")
         return 2
 
     # Gather information
@@ -369,6 +371,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Exit code based on findings
     has_critical = critical_count > 0
     has_warning = warning_count > 0
+
+    output.render(opts.format, "Audit GRUB bootloader configuration for security")
 
     return 1 if (has_critical or has_warning) else 0
 

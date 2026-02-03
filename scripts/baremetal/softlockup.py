@@ -257,6 +257,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for dmesg command
     if not context.check_tool("dmesg"):
         output.error("dmesg command not found")
+
+        output.render(opts.format, "Detect kernel softlockups, hung tasks, and RCU stalls")
         return 2
 
     # Get dmesg output
@@ -271,10 +273,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
         dmesg_output = result.stdout
     except Exception as e:
         output.error(f"Unable to read dmesg: {e}")
+
+        output.render(opts.format, "Detect kernel softlockups, hung tasks, and RCU stalls")
         return 2
 
     if not dmesg_output:
         output.error("Unable to read dmesg - try running with sudo")
+
+        output.render(opts.format, "Detect kernel softlockups, hung tasks, and RCU stalls")
         return 2
 
     # Get watchdog configuration
@@ -335,6 +341,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(", ".join(parts) if parts else "Issues detected")
     else:
         output.set_summary("No softlockups, hung tasks, or RCU stalls detected")
+
+    output.render(opts.format, "Detect kernel softlockups, hung tasks, and RCU stalls")
 
     return 1 if has_issues else 0
 

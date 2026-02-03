@@ -366,6 +366,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not runtimes:
         output.error("No container runtimes detected (docker, podman, ctr)")
+
+        output.render(opts.format, "Analyze container image storage and cleanup needs")
         return 2
 
     reclaimable_warn_bytes = opts.reclaimable_warn * 1024**3
@@ -435,6 +437,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{format_bytes(total_reclaimable)} reclaimable, {total_dangling} dangling")
     else:
         output.set_summary(f"{total_images} images across {len(results)} runtime(s)")
+
+    output.render(opts.format, "Analyze container image storage and cleanup needs")
 
     return 1 if has_warnings else 0
 

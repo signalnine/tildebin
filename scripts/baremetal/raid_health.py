@@ -246,6 +246,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not all_arrays:
         output.warning("No RAID arrays detected")
         output.emit({"arrays": []})
+
+        output.render(opts.format, "Check status of hardware and software RAID arrays")
         return 0
 
     # Filter arrays if warn-only mode
@@ -268,6 +270,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit with error if any array is not healthy
     has_issues = any(a['status'] != 'healthy' for a in all_arrays)
+
+    output.render(opts.format, "Check status of hardware and software RAID arrays")
     return 1 if has_issues else 0
 
 

@@ -230,6 +230,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for Linux sysfs
     if not os.path.exists('/sys/devices/system/cpu'):
         output.error("/sys/devices/system/cpu not found")
+
+        output.render(opts.format, "Monitor SMT (Hyperthreading) status and security implications")
         return 2
 
     # Gather information
@@ -275,6 +277,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"SMT disabled ({topology['num_physical_cores']} cores)")
 
     has_warnings = any(i['severity'] == 'WARNING' for i in issues)
+
+    output.render(opts.format, "Monitor SMT (Hyperthreading) status and security implications")
     return 1 if has_warnings else 0
 
 

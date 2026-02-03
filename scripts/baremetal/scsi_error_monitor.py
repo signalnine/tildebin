@@ -191,6 +191,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if /sys/class/scsi_device exists
     if not context.file_exists("/sys/class/scsi_device"):
         output.error("SCSI subsystem not found (/sys/class/scsi_device not present)")
+
+        output.render(opts.format, "Monitor SCSI/SAS device error counters from sysfs")
         return 2
 
     # Get SCSI devices
@@ -198,6 +200,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not devices:
         output.error("No SCSI devices found")
+
+        output.render(opts.format, "Monitor SCSI/SAS device error counters from sysfs")
         return 2
 
     # Collect statistics
@@ -238,6 +242,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             output.error("No SCSI disk devices found")
         else:
             output.error("No SCSI device statistics collected")
+
+        output.render(opts.format, "Monitor SCSI/SAS device error counters from sysfs")
         return 2
 
     output.emit({
@@ -253,6 +259,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Set summary
     healthy = sum(1 for r in results if r["status"] == "healthy")
     output.set_summary(f"{healthy}/{len(results)} SCSI devices healthy")
+
+    output.render(opts.format, "Monitor SCSI/SAS device error counters from sysfs")
 
     return 1 if has_issues else 0
 

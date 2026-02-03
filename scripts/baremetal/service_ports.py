@@ -341,16 +341,22 @@ def run(args: list[str], output: Output, context: Context) -> int:
             })
         output.emit({'presets': presets})
         output.set_summary(f"{len(presets)} presets available")
+
+        output.render(opts.format, "Monitor service port availability and responsiveness")
         return 0
 
     # Validate timeout
     if opts.timeout <= 0:
         output.error("Timeout must be a positive number")
+
+        output.render(opts.format, "Monitor service port availability and responsiveness")
         return 2
 
     # Require at least one service
     if not opts.services:
         output.error("At least one service specification required")
+
+        output.render(opts.format, "Monitor service port availability and responsiveness")
         return 2
 
     # Parse service specifications
@@ -410,6 +416,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     else:
         output.set_summary(f"{len(unreachable)}/{len(results)} service(s) unreachable")
 
+
+    output.render(opts.format, "Monitor service port availability and responsiveness")
     return 1 if unreachable else 0
 
 

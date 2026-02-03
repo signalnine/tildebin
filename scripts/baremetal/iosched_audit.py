@@ -152,6 +152,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if /sys/block exists
     if not context.file_exists('/sys/block'):
         output.error("/sys/block not found. This script requires sysfs.")
+
+        output.render(opts.format, "Audit I/O scheduler configuration for block devices")
         return 2
 
     # Get block devices
@@ -168,11 +170,15 @@ def run(args: list[str], output: Output, context: Context) -> int:
             devices_info.append(info)
     except Exception as e:
         output.error(f"Failed to read block devices: {e}")
+
+        output.render(opts.format, "Audit I/O scheduler configuration for block devices")
         return 2
 
     if not devices_info:
         output.warning("No block devices found")
         output.emit({"devices": []})
+
+        output.render(opts.format, "Audit I/O scheduler configuration for block devices")
         return 0
 
     # Sort by device name
@@ -198,6 +204,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     suboptimal = total - optimal
     output.set_summary(f"{optimal}/{total} devices optimal")
 
+
+    output.render(opts.format, "Audit I/O scheduler configuration for block devices")
     return 1 if suboptimal > 0 else 0
 
 

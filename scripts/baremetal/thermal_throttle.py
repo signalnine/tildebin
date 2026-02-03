@@ -177,12 +177,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
             "Thermal throttle interface not available. "
             "Check if /sys/devices/system/cpu/cpu0/thermal_throttle exists."
         )
+
+        output.render(opts.format, "Monitor CPU thermal throttling events")
         return 2
 
     # Get CPU list
     cpu_nums = get_cpu_list(context)
     if not cpu_nums:
         output.error("Could not determine CPU count")
+
+        output.render(opts.format, "Monitor CPU thermal throttling events")
         return 2
 
     # Gather throttle info for all CPUs
@@ -194,6 +198,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not cpu_data:
         output.error("Could not read thermal throttle information")
+
+        output.render(opts.format, "Monitor CPU thermal throttling events")
         return 2
 
     # Analyze data
@@ -230,6 +236,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             f"{summary['total_core_throttles']} core + "
             f"{summary['total_package_throttles']} package throttle events"
         )
+
+    output.render(opts.format, "Monitor CPU thermal throttling events")
 
     return 1 if summary["status"] != "OK" else 0
 

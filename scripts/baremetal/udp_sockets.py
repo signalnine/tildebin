@@ -340,12 +340,18 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate arguments
     if opts.socket_warn < 0:
         output.error('--socket-warn must be non-negative')
+
+        output.render(opts.format, "Monitor UDP socket usage to detect resource exhaustion and anomalies")
         return 2
     if opts.rx_queue_warn < 0:
         output.error('--rx-queue-warn must be non-negative')
+
+        output.render(opts.format, "Monitor UDP socket usage to detect resource exhaustion and anomalies")
         return 2
     if opts.tx_queue_warn < 0:
         output.error('--tx-queue-warn must be non-negative')
+
+        output.render(opts.format, "Monitor UDP socket usage to detect resource exhaustion and anomalies")
         return 2
 
     # Validate regex pattern
@@ -359,6 +365,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if we can read /proc
     if not context.file_exists('/proc/net/udp'):
         output.error('/proc/net/udp not available. Requires procfs.')
+
+        output.render(opts.format, "Monitor UDP socket usage to detect resource exhaustion and anomalies")
         return 2
 
     # Get sockets
@@ -423,6 +431,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     )
 
     # Exit code based on issues
+
+    output.render(opts.format, "Monitor UDP socket usage to detect resource exhaustion and anomalies")
     return 1 if analysis['issues'] else 0
 
 

@@ -356,10 +356,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if nodes is None:
         output.error("NUMA information not available")
+
+        output.render(opts.format, "Monitor NUMA memory access latency and topology")
         return 2
 
     if len(nodes) == 0:
         output.error("No NUMA nodes found")
+
+        output.render(opts.format, "Monitor NUMA memory access latency and topology")
         return 2
 
     if len(nodes) == 1:
@@ -373,6 +377,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             'issues': [],
         })
         output.set_summary("UMA system - no NUMA latency concerns")
+
+        output.render(opts.format, "Monitor NUMA memory access latency and topology")
         return 0
 
     # Gather NUMA information
@@ -409,9 +415,13 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if all_issues:
         warning_count = sum(1 for i in all_issues if i['severity'] == 'WARNING')
         output.set_summary(f"{warning_count} NUMA issue(s) detected")
+
+        output.render(opts.format, "Monitor NUMA memory access latency and topology")
         return 1
     else:
         output.set_summary(f"{topology['node_count']} NUMA nodes, topology healthy")
+
+        output.render(opts.format, "Monitor NUMA memory access latency and topology")
         return 0
 
 

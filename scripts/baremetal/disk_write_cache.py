@@ -222,6 +222,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not devices:
         output.error("No block devices found")
+
+        output.render(opts.format, "Audit disk write cache settings for data integrity compliance")
         return 2
 
     # Analyze devices
@@ -270,6 +272,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{with_issues} device(s) with write cache issues")
     else:
         output.set_summary(f"{wc_enabled} enabled, {wc_disabled} disabled, {wc_unknown} unknown")
+
+    output.render(opts.format, "Audit disk write cache settings for data integrity compliance")
 
     return 1 if with_issues > 0 else 0
 

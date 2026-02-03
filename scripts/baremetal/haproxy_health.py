@@ -283,10 +283,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
         stats = parse_csv_stats(csv_data)
     except Exception as e:
         output.error(f"Failed to parse HAProxy stats: {e}")
+
+        output.render(opts.format, "Monitor HAProxy load balancer health and backend status")
         return 2
 
     if not stats:
         output.error("No stats data received from HAProxy")
+
+        output.render(opts.format, "Monitor HAProxy load balancer health and backend status")
         return 2
 
     # Analyze stats
@@ -332,6 +336,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             f"HAProxy healthy: {analysis['backends_up']} backends, "
             f"{analysis['servers_up']} servers up"
         )
+
+    output.render(opts.format, "Monitor HAProxy load balancer health and backend status")
 
     return 1 if issues else 0
 

@@ -161,10 +161,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.warn_threshold <= 0 or opts.crit_threshold <= 0:
         output.error("Thresholds must be positive numbers")
+
+        output.render(opts.format, "Monitor NTP/Chrony time synchronization and clock drift")
         return 2
 
     if opts.warn_threshold >= opts.crit_threshold:
         output.error("Warning threshold must be less than critical threshold")
+
+        output.render(opts.format, "Monitor NTP/Chrony time synchronization and clock drift")
         return 2
 
     # Try chrony first, fall back to ntp
@@ -206,6 +210,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if data is None:
         output.error("Neither chrony nor ntp is available")
+
+        output.render(opts.format, "Monitor NTP/Chrony time synchronization and clock drift")
         return 2
 
     # Assess status
@@ -232,6 +238,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     output.set_summary(f"{sync_str}{offset_str}")
 
     # Return 1 if any issues
+
+    output.render(opts.format, "Monitor NTP/Chrony time synchronization and clock drift")
     return 1 if status in ['warning', 'critical', 'unknown'] else 0
 
 

@@ -295,6 +295,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     has_warning = any(i["severity"] == "warning" for i in issues)
 
     if has_critical or has_warning:
+
+        output.render(opts.format, "Monitor TPM health and status")
         return 1
     return 0
 

@@ -252,9 +252,13 @@ def run(args: list[str], output: Output, context: Context) -> int:
         stat_content = context.read_file('/proc/stat')
     except FileNotFoundError:
         output.error("/proc/stat not found. This script requires a Linux system.")
+
+        output.render(opts.format, "Analyze CPU time distribution across all CPUs")
         return 2
     except OSError as e:
         output.error(f"Cannot read /proc/stat: {e}")
+
+        output.render(opts.format, "Analyze CPU time distribution across all CPUs")
         return 2
 
     # Parse and calculate
@@ -263,6 +267,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if 'cpu' not in percentages:
         output.error("No CPU statistics available")
+
+        output.render(opts.format, "Analyze CPU time distribution across all CPUs")
         return 2
 
     # Analyze
@@ -304,6 +310,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit code
     if has_critical or has_warning:
+
+        output.render(opts.format, "Analyze CPU time distribution across all CPUs")
         return 1
     return 0
 

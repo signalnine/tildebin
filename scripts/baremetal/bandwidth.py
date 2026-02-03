@@ -252,10 +252,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if opts.interval <= 0:
         output.error("Interval must be positive")
+
+        output.render(opts.format, "Monitor network interface bandwidth utilization")
         return 2
 
     if opts.warn >= opts.crit:
         output.error("Warning threshold must be less than critical threshold")
+
+        output.render(opts.format, "Monitor network interface bandwidth utilization")
         return 2
 
     # Read /proc/net/dev
@@ -263,11 +267,15 @@ def run(args: list[str], output: Output, context: Context) -> int:
         before_content = context.read_file('/proc/net/dev')
     except FileNotFoundError:
         output.error("Cannot read /proc/net/dev")
+
+        output.render(opts.format, "Monitor network interface bandwidth utilization")
         return 2
 
     before = parse_net_dev(before_content)
     if not before:
         output.error("No network interfaces found")
+
+        output.render(opts.format, "Monitor network interface bandwidth utilization")
         return 2
 
     # Wait for sampling interval
@@ -278,6 +286,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         after_content = context.read_file('/proc/net/dev')
     except FileNotFoundError:
         output.error("Cannot read /proc/net/dev")
+
+        output.render(opts.format, "Monitor network interface bandwidth utilization")
         return 2
 
     after = parse_net_dev(after_content)
@@ -314,6 +324,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{len(issues)} interfaces with high utilization")
     else:
         output.set_summary(f"{up_count} interfaces within thresholds")
+
+    output.render(opts.format, "Monitor network interface bandwidth utilization")
 
     return 1 if issues else 0
 

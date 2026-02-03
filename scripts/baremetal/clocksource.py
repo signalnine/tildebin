@@ -252,6 +252,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     clocksource_info, error = get_clocksource_info(context)
     if clocksource_info is None:
         output.error(error)
+
+        output.render(opts.format, "Monitor kernel clock source configuration and stability")
         return 2
 
     tsc_info = get_tsc_info(context)
@@ -294,6 +296,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit code
     if analysis['issues'] or analysis['warnings']:
+
+        output.render(opts.format, "Monitor kernel clock source configuration and stability")
         return 1
     return 0
 

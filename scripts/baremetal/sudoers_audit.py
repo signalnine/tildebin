@@ -157,6 +157,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     main_sudoers = '/etc/sudoers'
     if not context.file_exists(main_sudoers):
         output.error("No sudoers file found at /etc/sudoers")
+
+        output.render(opts.format, "Audit sudoers configuration for security issues")
         return 2
 
     all_issues = []
@@ -180,9 +182,13 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     except PermissionError:
         output.error(f"Permission denied reading {main_sudoers}")
+
+        output.render(opts.format, "Audit sudoers configuration for security issues")
         return 2
     except Exception as e:
         output.error(f"Error reading {main_sudoers}: {e}")
+
+        output.render(opts.format, "Audit sudoers configuration for security issues")
         return 2
 
     # Check sudoers.d files
@@ -241,6 +247,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return 1 if critical or warning issues
     if critical_count > 0 or warning_count > 0:
+
+        output.render(opts.format, "Audit sudoers configuration for security issues")
         return 1
     return 0
 

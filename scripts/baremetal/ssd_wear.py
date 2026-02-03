@@ -312,11 +312,15 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.warn < opts.critical:
         output.error("Warning threshold must be >= critical threshold")
+
+        output.render(opts.format, "Monitor SSD wear levels and endurance metrics")
         return 2
 
     # Check for smartctl
     if not context.check_tool("smartctl"):
         output.error("smartctl not found. Install smartmontools package.")
+
+        output.render(opts.format, "Monitor SSD wear levels and endurance metrics")
         return 2
 
     # Get disk list
@@ -329,6 +333,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not disks:
         output.emit({"ssds": [], "message": "No SSDs found"})
         output.set_summary("No SSDs found")
+
+        output.render(opts.format, "Monitor SSD wear levels and endurance metrics")
         return 0
 
     results = []
@@ -376,8 +382,12 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit code
     if has_warnings:
+
+        output.render(opts.format, "Monitor SSD wear levels and endurance metrics")
         return 1
     else:
+
+        output.render(opts.format, "Monitor SSD wear levels and endurance metrics")
         return 0
 
 

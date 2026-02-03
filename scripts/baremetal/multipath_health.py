@@ -284,19 +284,27 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.min_paths_warn < 0:
         output.error("--min-paths-warn must be >= 0")
+
+        output.render(opts.format, "Monitor dm-multipath I/O path health and configuration")
         return 2
 
     if opts.min_paths_crit < 0:
         output.error("--min-paths-crit must be >= 0")
+
+        output.render(opts.format, "Monitor dm-multipath I/O path health and configuration")
         return 2
 
     if opts.min_paths_warn < opts.min_paths_crit:
         output.error("--min-paths-warn must be >= --min-paths-crit")
+
+        output.render(opts.format, "Monitor dm-multipath I/O path health and configuration")
         return 2
 
     # Check for multipath tools
     if not context.check_tool("multipath"):
         output.error("Multipath tools not found. Install multipath-tools package.")
+
+        output.render(opts.format, "Monitor dm-multipath I/O path health and configuration")
         return 2
 
     # Check if multipathd is running
@@ -306,6 +314,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             "issues": []
         })
         output.set_summary("multipathd not running")
+
+        output.render(opts.format, "Monitor dm-multipath I/O path health and configuration")
         return 2
 
     # Get multipath topology
@@ -317,6 +327,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             "issues": []
         })
         output.set_summary("No multipath devices")
+
+        output.render(opts.format, "Monitor dm-multipath I/O path health and configuration")
         return 0
 
     # Parse topology
@@ -328,6 +340,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             "issues": []
         })
         output.set_summary("No multipath devices")
+
+        output.render(opts.format, "Monitor dm-multipath I/O path health and configuration")
         return 0
 
     # Analyze for issues
@@ -366,8 +380,12 @@ def run(args: list[str], output: Output, context: Context) -> int:
     has_warning = any(issue["severity"] == "WARNING" for issue in issues)
 
     if has_critical or has_warning:
+
+        output.render(opts.format, "Monitor dm-multipath I/O path health and configuration")
         return 1
     else:
+
+        output.render(opts.format, "Monitor dm-multipath I/O path health and configuration")
         return 0
 
 

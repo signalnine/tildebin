@@ -292,12 +292,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for ceph tool
     if not context.check_tool("ceph"):
         output.error("ceph not found. Install ceph-common package.")
+
+        output.render(opts.format, "Monitor Ceph cluster health including OSDs, pools, and PGs")
         return 2
 
     # Gather cluster information
     status, error = get_cluster_status(context)
     if error:
         output.error(f"Failed to get cluster status: {error}")
+
+        output.render(opts.format, "Monitor Ceph cluster health including OSDs, pools, and PGs")
         return 2
 
     osd_tree, _ = get_osd_tree(context)
@@ -361,6 +365,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Determine exit code
     is_healthy = health["status"] == "HEALTH_OK"
+
+    output.render(opts.format, "Monitor Ceph cluster health including OSDs, pools, and PGs")
     return 0 if is_healthy else 1
 
 

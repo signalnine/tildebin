@@ -385,19 +385,27 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.warn < 0 or opts.warn > 100:
         output.error('--warn must be between 0 and 100')
+
+        output.render(opts.format, "Monitor System V IPC resource usage (semaphores, shared memory, message queues)")
         return 2
 
     if opts.crit < 0 or opts.crit > 100:
         output.error('--crit must be between 0 and 100')
+
+        output.render(opts.format, "Monitor System V IPC resource usage (semaphores, shared memory, message queues)")
         return 2
 
     if opts.crit <= opts.warn:
         output.error('--crit must be greater than --warn')
+
+        output.render(opts.format, "Monitor System V IPC resource usage (semaphores, shared memory, message queues)")
         return 2
 
     # Check if ipcs is available
     if not context.check_tool('ipcs'):
         output.error('ipcs command not found. Install util-linux.')
+
+        output.render(opts.format, "Monitor System V IPC resource usage (semaphores, shared memory, message queues)")
         return 2
 
     # Gather IPC statistics
@@ -460,6 +468,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     )
 
     # Exit with appropriate code
+
+    output.render(opts.format, "Monitor System V IPC resource usage (semaphores, shared memory, message queues)")
     return 1 if issues else 0
 
 

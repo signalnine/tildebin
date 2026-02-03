@@ -297,6 +297,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for systemctl
     if not context.check_tool('systemctl'):
         output.error('systemctl not found. This tool requires systemd.')
+
+        output.render(opts.format, "Monitor systemd socket activation units for health and connection status")
         return 2
 
     # Get sockets to check
@@ -339,6 +341,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not sockets:
         output.emit({'sockets': [], 'message': 'No socket units found'})
         output.set_summary('No socket units found')
+
+        output.render(opts.format, "Monitor systemd socket activation units for health and connection status")
         return 0
 
     # Filter inactive if not requested
@@ -355,6 +359,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not sockets:
         output.emit({'sockets': [], 'message': 'No active socket units'})
         output.set_summary('No active socket units')
+
+        output.render(opts.format, "Monitor systemd socket activation units for health and connection status")
         return 0
 
     # Analyze each socket
@@ -397,7 +403,11 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Determine exit code
     if critical > 0 or warning > 0:
+
+        output.render(opts.format, "Monitor systemd socket activation units for health and connection status")
         return 1
+
+    output.render(opts.format, "Monitor systemd socket activation units for health and connection status")
     return 0
 
 

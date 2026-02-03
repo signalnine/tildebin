@@ -12,6 +12,7 @@ class Output:
         self.errors: list[str] = []
         self.warnings: list[str] = []
         self._summary: str | None = None
+        self._printed: bool = False
 
     def emit(self, data: dict[str, Any]) -> None:
         """Store structured output data."""
@@ -58,3 +59,121 @@ class Output:
             else:
                 lines.append(f"{key}: {value}")
         return "\n".join(lines)
+
+    def render(self, format: str = "plain", title: str | None = None) -> None:
+        """Print output in the specified format.
+
+        Args:
+            format: Output format - "json" or "plain"
+            title: Optional title for plain text output
+        """
+        if self._printed:
+            return
+        self._printed = True
+
+        if not self.data:
+            return
+
+        if format == "json":
+            print(self.to_json())
+        else:
+            self._render_plain(title)
+
+    def _render_plain(self, title: str | None = None) -> None:
+        """Render output as formatted plain text."""
+        lines = []
+
+        # Title
+        if title:
+            lines.append(title)
+            lines.append("=" * len(title))
+            lines.append("")
+
+        # Status/summary at top if present
+        status = self.data.get("status")
+        if status:
+            status_upper = status.upper()
+            if status in ("healthy", "ok"):
+                lines.append(f"[OK] Status: {status_upper}")
+            elif status in ("warning", "degraded"):
+                lines.append(f"[WARNING] Status: {status_upper}")
+            else:
+                lines.append(f"[CRITICAL] Status: {status_upper}")
+            lines.append("")
+
+        # Main data (skip status, issues, timestamp which are handled separately)
+        skip_keys = {"status", "issues", "timestamp", "errors", "warnings"}
+        for key, value in self.data.items():
+            if key in skip_keys:
+                continue
+            self._render_value(lines, key, value, indent=0)
+
+        # Issues section
+        issues = self.data.get("issues", [])
+        if issues:
+            lines.append("")
+            lines.append("Issues:")
+            for issue in issues:
+                if isinstance(issue, dict):
+                    severity = issue.get("severity", "warning").upper()
+                    message = issue.get("message", str(issue))
+                    lines.append(f"  [{severity}] {message}")
+                else:
+                    lines.append(f"  - {issue}")
+        elif status in ("healthy", "ok"):
+            lines.append("")
+            lines.append("[OK] No issues detected")
+
+        print("\n".join(lines))
+
+    def _render_value(self, lines: list, key: str | int, value: Any, indent: int = 0) -> None:
+        """Recursively render a value with proper formatting."""
+        prefix = "  " * indent
+
+        # Format key nicely (handle int keys from dicts with numeric keys)
+        if isinstance(key, int):
+            display_key = str(key)
+        else:
+            display_key = str(key).replace("_", " ").title()
+
+        if isinstance(value, dict):
+            lines.append(f"{prefix}{display_key}:")
+            for k, v in value.items():
+                self._render_value(lines, k, v, indent + 1)
+        elif isinstance(value, list):
+            if not value:
+                lines.append(f"{prefix}{display_key}: (none)")
+            elif all(isinstance(x, (str, int, float, bool)) for x in value):
+                # Simple list - show inline or as bullets
+                if len(value) <= 3 and all(len(str(x)) < 20 for x in value):
+                    lines.append(f"{prefix}{display_key}: {', '.join(str(x) for x in value)}")
+                else:
+                    lines.append(f"{prefix}{display_key}:")
+                    for item in value[:10]:  # Limit to 10 items
+                        lines.append(f"{prefix}  - {item}")
+                    if len(value) > 10:
+                        lines.append(f"{prefix}  ... and {len(value) - 10} more")
+            else:
+                # Complex list
+                lines.append(f"{prefix}{display_key}:")
+                for i, item in enumerate(value[:10]):
+                    if isinstance(item, dict):
+                        # Show dict items compactly
+                        summary = ", ".join(f"{k}={v}" for k, v in list(item.items())[:3])
+                        lines.append(f"{prefix}  - {summary}")
+                    else:
+                        lines.append(f"{prefix}  - {item}")
+                if len(value) > 10:
+                    lines.append(f"{prefix}  ... and {len(value) - 10} more")
+        elif isinstance(value, bool):
+            lines.append(f"{prefix}{display_key}: {'yes' if value else 'no'}")
+        elif isinstance(value, float):
+            # Format floats nicely
+            if value == int(value):
+                lines.append(f"{prefix}{display_key}: {int(value)}")
+            elif abs(value) < 0.01 or abs(value) >= 1000:
+                lines.append(f"{prefix}{display_key}: {value:.2e}")
+            else:
+                lines.append(f"{prefix}{display_key}: {value:.2f}")
+        else:
+            lines.append(f"{prefix}{display_key}: {value}")

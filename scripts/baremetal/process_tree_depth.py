@@ -245,14 +245,20 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.depth_warning >= opts.depth_critical:
         output.error("depth-warning must be less than depth-critical")
+
+        output.render(opts.format, "Monitor process tree depth to detect fork bombs")
         return 2
 
     if opts.child_warning >= opts.child_critical:
         output.error("child-warning must be less than child-critical")
+
+        output.render(opts.format, "Monitor process tree depth to detect fork bombs")
         return 2
 
     if opts.depth_warning < 1 or opts.child_warning < 1:
         output.error("Thresholds must be positive integers")
+
+        output.render(opts.format, "Monitor process tree depth to detect fork bombs")
         return 2
 
     # Gather process data
@@ -260,6 +266,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not processes:
         output.error("No processes found in /proc")
+
+        output.render(opts.format, "Monitor process tree depth to detect fork bombs")
         return 2
 
     # Analyze
@@ -293,6 +301,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"WARNING: {len(analysis['warnings'])} warning(s)")
     else:
         output.set_summary(f"Healthy (max depth: {analysis['max_depth']})")
+
+    output.render(opts.format, "Monitor process tree depth to detect fork bombs")
 
     return 1 if analysis['issues'] else 0
 

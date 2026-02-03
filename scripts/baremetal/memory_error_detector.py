@@ -193,6 +193,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             'memory_controllers': [],
             'analysis': {'severity': 'unknown', 'total_ce': 0, 'total_ue': 0},
         })
+
+        output.render(opts.format, "Detect and report memory errors (ECC/EDAC)")
         return 0  # Not an error - just no ECC support
 
     # Collect memory controller data
@@ -232,7 +234,11 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit code based on findings
     if analysis['total_ue'] > 0 or analysis['total_ce'] > 0:
+
+        output.render(opts.format, "Detect and report memory errors (ECC/EDAC)")
         return 1
+
+    output.render(opts.format, "Detect and report memory errors (ECC/EDAC)")
     return 0
 
 

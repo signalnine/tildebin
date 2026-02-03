@@ -343,10 +343,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if devices is None:
         output.error(f"Error: {error}")
+
+        output.render(opts.format, "Analyze PCIe topology, IOMMU groups, and NUMA placement")
         return 2
 
     if not devices:
         output.error("No PCIe devices found")
+
+        output.render(opts.format, "Analyze PCIe topology, IOMMU groups, and NUMA placement")
         return 2
 
     # Analyze devices
@@ -384,9 +388,13 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Set summary
     if issues:
         output.set_summary(f"{len(issues)} PCIe topology issue(s) detected")
+
+        output.render(opts.format, "Analyze PCIe topology, IOMMU groups, and NUMA placement")
         return 1
     else:
         output.set_summary(f"{len(devices)} PCIe device(s), no issues")
+
+        output.render(opts.format, "Analyze PCIe topology, IOMMU groups, and NUMA placement")
         return 0
 
 

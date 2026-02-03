@@ -398,6 +398,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for LVM tools
     if not context.check_tool("lvs"):
         output.error("LVM tools not found (lvs). Install lvm2 package.")
+
+        output.render(opts.format, "Monitor LVM logical volumes, volume groups, and physical volumes")
         return 2
 
     # Gather LVM information
@@ -409,6 +411,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not vgs and not lvs and not pvs:
         output.emit({"message": "No LVM configuration found", "issues": []})
         output.set_summary("No LVM configured")
+
+        output.render(opts.format, "Monitor LVM logical volumes, volume groups, and physical volumes")
         return 0
 
     # Analyze for issues
@@ -452,8 +456,12 @@ def run(args: list[str], output: Output, context: Context) -> int:
     has_warning = any(issue["severity"] == "WARNING" for issue in issues)
 
     if has_critical or has_warning:
+
+        output.render(opts.format, "Monitor LVM logical volumes, volume groups, and physical volumes")
         return 1
     else:
+
+        output.render(opts.format, "Monitor LVM logical volumes, volume groups, and physical volumes")
         return 0
 
 

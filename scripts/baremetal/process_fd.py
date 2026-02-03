@@ -171,17 +171,25 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.warn < 0 or opts.warn > 100:
         output.error("Warning threshold must be 0-100")
+
+        output.render(opts.format, "Monitor per-process file descriptor usage")
         return 2
     if opts.crit < 0 or opts.crit > 100:
         output.error("Critical threshold must be 0-100")
+
+        output.render(opts.format, "Monitor per-process file descriptor usage")
         return 2
     if opts.warn >= opts.crit:
         output.error("Warning threshold must be less than critical")
+
+        output.render(opts.format, "Monitor per-process file descriptor usage")
         return 2
 
     # Check if /proc is available
     if not context.file_exists('/proc'):
         output.error("/proc not available")
+
+        output.render(opts.format, "Monitor per-process file descriptor usage")
         return 2
 
     # Scan processes
@@ -189,6 +197,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not processes:
         output.error("Unable to read any process information")
+
+        output.render(opts.format, "Monitor per-process file descriptor usage")
         return 2
 
     # Analyze for warnings and critical issues
@@ -222,12 +232,18 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Set summary
     if critical:
         output.set_summary(f"CRITICAL: {len(critical)} process(es) approaching fd exhaustion")
+
+        output.render(opts.format, "Monitor per-process file descriptor usage")
         return 1
     elif warnings:
         output.set_summary(f"WARNING: {len(warnings)} process(es) with elevated fd usage")
+
+        output.render(opts.format, "Monitor per-process file descriptor usage")
         return 1
     else:
         output.set_summary(f"All {len(processes)} processes within safe fd thresholds")
+
+        output.render(opts.format, "Monitor per-process file descriptor usage")
         return 0
 
 

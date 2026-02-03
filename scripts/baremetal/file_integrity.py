@@ -224,6 +224,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             "timestamp": current["created"],
         })
         output.set_summary(f"Baseline created: {accessible}/{file_count} files")
+
+        output.render(opts.format, "Monitor critical system files for integrity violations")
         return 0
 
     # Mode: Report only
@@ -236,6 +238,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             },
         })
         output.set_summary(f"Scanned {len(current['files'])} files")
+
+        output.render(opts.format, "Monitor critical system files for integrity violations")
         return 0
 
     # Mode: Verify against baseline
@@ -245,9 +249,13 @@ def run(args: list[str], output: Output, context: Context) -> int:
     except FileNotFoundError:
         output.error(f"No baseline found at {baseline_path}")
         output.error("Create one with: --baseline")
+
+        output.render(opts.format, "Monitor critical system files for integrity violations")
         return 2
     except json.JSONDecodeError as e:
         output.error(f"Invalid baseline file: {e}")
+
+        output.render(opts.format, "Monitor critical system files for integrity violations")
         return 2
 
     # Verify
@@ -269,6 +277,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     critical_count = sum(1 for v in violations if v.get("severity") == "critical")
     output.set_summary(f"{len(violations)} violations, {len(warnings)} warnings")
 
+
+    output.render(opts.format, "Monitor critical system files for integrity violations")
     return 1 if violations else 0
 
 

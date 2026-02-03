@@ -222,17 +222,25 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.recv_warn > opts.recv_crit:
         output.error("Receive warning threshold cannot exceed critical")
+
+        output.render(opts.format, "Monitor socket queue depths to identify buffering issues")
         return 2
     if opts.send_warn > opts.send_crit:
         output.error("Send warning threshold cannot exceed critical")
+
+        output.render(opts.format, "Monitor socket queue depths to identify buffering issues")
         return 2
     if opts.listen_warn > opts.listen_crit:
         output.error("Listen warning threshold cannot exceed critical")
+
+        output.render(opts.format, "Monitor socket queue depths to identify buffering issues")
         return 2
 
     # Check for ss command
     if not context.check_tool("ss"):
         output.error("ss command not found")
+
+        output.render(opts.format, "Monitor socket queue depths to identify buffering issues")
         return 2
 
     # Collect socket information
@@ -250,6 +258,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
                 sockets.extend(parse_ss_output(result.stdout, 'udp'))
     except Exception as e:
         output.error(f"Failed to run ss command: {e}")
+
+        output.render(opts.format, "Monitor socket queue depths to identify buffering issues")
         return 2
 
     if not sockets:
@@ -260,6 +270,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             'summary': {'critical_count': 0, 'warning_count': 0}
         })
         output.set_summary("No sockets found to analyze")
+
+        output.render(opts.format, "Monitor socket queue depths to identify buffering issues")
         return 0
 
     # Analyze sockets
@@ -308,7 +320,11 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return exit code
     if issues['critical'] or issues['warning']:
+
+        output.render(opts.format, "Monitor socket queue depths to identify buffering issues")
         return 1
+
+    output.render(opts.format, "Monitor socket queue depths to identify buffering issues")
     return 0
 
 

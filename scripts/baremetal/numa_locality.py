@@ -236,6 +236,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     nodes = get_numa_nodes(context)
     if nodes is None or len(nodes) == 0:
         output.error("Not a NUMA system or NUMA topology not available")
+
+        output.render(opts.format, "Analyze NUMA memory locality and identify processes with poor affinity")
         return 2
 
     if len(nodes) == 1:
@@ -248,6 +250,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             'warnings': []
         })
         output.set_summary("UMA system - no locality issues")
+
+        output.render(opts.format, "Analyze NUMA memory locality and identify processes with poor affinity")
         return 0
 
     # Gather NUMA data
@@ -303,12 +307,18 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Set summary
     if analysis['issues']:
         output.set_summary(f"{len(analysis['issues'])} NUMA locality issue(s)")
+
+        output.render(opts.format, "Analyze NUMA memory locality and identify processes with poor affinity")
         return 1
     elif analysis['warnings']:
         output.set_summary(f"{len(analysis['warnings'])} NUMA warning(s)")
+
+        output.render(opts.format, "Analyze NUMA memory locality and identify processes with poor affinity")
         return 1
     else:
         output.set_summary(f"{len(nodes)} NUMA nodes, locality healthy")
+
+        output.render(opts.format, "Analyze NUMA memory locality and identify processes with poor affinity")
         return 0
 
 

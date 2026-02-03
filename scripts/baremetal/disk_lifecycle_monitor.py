@@ -310,6 +310,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if smartctl is available
     if not context.check_tool("smartctl"):
         output.error("smartctl not found. Install smartmontools package.")
+
+        output.render(opts.format, "Monitor disk lifecycle metrics for hardware refresh planning")
         return 2
 
     # Get disk list
@@ -325,6 +327,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not disks:
         output.warning("No disks found")
         output.emit({"disks": []})
+
+        output.render(opts.format, "Monitor disk lifecycle metrics for hardware refresh planning")
         return 1
 
     results = []
@@ -384,6 +388,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     critical = sum(1 for r in results if r["lifecycle_status"] == "critical")
     output.set_summary(f"{healthy} healthy, {warning} warning, {critical} critical")
 
+
+    output.render(opts.format, "Monitor disk lifecycle metrics for hardware refresh planning")
     return 1 if has_warnings else 0
 
 

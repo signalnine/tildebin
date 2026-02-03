@@ -283,6 +283,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if opts.system_only and opts.user_only:
         output.error("Cannot specify both --system-only and --user-only")
+
+        output.render(opts.format, "Monitor cron job health and configuration issues")
         return 2
 
     results: dict[str, Any] = {
@@ -414,6 +416,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{total_jobs} jobs, {jobs_with_issues} with issues")
     else:
         output.set_summary(f"{total_jobs} cron jobs healthy")
+
+    output.render(opts.format, "Monitor cron job health and configuration issues")
 
     return 1 if (has_critical or has_warning) else 0
 

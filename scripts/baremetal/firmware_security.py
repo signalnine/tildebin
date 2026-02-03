@@ -333,6 +333,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     else:
         output.set_summary("All security checks passed")
 
+    output.render(opts.format, "Audit firmware security settings for baremetal systems")
+
     return 1 if (issues or warnings) else 0
 
 

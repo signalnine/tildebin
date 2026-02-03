@@ -199,6 +199,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if thermal sysfs exists
     if not context.file_exists(THERMAL_BASE):
         output.error("/sys/class/thermal not found. System may not have thermal zone support.")
+
+        output.render(opts.format, "Monitor kernel thermal zones and cooling devices")
         return 2
 
     # Get thermal data
@@ -207,6 +209,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not zones:
         output.error("No thermal zones found. Check kernel configuration for CONFIG_THERMAL.")
+
+        output.render(opts.format, "Monitor kernel thermal zones and cooling devices")
         return 2
 
     # Filter if warn-only
@@ -240,6 +244,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{issue_count} thermal zone(s) with issues")
     else:
         output.set_summary(f"{len(all_zones)} thermal zone(s) OK")
+
+    output.render(opts.format, "Monitor kernel thermal zones and cooling devices")
 
     return 1 if has_issues else 0
 

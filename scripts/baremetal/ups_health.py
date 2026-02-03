@@ -236,6 +236,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not has_nut and not has_apc:
         output.error('No UPS monitoring tools found.')
         output.error('Install nut-client (upsc) or apcupsd (apcaccess)')
+
+        output.render(opts.format, "Monitor UPS (Uninterruptible Power Supply) status")
         return 2
 
     # Collect UPS data
@@ -248,6 +250,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             'message': 'No UPS devices found'
         })
         output.set_summary('No UPS devices found')
+
+        output.render(opts.format, "Monitor UPS (Uninterruptible Power Supply) status")
         return 0
 
     # Apply warn-only filter
@@ -292,8 +296,12 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Determine exit code
     if critical_count > 0 or warning_count > 0:
+
+        output.render(opts.format, "Monitor UPS (Uninterruptible Power Supply) status")
         return 1
 
+
+    output.render(opts.format, "Monitor UPS (Uninterruptible Power Supply) status")
     return 0
 
 

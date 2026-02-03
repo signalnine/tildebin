@@ -109,6 +109,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if nvidia-smi is available
     if not context.check_tool("nvidia-smi"):
         output.error("nvidia-smi not found. NVIDIA drivers may not be installed.")
+
+        output.render(opts.format, "Monitor GPU health and performance using nvidia-smi")
         return 2
 
     # Query format for detailed GPU information
@@ -141,6 +143,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         ], check=True)
     except Exception as e:
         output.error(f"Failed to run nvidia-smi: {e}")
+
+        output.render(opts.format, "Monitor GPU health and performance using nvidia-smi")
         return 2
 
     gpus = []
@@ -195,6 +199,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not gpus:
         output.warning("No NVIDIA GPUs detected")
         output.emit({"gpus": []})
+
+        output.render(opts.format, "Monitor GPU health and performance using nvidia-smi")
         return 0
 
     # Filter for warn-only mode
@@ -223,6 +229,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return 1 if any issues
     has_issues = warning > 0 or critical > 0
+
+    output.render(opts.format, "Monitor GPU health and performance using nvidia-smi")
     return 1 if has_issues else 0
 
 

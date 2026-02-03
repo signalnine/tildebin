@@ -297,6 +297,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if USB sysfs is available
     if not context.file_exists(USB_SYS_PATH):
         output.error("/sys/bus/usb/devices not found. USB sysfs may not be available.")
+
+        output.render(opts.format, "Monitor USB devices for security compliance")
         return 2
 
     # Load whitelist if specified
@@ -311,6 +313,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     devices = get_usb_devices(context)
     if devices is None:
         output.error("Could not enumerate USB devices")
+
+        output.render(opts.format, "Monitor USB devices for security compliance")
         return 2
 
     # Analyze devices
@@ -338,6 +342,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         # No output needed in warn-only mode if no issues
         output.emit({"summary": output_data["summary"], "issues": [], "has_issues": False})
         output.set_summary("No flagged USB devices")
+
+        output.render(opts.format, "Monitor USB devices for security compliance")
         return 0
 
     output.emit(output_data)
@@ -347,11 +353,15 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(
             f"{len(results['flagged_devices'])} flagged USB device(s) detected"
         )
+
+        output.render(opts.format, "Monitor USB devices for security compliance")
         return 1
     else:
         output.set_summary(
             f"{results['total_devices']} USB device(s), no issues"
         )
+
+        output.render(opts.format, "Monitor USB devices for security compliance")
         return 0
 
 

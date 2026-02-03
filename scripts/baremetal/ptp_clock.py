@@ -306,6 +306,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
                 {"status": health["status"], "issues": [], "warnings": [], "devices": []}
             )
             output.set_summary("PTP healthy")
+
+            output.render(opts.format, "Monitor PTP (Precision Time Protocol) clock synchronization")
             return 0
 
     # Build output data
@@ -337,10 +339,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Determine exit code
     if health["status"] == "no_ptp":
+
+        output.render(opts.format, "Monitor PTP (Precision Time Protocol) clock synchronization")
         return 2
     elif health["status"] in ("degraded", "acquiring", "unknown") or health["issues"]:
+
+        output.render(opts.format, "Monitor PTP (Precision Time Protocol) clock synchronization")
         return 1
     else:
+
+        output.render(opts.format, "Monitor PTP (Precision Time Protocol) clock synchronization")
         return 0
 
 

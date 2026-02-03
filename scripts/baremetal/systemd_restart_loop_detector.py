@@ -205,19 +205,27 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate arguments
     if opts.hours <= 0:
         output.error("Hours must be a positive number")
+
+        output.render(opts.format, "Detect systemd services stuck in restart loops")
         return 2
 
     if opts.threshold <= 0:
         output.error("Threshold must be a positive number")
+
+        output.render(opts.format, "Detect systemd services stuck in restart loops")
         return 2
 
     # Check for required tools
     if not context.check_tool("systemctl"):
         output.error("systemctl not found. This system may not use systemd.")
+
+        output.render(opts.format, "Detect systemd services stuck in restart loops")
         return 2
 
     if not context.check_tool("journalctl"):
         output.error("journalctl not found. This system may not use systemd.")
+
+        output.render(opts.format, "Detect systemd services stuck in restart loops")
         return 2
 
     # Detect restart loops
@@ -258,6 +266,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"{len(loops)} services in restart loop ({critical_count} critical)")
     else:
         output.set_summary("No restart loops detected")
+
+    output.render(opts.format, "Detect systemd services stuck in restart loops")
 
     return 1 if loops else 0
 

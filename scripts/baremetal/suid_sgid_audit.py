@@ -155,6 +155,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for find command
     if not context.check_tool("find"):
         output.error("find command not found")
+
+        output.render(opts.format, "Audit SUID and SGID binaries for security issues")
         return 2
 
     # Set default paths
@@ -176,6 +178,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         files = parse_find_output(result.stdout)
     except Exception as e:
         output.error(f"Failed to run find command: {e}")
+
+        output.render(opts.format, "Audit SUID and SGID binaries for security issues")
         return 2
 
     if not files:
@@ -186,6 +190,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             'files': [],
         })
         output.set_summary("No SUID/SGID files found")
+
+        output.render(opts.format, "Audit SUID and SGID binaries for security issues")
         return 0
 
     # Analyze files
@@ -225,7 +231,11 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return 1 if suspicious or unexpected binaries found
     if suspicious_count > 0:
+
+        output.render(opts.format, "Audit SUID and SGID binaries for security issues")
         return 1
+
+    output.render(opts.format, "Audit SUID and SGID binaries for security issues")
     return 0
 
 

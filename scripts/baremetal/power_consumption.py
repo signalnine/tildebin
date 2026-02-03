@@ -173,6 +173,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not all_readings:
         output.warning("No power sensors found")
         output.emit({"readings": []})
+
+        output.render(opts.format, "Monitor power consumption using IPMI and RAPL")
         return 0
 
     # Filter for warn-only mode
@@ -199,6 +201,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return 1 if any issues
     has_issues = warnings > 0 or critical > 0
+
+    output.render(opts.format, "Monitor power consumption using IPMI and RAPL")
     return 1 if has_issues else 0
 
 

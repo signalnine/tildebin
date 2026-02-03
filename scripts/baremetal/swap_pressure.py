@@ -235,29 +235,43 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate arguments
     if opts.warn < 0 or opts.warn > 100:
         output.error("--warn must be between 0 and 100")
+
+        output.render(opts.format, "Analyze swap usage patterns and memory pressure")
         return 2
     if opts.crit < 0 or opts.crit > 100:
         output.error("--crit must be between 0 and 100")
+
+        output.render(opts.format, "Analyze swap usage patterns and memory pressure")
         return 2
     if opts.crit < opts.warn:
         output.error("--crit must be >= --warn")
+
+        output.render(opts.format, "Analyze swap usage patterns and memory pressure")
         return 2
     if opts.swap_rate_warn < 0:
         output.error("--swap-rate-warn must be non-negative")
+
+        output.render(opts.format, "Analyze swap usage patterns and memory pressure")
         return 2
     if opts.sample_interval <= 0:
         output.error("--sample-interval must be positive")
+
+        output.render(opts.format, "Analyze swap usage patterns and memory pressure")
         return 2
 
     # Check if we can read /proc
     if not context.file_exists('/proc/meminfo'):
         output.error("/proc/meminfo not available")
+
+        output.render(opts.format, "Analyze swap usage patterns and memory pressure")
         return 2
 
     # Get memory info
     meminfo = read_meminfo(context)
     if meminfo is None:
         output.error("Unable to read memory information")
+
+        output.render(opts.format, "Analyze swap usage patterns and memory pressure")
         return 2
 
     # Get swap rates (optional)
@@ -302,6 +316,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Exit code
     if analysis['status'] in ['critical', 'warning']:
+
+        output.render(opts.format, "Analyze swap usage patterns and memory pressure")
         return 1
     return 0
 

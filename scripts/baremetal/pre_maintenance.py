@@ -449,6 +449,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Verify /proc is available
     if not context.file_exists('/proc'):
         output.error("/proc filesystem not available")
+
+        output.render(opts.format, "Pre-maintenance validation checker for baremetal systems")
         return 2
 
     # Run all checks
@@ -485,12 +487,18 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Set summary
     if critical_count > 0:
         output.set_summary(f"CRITICAL: {critical_count} critical issue(s) found")
+
+        output.render(opts.format, "Pre-maintenance validation checker for baremetal systems")
         return 1
     elif warning_count > 0:
         output.set_summary(f"WARNING: {warning_count} warning(s) found")
+
+        output.render(opts.format, "Pre-maintenance validation checker for baremetal systems")
         return 1
     else:
         output.set_summary("All pre-maintenance checks passed")
+
+        output.render(opts.format, "Pre-maintenance validation checker for baremetal systems")
         return 0
 
 

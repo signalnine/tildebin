@@ -185,17 +185,23 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for systemd-analyze
     if not context.check_tool("systemd-analyze"):
         output.error("systemd-analyze not found. This tool requires systemd.")
+
+        output.render(opts.format, "Monitor system boot performance and systemd initialization times")
         return 2
 
     # Get overall boot time
     result = context.run(['systemd-analyze'], check=False)
     if result.returncode != 0:
         output.error(f"systemd-analyze failed: {result.stderr}")
+
+        output.render(opts.format, "Monitor system boot performance and systemd initialization times")
         return 2
 
     boot_times = parse_boot_time(result.stdout)
     if not boot_times:
         output.error("Failed to parse boot time output")
+
+        output.render(opts.format, "Monitor system boot performance and systemd initialization times")
         return 2
 
     # Get slow services
@@ -239,6 +245,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"boot time {boot_times['total']:.1f}s exceeds thresholds")
     else:
         output.set_summary(f"boot time {boot_times['total']:.1f}s")
+
+    output.render(opts.format, "Monitor system boot performance and systemd initialization times")
 
     return 1 if has_warnings else 0
 

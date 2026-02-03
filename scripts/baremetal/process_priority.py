@@ -232,6 +232,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if /proc is accessible
     if not context.file_exists('/proc'):
         output.error("/proc filesystem not accessible")
+
+        output.render(opts.format, "Monitor process niceness and I/O priority")
         return 2
 
     # Get process information
@@ -260,12 +262,18 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Set summary and exit code
     if summary['elevated_nice_count'] > 0:
         output.set_summary(f"{summary['elevated_nice_count']} process(es) with elevated priority")
+
+        output.render(opts.format, "Monitor process niceness and I/O priority")
         return 1
     elif summary['total_issues'] > 0:
         output.set_summary(f"{summary['total_issues']} priority issue(s) detected")
+
+        output.render(opts.format, "Monitor process niceness and I/O priority")
         return 0  # Degraded priority is informational, not a warning
     else:
         output.set_summary("No priority issues detected")
+
+        output.render(opts.format, "Monitor process niceness and I/O priority")
         return 0
 
 

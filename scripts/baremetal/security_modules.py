@@ -347,10 +347,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate arguments
     if opts.hours < 1:
         output.error("--hours must be at least 1")
+
+        output.render(opts.format, "Monitor SELinux and AppArmor security policy status")
         return 2
 
     if opts.limit < 1:
         output.error("--limit must be at least 1")
+
+        output.render(opts.format, "Monitor SELinux and AppArmor security policy status")
         return 2
 
     # Check for LSM availability
@@ -359,6 +363,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not selinux_avail and not apparmor_avail:
         output.error("Neither SELinux nor AppArmor detected on this system")
+
+        output.render(opts.format, "Monitor SELinux and AppArmor security policy status")
         return 2
 
     # Get status
@@ -413,6 +419,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     elif apparmor['available']:
         status = 'enabled' if apparmor['enabled'] else 'disabled'
         output.set_summary(f"AppArmor: {status}, {len(denials)} denials")
+
+    output.render(opts.format, "Monitor SELinux and AppArmor security policy status")
 
     return 1 if has_warning else 0
 

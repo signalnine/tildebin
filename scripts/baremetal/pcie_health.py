@@ -133,6 +133,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check if lspci is available
     if not context.check_tool("lspci"):
         output.error("lspci not found. Install pciutils package.")
+
+        output.render(opts.format, "Monitor PCIe device health and link status")
         return 2
 
     # Get all PCIe devices
@@ -140,6 +142,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         result = context.run(['lspci', '-D'], check=True)
     except Exception as e:
         output.error(f"Failed to run lspci: {e}")
+
+        output.render(opts.format, "Monitor PCIe device health and link status")
         return 2
 
     devices = []
@@ -155,6 +159,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not devices:
         output.warning("No PCIe devices found")
         output.emit({"devices": []})
+
+        output.render(opts.format, "Monitor PCIe device health and link status")
         return 0
 
     # Gather detailed information and check health
@@ -243,6 +249,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Return 1 if any issues
     has_issues = warning > 0 or critical > 0
+
+    output.render(opts.format, "Monitor PCIe device health and link status")
     return 1 if has_issues else 0
 
 

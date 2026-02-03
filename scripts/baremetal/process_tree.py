@@ -275,14 +275,20 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Validate thresholds
     if opts.max_depth < 1:
         output.error("--max-depth must be >= 1")
+
+        output.render(opts.format, "Analyze process tree for orphans and anomalies")
         return 2
 
     if opts.max_children < 1:
         output.error("--max-children must be >= 1")
+
+        output.render(opts.format, "Analyze process tree for orphans and anomalies")
         return 2
 
     if opts.orphan_age < 0:
         output.error("--orphan-age must be >= 0")
+
+        output.render(opts.format, "Analyze process tree for orphans and anomalies")
         return 2
 
     thresholds = {
@@ -297,6 +303,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     if not processes:
         output.error("Could not read process information")
+
+        output.render(opts.format, "Analyze process tree for orphans and anomalies")
         return 2
 
     # Build process tree
@@ -328,6 +336,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary("No anomalies detected")
     else:
         output.set_summary(f"{issue_count} issue(s), {warning_count} warning(s)")
+
+    output.render(opts.format, "Analyze process tree for orphans and anomalies")
 
     return 1 if issues or warnings else 0
 

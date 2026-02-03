@@ -163,6 +163,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for iostat
     if not context.check_tool("iostat"):
         output.error("iostat not found. Install sysstat package.")
+
+        output.render(opts.format, "Monitor disk I/O performance and identify bottlenecks")
         return 2
 
     # Run iostat with extended stats (-x) for 2 iterations, 1 second apart
@@ -170,6 +172,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         result = context.run(['iostat', '-x', '-d', '1', '2'], check=True)
     except Exception as e:
         output.error(f"Failed to run iostat: {e}")
+
+        output.render(opts.format, "Monitor disk I/O performance and identify bottlenecks")
         return 2
 
     # Parse device statistics
@@ -178,6 +182,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if not devices:
         output.warning("No disk devices found")
         output.emit({"devices": []})
+
+        output.render(opts.format, "Monitor disk I/O performance and identify bottlenecks")
         return 0
 
     # Analyze each device
@@ -221,6 +227,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     critical = sum(1 for r in results if r['status'] == 'critical')
     output.set_summary(f"{healthy} healthy, {warning} warning, {critical} critical")
 
+
+    output.render(opts.format, "Monitor disk I/O performance and identify bottlenecks")
     return 1 if has_issues else 0
 
 

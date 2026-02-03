@@ -278,6 +278,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check for InfiniBand sysfs
     if not context.file_exists("/sys/class/infiniband"):
         output.error("No InfiniBand devices found (/sys/class/infiniband not present)")
+
+        output.render(opts.format, "Monitor InfiniBand and RDMA health for HPC environments")
         return 2
 
     # Gather data
@@ -287,6 +289,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # If no devices found, exit with error
     if not devices:
         output.error("No InfiniBand devices found")
+
+        output.render(opts.format, "Monitor InfiniBand and RDMA health for HPC environments")
         return 2
 
     # Analyze health
@@ -327,6 +331,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     # Determine exit code
     has_issues = any(i["severity"] in ("ERROR", "WARNING") for i in issues)
+
+    output.render(opts.format, "Monitor InfiniBand and RDMA health for HPC environments")
     return 1 if has_issues else 0
 
 
