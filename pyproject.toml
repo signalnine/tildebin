@@ -20,6 +20,10 @@ dev = [
 [project.scripts]
 boxctl = "boxctl.cli:main"
 
+[tool.setuptools.packages.find]
+include = ["boxctl*", "scripts*"]
+exclude = ["skills*", "legacy*", "tests*", "docs*"]
+
 [tool.coverage.run]
 source = ["boxctl"]
 branch = true
