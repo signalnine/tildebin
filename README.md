@@ -217,6 +217,44 @@ DISK       STATUS   TEMP   HOURS
 /dev/sdb   HEALTHY  34C    8,901
 ```
 
+## Claude Code Skills
+
+boxctl includes Claude Skills for AI-assisted troubleshooting with Claude Code.
+
+### Available Skills
+
+| Skill | Invocation | Purpose |
+|-------|------------|---------|
+| `boxctl-discovery` | Auto / `/discover` | Find relevant scripts based on symptoms |
+| `baremetal-troubleshooting` | `/baremetal` | Guided system investigation with step tracking |
+| `k8s-troubleshooting` | `/k8s` | Graph-based Kubernetes investigation |
+
+### Installation
+
+```bash
+# Copy skills to Claude Code
+cp -r skills/* ~/.claude/skills/
+```
+
+### Usage
+
+Once installed, Claude Code will automatically suggest relevant boxctl scripts when you describe system issues:
+
+```
+You: "The server load average is really high"
+
+Claude: I found these relevant scripts:
+- loadavg_analyzer - breaks down load contributors
+- cpu_usage - monitor CPU time distribution
+- context_switch_monitor - detect CPU contention
+
+Use /baremetal to start investigation.
+```
+
+Then invoke `/baremetal` for guided troubleshooting with step tracking, hypothesis testing, and root cause analysis.
+
+See `docs/plans/2025-02-03-boxctl-skills-design.md` for full design documentation.
+
 ## Installation
 
 ```bash
