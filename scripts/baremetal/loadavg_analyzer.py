@@ -269,10 +269,11 @@ def run(args: list[str], output: Output, context: Context) -> int:
         f"{loadavg['load_15min']:.2f} ({analysis['status']})"
     )
 
+    # Render output
+    output.render(opts.format, "Analyze system load average and CPU scheduling pressure")
+
     # Return exit code
     if analysis['status'] in ['critical', 'warning']:
-
-        output.render(opts.format, "Analyze system load average and CPU scheduling pressure")
         return 1
     return 0
 
