@@ -100,3 +100,17 @@ Same as baremetal:
 | Pending pods | node_health, resource_usage | Insufficient resources, taints |
 | Service unreachable | service_health, endpoint_health | Selector mismatch, no ready pods |
 | Slow response | api_latency, resource_usage | CPU throttling, overloaded nodes |
+
+## Dead Ends
+
+When you can't find a script for what you need:
+
+1. Confirm no existing script covers it: `boxctl search "your terms"`
+2. File a request:
+   ```bash
+   boxctl request "capability needed" \
+     --searched "terms you tried" \
+     --context "what you were investigating"
+   ```
+3. Document the gap in your investigation summary
+4. Continue with alternative approaches if possible

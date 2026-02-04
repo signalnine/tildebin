@@ -85,3 +85,17 @@ Before using `--sudo`:
 | Ignoring exit codes | 0=healthy, 1=issues, 2=error |
 | Too many scripts at once | One at a time, interpret before next |
 | No step count | Always show "Step N/10" |
+
+## Dead Ends
+
+When you can't find a script for what you need:
+
+1. Confirm no existing script covers it: `boxctl search "your terms"`
+2. File a request:
+   ```bash
+   boxctl request "capability needed" \
+     --searched "terms you tried" \
+     --context "what you were investigating"
+   ```
+3. Document the gap in your investigation summary
+4. Continue with alternative approaches if possible

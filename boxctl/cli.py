@@ -2,12 +2,14 @@
 
 import argparse
 import shutil
+import subprocess
 import sys
 from collections import defaultdict
 from pathlib import Path
 
 from boxctl import __version__
 from boxctl.core import discover_scripts, filter_scripts, run_script, needs_privilege
+from boxctl.core.config import resolve_issue_platform
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -88,6 +90,24 @@ def create_parser() -> argparse.ArgumentParser:
         "scripts",
         nargs="*",
         help="Specific scripts to lint (default: all)",
+    )
+
+    # request command
+    request_parser = subparsers.add_parser(
+        "request",
+        help="Request a new script capability (files GitHub/GitLab issue)"
+    )
+    request_parser.add_argument(
+        "capability",
+        help="Description of the needed capability",
+    )
+    request_parser.add_argument(
+        "--searched",
+        help="Search terms tried (comma-separated)",
+    )
+    request_parser.add_argument(
+        "--context",
+        help="Investigation context that led to this request",
     )
 
     return parser
@@ -269,6 +289,70 @@ def cmd_lint(args: argparse.Namespace) -> int:
     return 1 if total_errors > 0 else 0
 
 
+def cmd_request(args: argparse.Namespace) -> int:
+    """Request a new script capability by filing a GitHub/GitLab issue."""
+    # Determine platform
+    platform = resolve_issue_platform()
+
+    if not platform:
+        print("Error: Could not determine issue platform.", file=sys.stderr)
+        print("Options:", file=sys.stderr)
+        print("  1. Set 'issue_platform: github' in .boxctl.yaml", file=sys.stderr)
+        print("  2. Set 'issue_platform: gitlab' in ~/.config/boxctl/config.yaml", file=sys.stderr)
+        print("  3. Ensure git remote points to github.com or gitlab.com", file=sys.stderr)
+        return 2
+
+    # Check for CLI tool
+    cli_tool = 'gh' if platform == 'github' else 'glab'
+    if not shutil.which(cli_tool):
+        print(f"Error: {cli_tool} CLI not found.", file=sys.stderr)
+        print(f"Install it to file {platform.title()} issues.", file=sys.stderr)
+        return 2
+
+    # Build issue body
+    body_lines = [
+        "## Requested Capability",
+        args.capability,
+        "",
+    ]
+
+    if args.searched:
+        body_lines.extend([
+            "## Searches Tried",
+            args.searched,
+            "",
+        ])
+
+    if args.context:
+        body_lines.extend([
+            "## Investigation Context",
+            args.context,
+            "",
+        ])
+
+    body_lines.extend([
+        "---",
+        "*Filed by LLM agent via `boxctl request`*",
+    ])
+
+    body = "\n".join(body_lines)
+    title = f"Script request: {args.capability}"
+
+    # Create issue
+    if platform == 'github':
+        cmd = ['gh', 'issue', 'create', '--title', title, '--body', body, '--label', 'script-request']
+    else:
+        cmd = ['glab', 'issue', 'create', '--title', title, '--description', body, '--label', 'script-request']
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        print(result.stdout, end="")
+        return 0
+    except subprocess.CalledProcessError as e:
+        print(f"Error creating issue: {e.stderr}", file=sys.stderr)
+        return 1
+
+
 def cmd_doctor(args: argparse.Namespace) -> int:
     """Check system health and tool availability."""
     scripts = discover_scripts(args.scripts_dir)
@@ -348,6 +432,7 @@ def main(argv: list[str] | None = None) -> int:
         "search": cmd_search,
         "doctor": cmd_doctor,
         "lint": cmd_lint,
+        "request": cmd_request,
     }
 
     return commands[args.command](args)
