@@ -159,9 +159,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.render(opts.format, "Audit SUID and SGID binaries for security issues")
         return 2
 
-    # Set default paths
+    # Set default paths with comprehensive exclusions for speed
     search_paths = opts.paths or ['/']
-    exclude_paths = opts.excludes or ['/proc', '/sys', '/run', '/dev']
+    exclude_paths = opts.excludes or [
+        '/proc', '/sys', '/run', '/dev',
+        '/snap', '/var/snap',  # Snap packages (many small filesystems)
+        '/var/lib/docker', '/var/lib/containers',  # Container storage
+        '/var/lib/lxd', '/var/lib/lxc',  # LXC/LXD
+        '/mnt', '/media',  # Mounted filesystems
+        '/nfs', '/cifs',  # Network filesystems
+    ]
 
     # Build and run find command
     # find / -path /proc -prune -o -path /sys -prune -o -type f \( -perm -4000 -o -perm -2000 \) -print

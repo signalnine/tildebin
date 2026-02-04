@@ -65,3 +65,14 @@ class Context:
     def cpu_count(self) -> int:
         """Get CPU count."""
         return os.cpu_count() or 1
+
+    def readlink(self, path: str) -> str:
+        """Read symlink target. Returns empty string on error."""
+        try:
+            return os.readlink(path)
+        except (OSError, ValueError):
+            return ""
+
+    def is_dir(self, path: str) -> bool:
+        """Check if path is a directory."""
+        return Path(path).is_dir()

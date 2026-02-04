@@ -226,7 +226,9 @@ def run(args: list[str], output: Output, context: Context) -> int:
         for fd_path in fd_list:
             fd_num = fd_path.split("/")[-1]
             try:
-                target = context.read_file(fd_path).strip()
+                target = context.readlink(fd_path)
+                if not target:
+                    continue
                 if "inotify" in target:
                     proc_instances += 1
 

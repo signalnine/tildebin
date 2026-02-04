@@ -63,22 +63,25 @@ print("user")
 class TestRunScriptWithPrivilege:
     """Tests for run_script with privilege escalation."""
 
-    def test_uses_sudo_for_privileged_script(self, mock_context, tmp_path):
+    def test_uses_sudo_for_privileged_script(self, mock_context, tmp_path, monkeypatch):
         """Uses sudo when script requires root privilege."""
         script_file = tmp_path / "priv.py"
         script_file.write_text(PRIVILEGED_SCRIPT)
 
+        # Set PYTHONPATH to match test expectation
+        monkeypatch.setenv("PYTHONPATH", ".")
+
         ctx = mock_context(
             tools_available=["sudo", "python3"],
             command_outputs={
-                ("sudo", "python3", str(script_file)): "running as root\n",
+                ("sudo", "PYTHONPATH=.", "python3", str(script_file)): "running as root\n",
             }
         )
 
         result = run_script(script_file, context=ctx, use_sudo=True)
 
         assert result.success is True
-        assert ["sudo", "python3", str(script_file)] in ctx.commands_run
+        assert ["sudo", "PYTHONPATH=.", "python3", str(script_file)] in ctx.commands_run
 
     def test_no_sudo_when_not_needed(self, mock_context, tmp_path):
         """Does not use sudo when script doesn't need privilege."""
@@ -97,15 +100,18 @@ class TestRunScriptWithPrivilege:
         assert result.success is True
         assert ["python3", str(script_file)] in ctx.commands_run
 
-    def test_sudo_with_arguments(self, mock_context, tmp_path):
+    def test_sudo_with_arguments(self, mock_context, tmp_path, monkeypatch):
         """Passes arguments through sudo."""
         script_file = tmp_path / "priv.py"
         script_file.write_text(PRIVILEGED_SCRIPT)
 
+        # Set PYTHONPATH to match test expectation
+        monkeypatch.setenv("PYTHONPATH", ".")
+
         ctx = mock_context(
             tools_available=["sudo", "python3"],
             command_outputs={
-                ("sudo", "python3", str(script_file), "--arg", "value"): "output\n",
+                ("sudo", "PYTHONPATH=.", "python3", str(script_file), "--arg", "value"): "output\n",
             }
         )
 
@@ -117,4 +123,4 @@ class TestRunScriptWithPrivilege:
         )
 
         assert result.success is True
-        assert ["sudo", "python3", str(script_file), "--arg", "value"] in ctx.commands_run
+        assert ["sudo", "PYTHONPATH=.", "python3", str(script_file), "--arg", "value"] in ctx.commands_run

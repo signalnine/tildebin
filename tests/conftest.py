@@ -125,6 +125,23 @@ class MockContext:
         """Return mocked CPU count."""
         return int(self.env.get("cpu_count", "1"))
 
+    def readlink(self, path: str) -> str:
+        """Return mocked symlink target.
+
+        In mock mode, symlink targets are stored as file contents.
+        Returns empty string if path not found (like real implementation).
+        """
+        return self.file_contents.get(path, "")
+
+    def is_dir(self, path: str) -> bool:
+        """Check if path is a directory.
+
+        In mock mode, a path is a directory if any file_contents path
+        starts with that path + "/".
+        """
+        path_with_slash = path.rstrip("/") + "/"
+        return any(p.startswith(path_with_slash) for p in self.file_contents.keys())
+
 
 @pytest.fixture
 def mock_context():

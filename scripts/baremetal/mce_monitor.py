@@ -104,7 +104,9 @@ def get_cpu_mce_info(context: Context) -> list[dict[str, Any]]:
                     "bank": int(bank_num),
                     "control": bank_value,
                 })
-            except (FileNotFoundError, PermissionError, ValueError):
+            except (FileNotFoundError, PermissionError, ValueError, OSError):
+                # OSError can occur on some systems (e.g., AMD EPYC) where
+                # bank files exist but cannot be read
                 pass
 
         cpu_info.append(info)

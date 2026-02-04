@@ -35,7 +35,8 @@ def get_interface_list(context: Context) -> list[str]:
         entries = context.glob("*", "/sys/class/net")
         for entry in entries:
             iface = entry.split("/")[-1]
-            if iface and iface != "lo":
+            # Skip loopback and special files (like bonding_masters)
+            if iface and iface != "lo" and context.is_dir(entry):
                 interfaces.append(iface)
     except Exception:
         pass

@@ -6,6 +6,27 @@ from pathlib import Path
 from boxctl.core.output import Output
 
 
+# Default exclusion paths used by suid_sgid_audit
+DEFAULT_EXCLUDES = [
+    '/proc', '/sys', '/run', '/dev',
+    '/snap', '/var/snap',
+    '/var/lib/docker', '/var/lib/containers',
+    '/var/lib/lxd', '/var/lib/lxc',
+    '/mnt', '/media',
+    '/nfs', '/cifs',
+]
+
+
+def build_find_cmd(search_paths: list[str], exclude_paths: list[str] | None = None) -> tuple:
+    """Build the expected find command tuple."""
+    excludes = exclude_paths or DEFAULT_EXCLUDES
+    cmd = ['find'] + search_paths
+    for exc in excludes:
+        cmd.extend(['-path', exc, '-prune', '-o'])
+    cmd.extend(['-type', 'f', '(', '-perm', '-4000', '-o', '-perm', '-2000', ')', '-print'])
+    return tuple(cmd)
+
+
 @pytest.fixture
 def find_suid_clean(fixtures_dir):
     """Load clean SUID find output."""
@@ -41,10 +62,7 @@ class TestSuidSgidAudit:
         ctx = mock_context(
             tools_available=["find"],
             command_outputs={
-                tuple(['find', '/', '-path', '/proc', '-prune', '-o',
-                       '-path', '/sys', '-prune', '-o', '-path', '/run', '-prune', '-o',
-                       '-path', '/dev', '-prune', '-o',
-                       '-type', 'f', '(', '-perm', '-4000', '-o', '-perm', '-2000', ')', '-print']): "",
+                build_find_cmd(['/']):  "",
             }
         )
         output = Output()
@@ -61,10 +79,7 @@ class TestSuidSgidAudit:
         ctx = mock_context(
             tools_available=["find"],
             command_outputs={
-                tuple(['find', '/', '-path', '/proc', '-prune', '-o',
-                       '-path', '/sys', '-prune', '-o', '-path', '/run', '-prune', '-o',
-                       '-path', '/dev', '-prune', '-o',
-                       '-type', 'f', '(', '-perm', '-4000', '-o', '-perm', '-2000', ')', '-print']): find_suid_clean,
+                build_find_cmd(['/']): find_suid_clean,
             }
         )
         output = Output()
@@ -81,10 +96,7 @@ class TestSuidSgidAudit:
         ctx = mock_context(
             tools_available=["find"],
             command_outputs={
-                tuple(['find', '/', '-path', '/proc', '-prune', '-o',
-                       '-path', '/sys', '-prune', '-o', '-path', '/run', '-prune', '-o',
-                       '-path', '/dev', '-prune', '-o',
-                       '-type', 'f', '(', '-perm', '-4000', '-o', '-perm', '-2000', ')', '-print']): find_suid_issues,
+                build_find_cmd(['/']): find_suid_issues,
             }
         )
         output = Output()
@@ -103,10 +115,7 @@ class TestSuidSgidAudit:
         ctx = mock_context(
             tools_available=["find"],
             command_outputs={
-                tuple(['find', '/', '-path', '/proc', '-prune', '-o',
-                       '-path', '/sys', '-prune', '-o', '-path', '/run', '-prune', '-o',
-                       '-path', '/dev', '-prune', '-o',
-                       '-type', 'f', '(', '-perm', '-4000', '-o', '-perm', '-2000', ')', '-print']): find_output,
+                build_find_cmd(['/']): find_output,
             }
         )
         output = Output()
@@ -123,10 +132,7 @@ class TestSuidSgidAudit:
         ctx = mock_context(
             tools_available=["find"],
             command_outputs={
-                tuple(['find', '/usr', '-path', '/proc', '-prune', '-o',
-                       '-path', '/sys', '-prune', '-o', '-path', '/run', '-prune', '-o',
-                       '-path', '/dev', '-prune', '-o',
-                       '-type', 'f', '(', '-perm', '-4000', '-o', '-perm', '-2000', ')', '-print']): find_suid_clean,
+                build_find_cmd(['/usr']): find_suid_clean,
             }
         )
         output = Output()
@@ -144,10 +150,7 @@ class TestSuidSgidAudit:
         ctx = mock_context(
             tools_available=["find"],
             command_outputs={
-                tuple(['find', '/', '-path', '/proc', '-prune', '-o',
-                       '-path', '/sys', '-prune', '-o', '-path', '/run', '-prune', '-o',
-                       '-path', '/dev', '-prune', '-o',
-                       '-type', 'f', '(', '-perm', '-4000', '-o', '-perm', '-2000', ')', '-print']): find_output,
+                build_find_cmd(['/']): find_output,
             }
         )
         output = Output()

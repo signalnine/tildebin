@@ -149,7 +149,9 @@ def build_inode_to_process_map(context: Context) -> dict[str, dict]:
         for fd_path in fd_entries:
             try:
                 # Read symlink target
-                link = context.read_file(fd_path)
+                link = context.readlink(fd_path)
+                if not link:
+                    continue
                 if link.startswith("socket:["):
                     inode = link[8:-1]
                     if inode not in inode_map:

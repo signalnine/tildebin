@@ -101,6 +101,18 @@ def run(args: list[str], output: Output, context: Context) -> int:
         action="store_true",
         help="Show detailed information"
     )
+    parser.add_argument(
+        "-x", "--one-file-system",
+        action="store_true",
+        default=True,
+        help="Stay on one filesystem (default: true)"
+    )
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        dest="excludes",
+        help="Exclude pattern (can be repeated)"
+    )
 
     opts = parser.parse_args(args)
 
@@ -138,7 +150,19 @@ def run(args: list[str], output: Output, context: Context) -> int:
         return 2
 
     # Run du command
-    cmd = ['du', '-a', f'--max-depth={opts.depth}', '-h', opts.path]
+    cmd = ['du', '-a', f'--max-depth={opts.depth}', '-h']
+
+    # Stay on one filesystem to avoid slow network/pseudo mounts
+    if opts.one_file_system:
+        cmd.append('-x')
+
+    # Add exclusions
+    default_excludes = ['/proc', '/sys', '/dev', '/run', '/snap', '/var/snap']
+    excludes = (opts.excludes or []) + default_excludes
+    for exc in excludes:
+        cmd.extend(['--exclude', exc])
+
+    cmd.append(opts.path)
 
     try:
         result = context.run(cmd, check=False, timeout=300)

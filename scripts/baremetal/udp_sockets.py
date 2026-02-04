@@ -140,9 +140,10 @@ def get_inode_to_pid_map(context: Context) -> dict[int, tuple[int, str]]:
             fd_files = context.glob('*', f'{proc_dir}/fd')
             for fd_path in fd_files:
                 try:
-                    # In real execution, we'd use os.readlink
-                    # For testing, the mock context handles this
-                    link = context.read_file(fd_path)
+                    # Use readlink for symlinks
+                    link = context.readlink(fd_path)
+                    if not link:
+                        continue
                     if link.startswith('socket:['):
                         inode = int(link[8:-1])
                         inode_map[inode] = (pid, comm)
