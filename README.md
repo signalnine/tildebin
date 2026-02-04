@@ -1,58 +1,121 @@
 # boxctl
 
-A unified CLI for 300+ baremetal and Kubernetes monitoring scripts.
+A diagnostic toolkit designed for LLM agents to investigate baremetal and Kubernetes infrastructure issues.
 
-## Overview
+## Why boxctl?
 
-boxctl provides a single interface to discover, run, and manage diagnostic scripts for system administration. Scripts are organized by category and tagged for easy discovery.
+LLM agents excel at reasoning about complex systems, but they need structured access to system state. boxctl provides:
 
-**Features:**
-- 315 monitoring scripts (216 baremetal, 93 Kubernetes)
-- Script discovery with search and filtering
-- Consistent output formats (plain, JSON)
-- Automatic privilege escalation for root-required scripts
-- 2400+ unit tests with integration test suite
-- Testable design with dependency injection
+- **315 diagnostic scripts** covering baremetal (216) and Kubernetes (93) systems
+- **Consistent JSON output** that agents can parse and reason about
+- **Semantic exit codes** (0=healthy, 1=issues, 2=error) for decision-making
+- **Rich metadata** so agents can discover relevant scripts by symptom or keyword
+- **Testable design** with dependency injection for reliable operation
 
-## Quick Start
+## How Agents Use boxctl
+
+### 1. Discover Relevant Scripts
+
+When investigating an issue, agents search for scripts by symptom:
 
 ```bash
-# Install
-pip install -e /path/to/boxctl
+boxctl search "high load"
+# Returns: loadavg_analyzer, cpu_usage, context_switch_monitor, run_queue_monitor
 
-# List all scripts
-boxctl list
+boxctl search "disk full"
+# Returns: disk_space_forecaster, inode_usage, filesystem_usage
 
-# List scripts by category
-boxctl list --category baremetal/disk
-
-# Search for scripts
-boxctl search "memory leak"
-
-# Run a script
-boxctl run disk_health
-
-# Run with JSON output
-boxctl run disk_health --format json
-
-# Show script details
-boxctl show disk_health
+boxctl search "pod pending"
+# Returns: pending_pod_analyzer, node_capacity, resource_quota_auditor
 ```
 
-## Commands
+### 2. Run Diagnostics with JSON Output
 
-| Command | Description |
-|---------|-------------|
-| `list` | List available scripts with optional filtering |
-| `run` | Execute a script by name |
-| `show` | Display script metadata and documentation |
-| `search` | Find scripts by keyword in name, tags, or description |
-| `doctor` | Check script health (missing dependencies, syntax errors) |
-| `lint` | Validate script metadata format |
+Agents run scripts and parse structured output:
 
-### list
+```bash
+boxctl run loadavg_analyzer --format json
+```
 
-List available scripts with filtering options.
+```json
+{
+  "load_1m": 4.2,
+  "load_5m": 3.8,
+  "load_15m": 2.1,
+  "cpu_count": 4,
+  "per_cpu_load_1m": 1.05,
+  "status": "elevated",
+  "top_contributors": [
+    {"pid": 1234, "comm": "postgres", "cpu_percent": 45.2},
+    {"pid": 5678, "comm": "nginx", "cpu_percent": 22.1}
+  ]
+}
+```
+
+### 3. Follow Investigation Paths
+
+Scripts include `related` metadata pointing to next steps:
+
+```bash
+boxctl show loadavg_analyzer
+# Related: cpu_usage, context_switch_monitor, process_tree, run_queue_monitor
+```
+
+Agents use exit codes to guide investigation depth:
+- Exit 0: Move to next area
+- Exit 1: Found issues, investigate further with related scripts
+- Exit 2: Tool missing, try alternative approach
+
+### 4. Synthesize Findings
+
+After running multiple scripts, agents combine structured data to form conclusions:
+
+```
+Investigation: High API latency on production servers
+
+Scripts run:
+- loadavg_analyzer (exit 1): Load 4.2 on 4 CPUs, postgres consuming 45%
+- disk_io_latency (exit 1): /dev/sda p99 latency 45ms (threshold: 20ms)
+- memory_fragmentation (exit 0): Normal
+- tcp_connection_monitor (exit 0): Normal connection counts
+
+Conclusion: Database I/O contention causing elevated load.
+Recommendation: Investigate postgres query patterns, consider SSD upgrade.
+```
+
+## Script Categories
+
+### Baremetal (216 scripts)
+
+| Category | Scripts | Coverage |
+|----------|---------|----------|
+| `baremetal/network` | 30 | TCP/UDP monitoring, ARP, ethtool, firewall audit |
+| `baremetal/disk` | 29 | SMART health, I/O latency, NVMe, ZFS, RAID |
+| `baremetal/security` | 25 | Kernel hardening, SSH audit, SUID/SGID, auditd |
+| `baremetal/memory` | 16 | Fragmentation, OOM risk, hugepages, NUMA |
+| `baremetal/kernel` | 14 | Taint flags, module audit, dmesg analysis |
+| `baremetal/process` | 14 | FD exhaustion, zombie detection, connection audit |
+| `baremetal/storage` | 13 | LVM, btrfs, multipath, iSCSI, Ceph |
+| `baremetal/hardware` | 12 | IPMI sensors, temperature, PCIe, USB |
+| `baremetal/cpu` | 10 | Steal time, context switches, NUMA locality |
+| `baremetal/systemd` | 9 | Service health, timer monitoring, journal analysis |
+
+### Kubernetes (93 scripts)
+
+| Category | Scripts | Coverage |
+|----------|---------|----------|
+| `k8s/workloads` | 10 | Deployments, StatefulSets, DaemonSets, Jobs |
+| `k8s/security` | 10 | Pod security, RBAC, secrets, network policies |
+| `k8s/nodes` | 9 | Node health, capacity, pressure conditions |
+| `k8s/resources` | 9 | Quotas, limits, resource utilization |
+| `k8s/networking` | 8 | Services, ingress, endpoints, DNS |
+| `k8s/cluster` | 8 | API server, etcd, control plane health |
+| `k8s/storage` | 8 | PV/PVC health, storage classes, CSI |
+| `k8s/pods` | 5 | Pending analysis, disruption budgets, eviction |
+
+## CLI Reference
+
+### Discovery Commands
 
 ```bash
 # List all scripts
@@ -64,244 +127,131 @@ boxctl list --category k8s/pods
 
 # Filter by tag
 boxctl list --tag health
-boxctl list --tag scheduling
+boxctl list --tag security
 
-# Show only scripts requiring root
-boxctl list --privilege root
-
-# Combine filters
-boxctl list --category baremetal --tag network
+# Search by keyword (searches names, tags, descriptions)
+boxctl search "memory leak"
+boxctl search "node pressure"
 ```
 
-### run
-
-Execute a script by name.
+### Execution Commands
 
 ```bash
-# Basic execution
+# Run a script
 boxctl run disk_health
+
+# JSON output for agent parsing
+boxctl run disk_health --format json
 
 # Pass arguments to script
 boxctl run disk_health -- --device /dev/sda
-
-# Change output format
-boxctl run disk_health --format json
-boxctl run disk_health --format table
 
 # Verbose output
 boxctl run disk_health -v
 ```
 
-### show
-
-Display detailed information about a script.
+### Inspection Commands
 
 ```bash
+# Show script metadata
 boxctl show disk_health
-```
+# Displays: category, tags, required tools, privilege level, related scripts, docstring
 
-Output includes:
-- Category and tags
-- Required tools
-- Privilege level
-- Related scripts
-- Full docstring
-
-### search
-
-Find scripts by keyword.
-
-```bash
-# Search in script names, tags, and descriptions
-boxctl search "cpu"
-boxctl search "kubernetes node"
-boxctl search "raid"
-```
-
-### doctor
-
-Check for issues with scripts.
-
-```bash
-# Check all scripts
+# Check script health
 boxctl doctor
-
-# Check specific category
 boxctl doctor --category baremetal
-```
 
-Reports:
-- Missing required tools
-- Syntax errors
-- Invalid metadata
-
-### lint
-
-Validate script metadata format.
-
-```bash
-# Lint all scripts
+# Validate metadata format
 boxctl lint
-
-# Lint specific script
-boxctl lint disk_health
 ```
 
-## Script Categories
+## Exit Code Convention
 
-### Baremetal (216 scripts)
+All scripts follow consistent exit codes for programmatic decision-making:
 
-| Category | Count | Examples |
-|----------|-------|----------|
-| `baremetal/network` | 30 | tcp_connection_monitor, arp_table_monitor, ethtool_audit |
-| `baremetal/disk` | 29 | disk_health, disk_io_latency, nvme_health, zfs_health |
-| `baremetal/security` | 25 | kernel_hardening_audit, ssh_host_key_audit, auditd_health |
-| `baremetal/memory` | 16 | memory_fragmentation, oom_risk_analyzer, hugepage_monitor |
-| `baremetal/kernel` | 14 | kernel_taint, kernel_module_audit, dmesg_analyzer |
-| `baremetal/process` | 14 | process_tree, defunct_parent_analyzer, fd_exhaustion_monitor |
-| `baremetal/storage` | 13 | lvm_health, btrfs_health, multipath_health |
-| `baremetal/hardware` | 12 | ipmi_sensor, hardware_temperature, pci_health |
-| `baremetal/cpu` | 10 | cpu_usage, cpu_steal_monitor, context_switch_monitor |
-| `baremetal/systemd` | 9 | systemd_service_monitor, systemd_timer_monitor |
-| `baremetal/system` | 10 | uptime, load_average, entropy_monitor |
-| `baremetal/boot` | 6 | boot_perf, efi_secure_boot, initramfs_health |
-
-### Kubernetes (93 scripts)
-
-| Category | Count | Examples |
-|----------|-------|----------|
-| `k8s/workloads` | 10 | deployment_status, statefulset_health, daemonset_health |
-| `k8s/security` | 10 | pod_security_audit, rbac_analyzer, secret_audit |
-| `k8s/nodes` | 9 | node_health, node_capacity, node_pressure |
-| `k8s/resources` | 9 | resource_quota_auditor, limit_range_audit |
-| `k8s/networking` | 8 | service_health, ingress_health, network_policy_analyzer |
-| `k8s/cluster` | 8 | api_latency, etcd_health, control_plane_health |
-| `k8s/storage` | 8 | pv_health, pvc_analyzer, storage_class_audit |
-| `k8s/pods` | 5 | pending_pod_analyzer, pod_disruption_budget |
-
-## Exit Codes
-
-All scripts follow a consistent exit code convention:
-
-| Code | Meaning |
-|------|---------|
-| 0 | Success / healthy / no issues found |
-| 1 | Warnings or issues detected |
-| 2 | Usage error or missing dependency |
+| Code | Meaning | Agent Action |
+|------|---------|--------------|
+| 0 | Healthy / no issues | Move to next investigation area |
+| 1 | Issues detected | Dig deeper with related scripts |
+| 2 | Missing dependency or usage error | Try alternative approach |
 
 ## Output Formats
 
-Scripts support multiple output formats via `--format`:
+**json** (recommended for agents):
+```json
+{
+  "status": "warning",
+  "data": { ... },
+  "summary": "2 issues found"
+}
+```
 
-**plain** (default): Human-readable text output
+**plain** (human-readable):
 ```
 Disk /dev/sda: HEALTHY
   Temperature: 32C
   Power-on hours: 12,345
 ```
 
-**json**: Machine-parseable JSON
-```json
-{
-  "disk": "/dev/sda",
-  "status": "healthy",
-  "temperature_c": 32,
-  "power_on_hours": 12345
-}
-```
-
-**table**: Aligned columns for terminal display
+**table** (terminal display):
 ```
 DISK       STATUS   TEMP   HOURS
 /dev/sda   HEALTHY  32C    12,345
-/dev/sdb   HEALTHY  34C    8,901
 ```
-
-## Claude Code Skills
-
-boxctl includes Claude Skills for AI-assisted troubleshooting with Claude Code.
-
-### Available Skills
-
-| Skill | Invocation | Purpose |
-|-------|------------|---------|
-| `boxctl-discovery` | Auto / `/discover` | Find relevant scripts based on symptoms |
-| `baremetal-troubleshooting` | `/baremetal` | Guided system investigation with step tracking |
-| `k8s-troubleshooting` | `/k8s` | Graph-based Kubernetes investigation |
-
-### Installation
-
-```bash
-# Copy skills to Claude Code
-cp -r skills/* ~/.claude/skills/
-```
-
-### Usage
-
-Once installed, Claude Code will automatically suggest relevant boxctl scripts when you describe system issues:
-
-```
-You: "The server load average is really high"
-
-Claude: I found these relevant scripts:
-- loadavg_analyzer - breaks down load contributors
-- cpu_usage - monitor CPU time distribution
-- context_switch_monitor - detect CPU contention
-
-Use /baremetal to start investigation.
-```
-
-Then invoke `/baremetal` for guided troubleshooting with step tracking, hypothesis testing, and root cause analysis.
-
-See `docs/plans/2025-02-03-boxctl-skills-design.md` for full design documentation.
 
 ## Installation
 
 ```bash
-# Clone the repository
+# Clone and install
 git clone https://github.com/signalnine/boxctl.git
 cd boxctl
-
-# Install in development mode
 pip install -e .
 
-# Or just run directly
-PYTHONPATH=/path/to/boxctl python3 -m boxctl doctor
-```
-
-## Testing
-
-```bash
-# Run all unit tests (2400+)
-make test
-
-# Run integration tests (requires real hardware/cluster)
-make test-integration
-
-# Run specific test category
-make test-baremetal
-make test-k8s
-```
-
-## Required Tools
-
-The `doctor` command shows which tools are available:
-
-```bash
+# Verify installation
 boxctl doctor
 ```
 
-Common tools by category:
-- **Disk**: smartctl, nvme, lsblk, btrfs, zpool
-- **Network**: ss, ip, ethtool, iptables
-- **Hardware**: ipmitool, sensors, dmidecode
-- **Kubernetes**: kubectl
-- **Security**: auditctl, openssl
+## Claude Code Integration
+
+boxctl includes Claude Skills for AI-assisted troubleshooting:
+
+```bash
+# Install skills
+cp -r skills/* ~/.claude/skills/
+```
+
+Skills available:
+- `boxctl-discovery` - Auto-suggests scripts based on symptoms
+- `baremetal-troubleshooting` - Guided investigation with step tracking
+- `k8s-troubleshooting` - Graph-based Kubernetes investigation
+
+## Architecture
+
+boxctl is designed for testability and agent integration:
+
+- **Context abstraction**: All system access goes through a `Context` class that can be mocked
+- **Output helper**: Scripts use `Output` class for consistent structured data
+- **Metadata-driven**: YAML frontmatter in each script defines category, tags, requirements
+- **2600+ unit tests**: Full coverage without requiring real hardware or clusters
+
+## Required Tools
+
+Scripts check for dependencies and exit with code 2 if missing:
+
+| Category | Tools |
+|----------|-------|
+| Disk | smartctl, nvme, lsblk, btrfs, zpool |
+| Network | ss, ip, ethtool, iptables |
+| Hardware | ipmitool, sensors, dmidecode |
+| Kubernetes | kubectl |
+| Security | auditctl, openssl |
+
+Run `boxctl doctor` to check tool availability.
 
 ## Requirements
 
 - Python 3.10+
-- Scripts check for required tools and exit with code 2 if missing
+- Tools vary by script (graceful degradation with exit code 2)
 
 ## License
 
