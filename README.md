@@ -165,6 +165,25 @@ boxctl doctor --category baremetal
 boxctl lint
 ```
 
+### Requesting New Scripts
+
+When agents can't find a script for what they need, they can file a request:
+
+```bash
+boxctl request "Check Redis replication lag" \
+  --searched "redis replication, redis lag" \
+  --context "Debugging slow API responses, suspected replica drift"
+```
+
+This creates a GitHub/GitLab issue with the `script-request` label.
+
+**Platform detection** (in order):
+1. `.boxctl.yaml` in repo (`issue_platform: github` or `gitlab`)
+2. `~/.config/boxctl/config.yaml` (user default)
+3. Auto-detect from git remote URL
+
+**Requirements:** `gh` CLI (GitHub) or `glab` CLI (GitLab)
+
 ## Exit Code Convention
 
 All scripts follow consistent exit codes for programmatic decision-making:
