@@ -140,13 +140,24 @@ def analyze_drive_health(
 
     # Temperature
     temperature = smart_data.get("temperature", None)
+    temp_raw = smart_data.get("temperature_raw", "")
     if temperature is None:
         temperature = smart_data.get("composite_temperature", None)
+        temp_raw = smart_data.get("composite_temperature_raw", "")
 
     if temperature is not None:
-        # Some drives report in Kelvin
-        if temperature > 200:
-            temperature = temperature - 273
+        # Parse unit from raw string (e.g. "98 °F (310 K)" or "37 C" or "310 K")
+        if temp_raw:
+            kelvin_match = re.search(r"(\d+)\s*K\b", temp_raw)
+            if kelvin_match:
+                # Prefer Kelvin - unambiguous conversion
+                temperature = int(kelvin_match.group(1)) - 273
+            elif "°F" in temp_raw or "F" in temp_raw.split("(")[0]:
+                # Fahrenheit to Celsius
+                temperature = round((temperature - 32) * 5 / 9)
+            elif temperature > 200:
+                # Fallback heuristic: bare number > 200 is likely Kelvin
+                temperature = temperature - 273
 
         result["metrics"]["temperature_c"] = temperature
 

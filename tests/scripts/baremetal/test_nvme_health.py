@@ -37,6 +37,12 @@ def nvme_smart_endurance_exceeded(fixtures_dir):
 
 
 @pytest.fixture
+def nvme_smart_fahrenheit(fixtures_dir):
+    """Load NVMe SMART output with Fahrenheit/Kelvin temperature."""
+    return (fixtures_dir / "storage" / "nvme_smart_fahrenheit.txt").read_text()
+
+
+@pytest.fixture
 def nvme_id_ctrl(fixtures_dir):
     """Load NVMe controller identification output."""
     return (fixtures_dir / "storage" / "nvme_id_ctrl.txt").read_text()
@@ -164,6 +170,31 @@ class TestNvmeHealth:
         assert output.data["drives"][0]["status"] == "critical"
         assert any("media" in i["type"].lower()
                    for i in output.data["drives"][0].get("issues", []))
+
+    def test_fahrenheit_temperature_parsed_correctly(self, mock_context, nvme_smart_fahrenheit, nvme_id_ctrl):
+        """Correctly converts Fahrenheit/Kelvin temperature to Celsius."""
+        from scripts.baremetal import nvme_health
+
+        ctx = mock_context(
+            tools_available=["nvme"],
+            command_outputs={
+                ("nvme", "smart-log", "/dev/nvme0n1"): nvme_smart_fahrenheit,
+                ("nvme", "id-ctrl", "/dev/nvme0"): nvme_id_ctrl,
+            },
+            file_contents={
+                "/dev/nvme0n1": "",
+            }
+        )
+        output = Output()
+
+        exit_code = nvme_health.run(["--device", "/dev/nvme0n1"], output, ctx)
+
+        assert exit_code == 0
+        drive = output.data["drives"][0]
+        assert drive["status"] == "healthy"
+        # 310 K = 37 C - should be well within normal range
+        assert drive["metrics"]["temperature_c"] == 37
+        assert len(drive["issues"]) == 0
 
     def test_endurance_exceeded(self, mock_context, nvme_smart_endurance_exceeded, nvme_id_ctrl):
         """Returns 1 when endurance is exceeded."""
