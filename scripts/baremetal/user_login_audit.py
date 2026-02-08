@@ -295,14 +295,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "dormant_threshold_days": opts.dormant_days,
     }
 
+    # Build result data
+    output_data = results if opts.verbose else [r for r in results if r["issues"]] if opts.warn_only else results
+    data = {"summary": summary, "users": output_data}
+    output.emit(data)
+
     # Output results
-    if opts.format == "json":
-        output_data = results if opts.verbose else [r for r in results if r["issues"]] if opts.warn_only else results
-        print(json.dumps({"summary": summary, "users": output_data}, indent=2, default=str))
-    elif opts.format == "table":
+    if opts.format == "table":
         _output_table(results, summary, opts.warn_only, opts.verbose)
     else:
-        _output_plain(results, summary, opts.warn_only, opts.verbose)
+        output.render(opts.format, "User Account Login Audit", warn_only=getattr(opts, 'warn_only', False))
 
     # Set output summary
     if summary["issues_count"] > 0:
@@ -314,51 +316,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"All {summary['total_users']} user accounts are healthy")
 
     return 1 if summary["issues_count"] > 0 else 0
-
-
-def _output_plain(results: list[dict], summary: dict, warn_only: bool, verbose: bool) -> None:
-    """Output results in plain text format."""
-    if not warn_only:
-        print("User Account Login Audit")
-        print("=" * 60)
-        print(f"Total accounts analyzed: {summary['total_users']}")
-        print(f"Dormant accounts: {summary['dormant_count']}")
-        print(f"Never logged in: {summary['never_logged_in']}")
-        print(f"Accounts with issues: {summary['issues_count']}")
-        print()
-
-    # Filter if warn_only
-    if warn_only:
-        results = [r for r in results if r["issues"]]
-
-    if not results:
-        if not warn_only:
-            print("No issues detected.")
-        return
-
-    # Print results
-    for user in sorted(results, key=lambda x: (not x["issues"], x["username"])):
-        if warn_only and not user["issues"]:
-            continue
-
-        status = "!" if user["issues"] else " "
-        login_str = user.get("last_login", "Never")
-        if login_str and login_str != "Never":
-            login_str = login_str[:10]  # Just the date
-
-        print(f"[{status}] {user['username']:<20} UID:{user['uid']:<6} Last Login: {login_str}")
-
-        if user["issues"]:
-            for issue in user["issues"]:
-                print(f"    - {issue}")
-
-        if verbose:
-            print(f"    Shell: {user['shell']}")
-            print(f"    Home: {user['home']}")
-            if user.get("gecos"):
-                print(f"    GECOS: {user['gecos']}")
-
-    print()
 
 
 def _output_table(results: list[dict], summary: dict, warn_only: bool, verbose: bool) -> None:

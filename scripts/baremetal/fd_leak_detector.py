@@ -18,7 +18,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -243,53 +242,19 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Check warn-only mode
     has_issues = summary["critical_count"] > 0 or summary["warning_count"] > 0
 
-    if opts.warn_only and not has_issues:
-        return 0
-
     # Build result
     result = {
         "summary": summary,
         "processes": processes,
     }
 
+    output.emit(result)
+
+    if opts.warn_only and not has_issues:
+        return 0
+
     # Output
-    if opts.format == "json":
-        print(json.dumps(result, indent=2))
-    else:
-        lines = []
-        lines.append("File Descriptor Leak Detector")
-        lines.append("=" * 60)
-        lines.append(f"Processes analyzed: {summary['total_processes_analyzed']}")
-        lines.append(f"Processes with issues: {summary['processes_with_issues']}")
-        lines.append(f"  Critical: {summary['critical_count']}")
-        lines.append(f"  Warning: {summary['warning_count']}")
-        lines.append("")
-
-        if summary.get("system_fd_allocated"):
-            lines.append(
-                f"System FD usage: {summary['system_fd_allocated']}/{summary['system_fd_max']} "
-                f"({summary.get('system_fd_usage_pct', 'N/A')}%)"
-            )
-            lines.append("")
-
-        if processes:
-            lines.append(f"Top {min(opts.top, len(processes))} processes by FD count:")
-            lines.append("-" * 60)
-
-            for proc in processes:
-                limit_str = f"/{proc['fd_limit']}" if proc["fd_limit"] else ""
-                lines.append(f"PID {proc['pid']}: {proc['comm']}")
-                lines.append(f"  FDs: {proc['fd_count']}{limit_str}")
-
-                if opts.verbose and proc.get("fd_usage_pct"):
-                    lines.append(f"  Usage: {proc['fd_usage_pct']}% of limit")
-
-                for issue in proc["issues"]:
-                    lines.append(f"  [{issue['severity']}] {issue['message']}")
-
-                lines.append("")
-
-        print("\n".join(lines))
+    output.render(opts.format, "File Descriptor Leak Detector", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     status = (

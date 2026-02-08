@@ -25,7 +25,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import os
 from datetime import datetime, timezone
 from typing import Any
@@ -221,21 +220,20 @@ def run(args: list[str], output: Output, context: Context) -> int:
             continue
 
     if not pidfiles:
-        if opts.format == "json":
-            print(json.dumps({
-                "pidfiles": [],
-                "summary": {
-                    "total": 0,
-                    "valid": 0,
-                    "stale": 0,
-                    "mismatch": 0,
-                    "invalid": 0,
-                },
-                "has_issues": False,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            }, indent=2))
-        elif not opts.warn_only:
-            print("[OK] No PID files found in searched directories")
+        output_data = {
+            "pidfiles": [],
+            "summary": {
+                "total": 0,
+                "valid": 0,
+                "stale": 0,
+                "mismatch": 0,
+                "invalid": 0,
+            },
+            "has_issues": False,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        output.emit(output_data)
+        output.render(opts.format, "Stale PID File Detector", warn_only=getattr(opts, 'warn_only', False))
         return 0
 
     # Analyze each PID file
@@ -252,23 +250,24 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     has_issues = bool(stale or mismatch)
 
-    # Output results
-    if opts.format == "json":
-        output_data = {
-            "pidfiles": results if opts.verbose else [r for r in results if r["status"] != "valid"],
-            "summary": {
-                "total": len(results),
-                "valid": len(valid),
-                "stale": len(stale),
-                "mismatch": len(mismatch),
-                "invalid": len(invalid),
-            },
-            "has_issues": has_issues,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        }
-        print(json.dumps(output_data, indent=2))
+    # Build output data
+    output_data = {
+        "pidfiles": results if opts.verbose else [r for r in results if r["status"] != "valid"],
+        "summary": {
+            "total": len(results),
+            "valid": len(valid),
+            "stale": len(stale),
+            "mismatch": len(mismatch),
+            "invalid": len(invalid),
+        },
+        "has_issues": has_issues,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
-    elif opts.format == "table":
+    output.emit(output_data)
+
+    # Output results
+    if opts.format == "table":
         print(f"{'PID FILE':<50} {'PID':<8} {'AGE':<8} {'STATUS':<20}")
         print("-" * 90)
 
@@ -285,41 +284,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         print()
         print(f"Summary: {len(results)} total, {len(valid)} valid, {len(stale)} stale, "
               f"{len(mismatch)} mismatch, {len(invalid)} invalid")
-
-    else:  # plain format
-        if stale:
-            print(f"Stale PID files ({len(stale)} found):")
-            for r in stale:
-                age_str = format_age(r["age_seconds"])
-                print(f"  [STALE] {r['filepath']} (pid={r['pid']}, age={age_str})")
-                if opts.verbose:
-                    print(f"          {r['details']}")
-            print()
-
-        if mismatch:
-            print(f"PID/Name mismatches ({len(mismatch)} found):")
-            for r in mismatch:
-                print(f"  [WARN] {r['filepath']} - {r['details']}")
-            print()
-
-        if invalid and opts.verbose:
-            print(f"Invalid PID files ({len(invalid)} found):")
-            for r in invalid:
-                print(f"  [INFO] {r['filepath']} - {r['details']}")
-            print()
-
-        if opts.verbose and valid:
-            print(f"Valid PID files ({len(valid)} found):")
-            for r in valid:
-                print(f"  [OK] {r['filepath']} (pid={r['pid']}, process={r['process_name'] or 'unknown'})")
-            print()
-
-        # Summary
-        if not has_issues:
-            if not opts.warn_only:
-                print(f"[OK] No stale PID files detected ({len(results)} files checked)")
-        else:
-            print(f"[WARN] Found {len(stale)} stale and {len(mismatch)} mismatched PID files")
+    else:
+        output.render(opts.format, "Stale PID File Detector", warn_only=getattr(opts, 'warn_only', False))
 
     # Set output summary
     if has_issues:

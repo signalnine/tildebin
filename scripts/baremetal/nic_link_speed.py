@@ -23,7 +23,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import re
 from datetime import datetime, timezone
 
@@ -305,56 +304,10 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "healthy": not has_issues,
     }
 
+    output.emit(output_data)
+
     # Output results
-    if opts.format == "json":
-        print(json.dumps(output_data, indent=2))
-    else:
-        lines = []
-        lines.append("NIC Link Speed Audit")
-        lines.append("=" * 70)
-        lines.append("")
-
-        if not results:
-            lines.append("No physical network interfaces found.")
-        else:
-            for r in results:
-                status_symbol = "OK" if r["status"] == "ok" else "X"
-                if r["status"] == "no_link":
-                    status_symbol = "-"
-
-                speed_display = r["info"]["speed_raw"]
-                max_speed = format_speed(r["info"]["max_supported_speed"])
-
-                line = f"[{status_symbol}] {r['interface']}: {speed_display}"
-                if r["info"]["max_supported_speed"]:
-                    line += f" (max: {max_speed})"
-                line += f" [{r['info']['duplex']}]"
-                lines.append(line)
-
-                if r["issues"]:
-                    for issue in r["issues"]:
-                        lines.append(f"  WARNING: {issue}")
-
-                if opts.verbose:
-                    lines.append(f"  Driver: {r['info']['driver']}")
-                    if r["info"]["auto_negotiation"] is not None:
-                        autoneg = "on" if r["info"]["auto_negotiation"] else "off"
-                        lines.append(f"  Auto-negotiation: {autoneg}")
-                    if r["info"]["supported_speeds"]:
-                        speeds = ", ".join(
-                            format_speed(s) for s in sorted(r["info"]["supported_speeds"])
-                        )
-                        lines.append(f"  Supported speeds: {speeds}")
-                    lines.append("")
-
-            lines.append("")
-            suboptimal_count = sum(1 for r in results if r["issues"])
-            lines.append(
-                f"Summary: {len(results)} interfaces checked, "
-                f"{suboptimal_count} with issues"
-            )
-
-        print("\n".join(lines))
+    output.render(opts.format, "NIC Link Speed Audit", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(

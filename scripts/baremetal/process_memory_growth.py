@@ -31,7 +31,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import re
 from datetime import datetime, timezone
 
@@ -362,16 +361,17 @@ def run(args: list[str], output: Output, context: Context) -> int:
         procs = sorted(sample.values(), key=lambda x: x["rss_kb"], reverse=True)
         top_n = opts.top if opts.top > 0 else 10
 
-        if opts.format == "json":
-            result = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "status": "ok",
-                "snapshot_mode": True,
-                "summary": {"total_processes": len(procs)},
-                "top_by_memory": procs[:top_n],
-            }
-            print(json.dumps(result, indent=2))
-        elif opts.format == "table":
+        snapshot_result = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "status": "ok",
+            "snapshot_mode": True,
+            "summary": {"total_processes": len(procs)},
+            "top_by_memory": procs[:top_n],
+        }
+
+        output.emit(snapshot_result)
+
+        if opts.format == "table":
             print(f"{'PID':>7} {'Command':<15} {'User':<10} {'RSS':>12}")
             print("-" * 50)
             for proc in procs[:top_n]:
@@ -380,12 +380,7 @@ def run(args: list[str], output: Output, context: Context) -> int:
                     f"{format_size(proc['rss_kb']):>12}"
                 )
         else:
-            print(f"Memory snapshot ({len(procs)} processes):")
-            for proc in procs[:top_n]:
-                print(
-                    f"  PID {proc['pid']:>7} ({proc['comm']:<15}): "
-                    f"{format_size(proc['rss_kb'])} user={proc['user']}"
-                )
+            output.render(opts.format, "Process Memory Growth Monitor", warn_only=getattr(opts, 'warn_only', False))
 
         output.set_summary(f"Snapshot: {len(procs)} processes")
         return 0
@@ -419,107 +414,28 @@ def run(args: list[str], output: Output, context: Context) -> int:
     results = calculate_growth(samples, opts.interval)
 
     if not results:
-        if opts.format == "json":
-            result = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "status": "ok",
-                "summary": {
-                    "total_processes_tracked": 0,
-                    "critical_count": 0,
-                    "warning_count": 0,
-                    "total_growth_kb": 0,
-                    "monitoring_duration_sec": total_time,
-                },
-                "message": "No processes persisted across all samples",
-            }
-            print(json.dumps(result, indent=2))
-        else:
-            print("No processes persisted across all samples")
+        no_results = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "status": "ok",
+            "summary": {
+                "total_processes_tracked": 0,
+                "critical_count": 0,
+                "warning_count": 0,
+                "total_growth_kb": 0,
+                "monitoring_duration_sec": total_time,
+            },
+            "message": "No processes persisted across all samples",
+        }
+        output.emit(no_results)
+        output.render(opts.format, "Process Memory Growth Monitor", warn_only=getattr(opts, 'warn_only', False))
         return 0
 
     # Analyze growth
     warnings, critical = analyze_growth(results, opts.min_growth, opts.min_pct)
 
-    # Output based on format
-    if opts.format == "json":
-        _output_json(results, warnings, critical, opts.top, total_time)
-    elif opts.format == "table":
-        _output_table(results, warnings, critical, opts.warn_only, opts.top)
-    else:
-        _output_plain(results, warnings, critical, opts.warn_only, opts.verbose, opts.top)
-
-    # Set summary
-    if critical:
-        output.set_summary(f"CRITICAL - {len(critical)} process(es) with significant memory growth")
-    elif warnings:
-        output.set_summary(f"WARNING - {len(warnings)} process(es) with elevated memory growth")
-    else:
-        output.set_summary("OK - No significant memory growth detected")
-
-    return 1 if (critical or warnings) else 0
-
-
-def _output_plain(
-    results: list[dict],
-    warnings: list[dict],
-    critical: list[dict],
-    warn_only: bool,
-    verbose: bool,
-    top_n: int,
-) -> None:
-    """Output in plain text format."""
-    if critical:
-        print("CRITICAL - Processes with significant memory growth:")
-        for proc in sorted(critical, key=lambda x: x["growth_kb"], reverse=True):
-            print(
-                f"  PID {proc['pid']:>7} ({proc['comm']:<15}): "
-                f"{format_size(proc['rss_start_kb'])} -> {format_size(proc['rss_end_kb'])} "
-                f"(+{format_size(proc['growth_kb'])}, +{proc['growth_pct']}%)"
-            )
-        print()
-
-    if warnings:
-        print("WARNING - Processes with elevated memory growth:")
-        for proc in sorted(warnings, key=lambda x: x["growth_kb"], reverse=True):
-            print(
-                f"  PID {proc['pid']:>7} ({proc['comm']:<15}): "
-                f"{format_size(proc['rss_start_kb'])} -> {format_size(proc['rss_end_kb'])} "
-                f"(+{format_size(proc['growth_kb'])}, +{proc['growth_pct']}%)"
-            )
-        print()
-
-    if not warn_only:
-        if not critical and not warnings:
-            print("OK - No significant memory growth detected")
-            print()
-
-        if verbose or top_n > 0:
-            sorted_results = sorted(results, key=lambda x: x["growth_kb"], reverse=True)
-            display_count = top_n if top_n > 0 else 10
-            growers = [r for r in sorted_results if r["growth_kb"] > 0][:display_count]
-
-            if growers:
-                print(f"Top {len(growers)} memory growers (by absolute growth):")
-                for proc in growers:
-                    print(
-                        f"  PID {proc['pid']:>7} ({proc['comm']:<15}): "
-                        f"+{format_size(proc['growth_kb'])} "
-                        f"({proc['growth_rate_kb_min']:.1f} KB/min) "
-                        f"user={proc['user']}"
-                    )
-
-
-def _output_json(
-    results: list[dict],
-    warnings: list[dict],
-    critical: list[dict],
-    top_n: int,
-    total_time: float,
-) -> None:
-    """Output in JSON format."""
+    # Build result for output
     sorted_results = sorted(results, key=lambda x: x["growth_kb"], reverse=True)
-    top_growers = sorted_results[:top_n] if top_n > 0 else sorted_results[:10]
-
+    top_growers = sorted_results[:opts.top] if opts.top > 0 else sorted_results[:10]
     total_growth = sum(r["growth_kb"] for r in results if r["growth_kb"] > 0)
 
     result = {
@@ -536,7 +452,25 @@ def _output_json(
         "warnings": warnings,
         "top_growers": top_growers,
     }
-    print(json.dumps(result, indent=2))
+
+    output.emit(result)
+
+    # Output based on format
+    if opts.format == "table":
+        _output_table(results, warnings, critical, opts.warn_only, opts.top)
+    else:
+        output.render(opts.format, "Process Memory Growth Monitor", warn_only=getattr(opts, 'warn_only', False))
+
+    # Set summary
+    if critical:
+        output.set_summary(f"CRITICAL - {len(critical)} process(es) with significant memory growth")
+    elif warnings:
+        output.set_summary(f"WARNING - {len(warnings)} process(es) with elevated memory growth")
+    else:
+        output.set_summary("OK - No significant memory growth detected")
+
+    return 1 if (critical or warnings) else 0
+
 
 
 def _output_table(

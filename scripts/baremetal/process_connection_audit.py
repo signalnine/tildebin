@@ -25,7 +25,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from collections import defaultdict
 from datetime import datetime, timezone
 
@@ -442,17 +441,37 @@ def run(args: list[str], output: Output, context: Context) -> int:
         all_connections, opts.max_per_process, opts.max_to_single_host
     )
 
+    # Build result for output
+    state_counts: dict[str, int] = defaultdict(int)
+    for conn in all_connections:
+        state_counts[conn["state"]] += 1
+
+    result = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "process_summary": process_summary,
+        "state_counts": dict(state_counts),
+        "issues": issues,
+        "summary": {
+            "total_connections": len(all_connections),
+            "total_processes": len(process_summary),
+            "established": state_counts.get("ESTABLISHED", 0),
+            "time_wait": state_counts.get("TIME_WAIT", 0),
+            "close_wait": state_counts.get("CLOSE_WAIT", 0),
+        },
+        "has_issues": len(issues) > 0,
+    }
+
+    output.emit(result)
+
     # Handle warn-only mode
     if opts.warn_only and not issues:
         return 0
 
     # Output results
-    if opts.format == "json":
-        _output_json(all_connections, process_summary, issues)
-    elif opts.format == "table":
+    if opts.format == "table":
         _output_table(all_connections, process_summary, issues, opts.verbose, opts.warn_only)
     else:
-        _output_plain(all_connections, process_summary, issues, opts.verbose, opts.warn_only)
+        output.render(opts.format, "Process Connection Audit", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     if issues:
@@ -465,76 +484,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     return 1 if issues else 0
 
-
-def _output_plain(
-    connections: list[dict],
-    process_summary: list[dict],
-    issues: list[dict],
-    verbose: bool,
-    warn_only: bool,
-) -> None:
-    """Output results in plain text format."""
-    if not warn_only or issues:
-        print("Process Connection Summary:")
-        print(f"{'PID':>8} {'Process':<20} {'Conns':>6} {'Hosts':>6} {'Ports':>6} {'Top Remote'}")
-        print("-" * 85)
-
-        for proc in process_summary[:20]:
-            pid = proc["pid"] if proc["pid"] else "-"
-            top_remote = proc["top_remotes"][0]["remote"] if proc["top_remotes"] else "-"
-            print(
-                f"{str(pid):>8} {proc['name']:<20} {proc['connection_count']:>6} "
-                f"{proc['unique_remote_hosts']:>6} {proc['unique_remote_ports']:>6} {top_remote}"
-            )
-
-        if len(process_summary) > 20:
-            print(f"  ... and {len(process_summary) - 20} more processes")
-
-        print(
-            f"\nTotal: {len(connections)} active connections across "
-            f"{len(process_summary)} processes"
-        )
-
-        if verbose:
-            state_counts: dict[str, int] = defaultdict(int)
-            for conn in connections:
-                state_counts[conn["state"]] += 1
-            print("\nState Distribution:")
-            for state, count in sorted(state_counts.items(), key=lambda x: -x[1]):
-                print(f"  {state:<15} {count:>6}")
-
-    if issues:
-        print(f"\nIssues Detected ({len(issues)}):")
-        for issue in issues:
-            severity = issue["severity"].upper()
-            print(f"  [{severity}] {issue['message']}")
-    elif not warn_only:
-        print("\n[OK] No anomalies detected")
-
-
-def _output_json(
-    connections: list[dict], process_summary: list[dict], issues: list[dict]
-) -> None:
-    """Output results in JSON format."""
-    state_counts: dict[str, int] = defaultdict(int)
-    for conn in connections:
-        state_counts[conn["state"]] += 1
-
-    result = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "process_summary": process_summary,
-        "state_counts": dict(state_counts),
-        "issues": issues,
-        "summary": {
-            "total_connections": len(connections),
-            "total_processes": len(process_summary),
-            "established": state_counts.get("ESTABLISHED", 0),
-            "time_wait": state_counts.get("TIME_WAIT", 0),
-            "close_wait": state_counts.get("CLOSE_WAIT", 0),
-        },
-        "has_issues": len(issues) > 0,
-    }
-    print(json.dumps(result, indent=2))
 
 
 def _output_table(

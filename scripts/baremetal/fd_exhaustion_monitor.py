@@ -18,7 +18,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -186,29 +185,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output
-    if opts.format == "json":
-        if not opts.warn_only or has_critical or has_warning:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or has_critical or has_warning:
-            lines = []
-            lines.append(
-                f"System FDs: {system_stats['allocated']} / {system_stats['max']} "
-                f"({system_stats['usage_percent']:.1f}% used)"
-            )
-            lines.append(f"Available: {system_stats['available']} file descriptors")
-
-            if issues:
-                lines.append("")
-                for issue in issues:
-                    severity = issue["severity"]
-                    message = issue["message"]
-                    prefix = {"CRITICAL": "[CRITICAL]", "WARNING": "[WARNING]"}.get(
-                        severity, "[INFO]"
-                    )
-                    lines.append(f"{prefix} {message}")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "File Descriptor Exhaustion Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     status = "critical" if has_critical else ("warning" if has_warning else "healthy")

@@ -19,7 +19,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from collections import defaultdict
 from datetime import datetime, timezone
 
@@ -234,10 +233,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
             if z["age_seconds"] is not None and z["age_seconds"] >= opts.min_age
         ]
 
-    # Handle warn-only mode
-    if opts.warn_only and not zombies:
-        return 0
-
     # Build result data
     groups = group_by_parent(zombies)
     result = {
@@ -257,13 +252,17 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "healthy": len(zombies) == 0,
     }
 
+    output.emit(result)
+
+    # Handle warn-only mode
+    if opts.warn_only and not zombies:
+        return 0
+
     # Output based on format
-    if opts.format == "json":
-        print(json.dumps(result, indent=2, default=str))
-    elif opts.format == "table":
+    if opts.format == "table":
         _output_table(zombies, groups, opts.verbose, opts.group)
     else:
-        _output_plain(zombies, groups, opts.verbose, opts.group)
+        output.render(opts.format, "Zombie Process Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     if zombies:
@@ -272,48 +271,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary("No zombie processes detected")
 
     return 1 if zombies else 0
-
-
-def _output_plain(
-    zombies: list[dict], groups: dict, verbose: bool, group_output: bool
-) -> None:
-    """Output in plain text format."""
-    if not zombies:
-        print("No zombie processes detected")
-        return
-
-    print(f"Found {len(zombies)} zombie process(es)")
-    print()
-
-    if group_output:
-        print(f"Grouped by {len(groups)} parent process(es):")
-        print()
-
-        for (ppid, parent_name), children in sorted(
-            groups.items(), key=lambda x: -len(x[1])
-        ):
-            print(f"Parent: {parent_name} (PID {ppid}) - {len(children)} zombie(s)")
-            for z in children:
-                age_str = format_age(z["age_seconds"])
-                print(f"  - PID {z['pid']}: {z['name']} (age: {age_str})")
-            print()
-    else:
-        print(f"{'PID':<8} {'Name':<16} {'PPID':<8} {'Parent':<16} {'Age':<10}")
-        print("-" * 66)
-
-        for z in sorted(zombies, key=lambda x: x["pid"]):
-            age_str = format_age(z["age_seconds"])
-            print(
-                f"{z['pid']:<8} {z['name']:<16} {z['ppid']:<8} "
-                f"{z['parent_name']:<16} {age_str:<10}"
-            )
-
-    if verbose:
-        print()
-        print("Recommendations:")
-        print("- Investigate parent processes not reaping children")
-        print("- Check for signal handling issues in parent processes")
-        print("- Consider restarting problematic parent processes")
 
 
 def _output_table(

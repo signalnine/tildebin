@@ -282,18 +282,12 @@ def run(args: list[str], output: Output, context: Context) -> int:
         interfaces = get_physical_interfaces(context)
 
     if not interfaces:
-        if opts.format == "json":
-            print(
-                json.dumps(
-                    {
-                        "interfaces": [],
-                        "inconsistencies": [],
-                        "summary": {"total_interfaces": 0},
-                    }
-                )
-            )
-        else:
-            print("No physical network interfaces found")
+        output.emit({
+            "interfaces": [],
+            "inconsistencies": [],
+            "summary": {"total_interfaces": 0},
+        })
+        output.render(opts.format, "NIC Firmware/Driver Audit")
         return 0
 
     # Load expected versions if provided
@@ -325,10 +319,10 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "healthy": not has_issues,
     }
 
+    output.emit(output_data)
+
     # Output results
-    if opts.format == "json":
-        print(json.dumps(output_data, indent=2))
-    elif opts.format == "table":
+    if opts.format == "table":
         if opts.warn_only:
             results = [r for r in results if r["issues"]]
 
@@ -362,54 +356,7 @@ def run(args: list[str], output: Output, context: Context) -> int:
                         f"({', '.join(inc['versions'])})"
                     )
     else:
-        if opts.warn_only:
-            results = [r for r in results if r["issues"]]
-
-        if not results:
-            print(
-                "No physical network interfaces found (or no issues in --warn-only mode)"
-            )
-        else:
-            lines = []
-            lines.append("NIC Firmware/Driver Audit")
-            lines.append("=" * 80)
-            lines.append("")
-
-            for result in results:
-                status = "OK" if not result["issues"] else "ISSUE"
-                symbol = "+" if not result["issues"] else "!"
-
-                lines.append(f"[{symbol}] {result['interface']} ({status})")
-                lines.append(
-                    f"    Driver: {result['driver']} v{result['driver_version']}"
-                )
-                lines.append(f"    Firmware: {result['firmware_version']}")
-                lines.append(
-                    f"    Link: {result['speed']} {result['duplex']} "
-                    f"({'up' if result['link_detected'] else 'down'})"
-                )
-
-                if opts.verbose:
-                    lines.append(f"    Bus: {result['bus_info']}")
-
-                if result["issues"]:
-                    for issue in result["issues"]:
-                        lines.append(f"    WARNING: {issue}")
-
-                lines.append("")
-
-            if inconsistencies:
-                lines.append("Inconsistencies Detected:")
-                lines.append("-" * 40)
-                for inc in inconsistencies:
-                    lines.append(
-                        f"  {inc['type'].replace('_', ' ').title()}: {inc['driver']}"
-                    )
-                    lines.append(f"    Versions found: {', '.join(inc['versions'])}")
-                    lines.append(f"    Affected: {', '.join(inc['interfaces'])}")
-                    lines.append("")
-
-            print("\n".join(lines))
+        output.render(opts.format, "NIC Firmware/Driver Audit", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(

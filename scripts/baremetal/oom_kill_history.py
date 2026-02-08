@@ -24,7 +24,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import re
 from collections import defaultdict
 from datetime import datetime
@@ -305,20 +304,21 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Analyze events
     analysis = analyze_events(events)
 
+    # Build result
+    result = {
+        'analysis': analysis,
+        'events': events[-100:] if events else [],  # Limit to last 100
+    }
+
+    output.emit(result)
+
     # Handle warn-only mode
     if opts.warn_only and not events:
         output.set_summary("No OOM kills found")
         return 0
 
     # Output results
-    if opts.format == 'json':
-        result = {
-            'analysis': analysis,
-            'events': events[-100:] if events else [],  # Limit to last 100
-        }
-        print(json.dumps(result, indent=2, default=str))
-
-    elif opts.format == 'table':
+    if opts.format == 'table':
         lines = []
         lines.append(f"{'PROCESS':<30} {'KILLS':>6} {'AVG VM':>12} {'LAST KILLED':<25}")
         lines.append("=" * 80)
@@ -345,75 +345,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             lines.append(f"Total events: {len(events)} | Unique processes: {len(by_process)}")
 
         print('\n'.join(lines))
-
-    else:  # plain
-        lines = []
-        lines.append("OOM Kill History Analysis")
-        lines.append("=" * 60)
-
-        if analysis['total_events'] == 0:
-            lines.append("")
-            lines.append("No OOM kill events found in logs.")
-            lines.append("This is good - no processes were killed due to memory pressure.")
-        else:
-            lines.append(f"\nTotal OOM kills found: {analysis['total_events']}")
-            lines.append(f"Unique processes killed: {analysis['unique_processes']}")
-
-            if analysis.get('time_range'):
-                tr = analysis['time_range']
-                lines.append(f"Time range: {tr.get('first_event', 'n/a')} to {tr.get('last_event', 'n/a')}")
-
-            # Top killed processes
-            lines.append("")
-            lines.append("-" * 60)
-            lines.append("MOST FREQUENTLY KILLED PROCESSES:")
-            lines.append("-" * 60)
-            for process, count in analysis.get('top_killed_processes', []):
-                bar = '#' * min(count, 30)
-                lines.append(f"  {process:<25} {count:>4} kills  {bar}")
-
-            # Memory statistics
-            if analysis.get('memory_stats'):
-                stats = analysis['memory_stats']
-                lines.append("")
-                lines.append("-" * 60)
-                lines.append("MEMORY STATISTICS (at time of kill):")
-                lines.append("-" * 60)
-                if 'avg_total_vm_kb' in stats:
-                    lines.append(f"  Average total VM:  {format_kb(stats['avg_total_vm_kb'])}")
-                    lines.append(f"  Maximum total VM:  {format_kb(stats['max_total_vm_kb'])}")
-                if 'avg_anon_rss_kb' in stats:
-                    lines.append(f"  Average anon RSS:  {format_kb(stats['avg_anon_rss_kb'])}")
-                    lines.append(f"  Maximum anon RSS:  {format_kb(stats['max_anon_rss_kb'])}")
-
-            # Cgroup distribution
-            if analysis.get('cgroup_distribution'):
-                lines.append("")
-                lines.append("-" * 60)
-                lines.append("CGROUP/CONTAINER DISTRIBUTION:")
-                lines.append("-" * 60)
-                for cgroup, count in analysis['cgroup_distribution'].items():
-                    lines.append(f"  {cgroup:<25} {count:>4}")
-
-            # Individual events (if not summary only)
-            if not opts.summary and events:
-                lines.append("")
-                lines.append("-" * 60)
-                lines.append("RECENT OOM KILL EVENTS:")
-                lines.append("-" * 60)
-                # Show last 20 events
-                for event in events[-20:]:
-                    ts = event.get('timestamp_raw', 'unknown time')
-                    proc = event['process']
-                    pid = event['pid']
-                    vm = format_kb(event.get('total_vm_kb'))
-                    rss = format_kb(event.get('anon_rss_kb'))
-                    lines.append(f"  [{ts}] {proc} (PID {pid})")
-                    lines.append(f"      VM: {vm}, RSS: {rss}")
-                    if opts.verbose and event.get('cgroup'):
-                        lines.append(f"      Cgroup: {event['cgroup']}")
-
-        print('\n'.join(lines))
+    else:
+        output.render(opts.format, "OOM Kill History Analysis", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     if events:

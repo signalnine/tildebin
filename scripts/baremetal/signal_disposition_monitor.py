@@ -27,7 +27,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from datetime import datetime, timezone
 
 from boxctl.core.context import Context
@@ -370,75 +369,7 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if opts.high_only:
         results = [r for r in results if r["analysis"]["severity"] == "high"]
 
-    # Handle warn-only mode
-    if opts.warn_only and not results:
-        return 0
-
-    # Output results
-    if opts.format == "json":
-        _output_json(results)
-    elif opts.format == "table":
-        _output_table(results, opts.verbose)
-    else:
-        _output_plain(results, opts.verbose)
-
-    # Set summary
-    if results:
-        high_count = len([r for r in results if r["analysis"]["severity"] == "high"])
-        output.set_summary(
-            f"Found {len(results)} process(es) with concerning signal dispositions "
-            f"({high_count} high severity)"
-        )
-    else:
-        output.set_summary("No processes with concerning signal dispositions found")
-
-    return 1 if results else 0
-
-
-def _output_plain(results: list[dict], verbose: bool) -> None:
-    """Output in plain text format."""
-    if not results:
-        print("No processes with concerning signal dispositions found")
-        return
-
-    high_severity = [r for r in results if r["analysis"]["severity"] == "high"]
-    medium_severity = [r for r in results if r["analysis"]["severity"] == "medium"]
-
-    print(f"Found {len(results)} process(es) with concerning signal dispositions")
-    print()
-
-    if high_severity:
-        print(f"HIGH SEVERITY ({len(high_severity)} processes - ignoring SIGTERM):")
-        print("-" * 70)
-        for proc in sorted(high_severity, key=lambda x: x["name"]):
-            print(f"  PID {proc['pid']}: {proc['name']} (user: {proc['user']})")
-            if verbose:
-                print(f"    Command: {proc['cmdline'][:60]}...")
-            for issue in proc["analysis"]["issues"]:
-                print(f"    - {issue['message']}")
-        print()
-
-    if medium_severity:
-        print(f"MEDIUM SEVERITY ({len(medium_severity)} processes):")
-        print("-" * 70)
-        for proc in sorted(medium_severity, key=lambda x: x["name"]):
-            print(f"  PID {proc['pid']}: {proc['name']} (user: {proc['user']})")
-            if verbose:
-                print(f"    Command: {proc['cmdline'][:60]}...")
-            for issue in proc["analysis"]["issues"]:
-                print(f"    - {issue['message']}")
-        print()
-
-    if verbose:
-        print("Recommendations:")
-        print("- Processes ignoring SIGTERM will not gracefully shut down")
-        print("- Review application signal handlers before deployments")
-        print("- Consider using SIGKILL as fallback after SIGTERM timeout")
-        print("- Some system services legitimately ignore signals (systemd, containerd)")
-
-
-def _output_json(results: list[dict]) -> None:
-    """Output in JSON format."""
+    # Build result for output
     json_results = []
     for proc in results:
         proc_copy = proc.copy()
@@ -460,7 +391,31 @@ def _output_json(results: list[dict]) -> None:
         ),
         "processes": json_results,
     }
-    print(json.dumps(result, indent=2, default=str))
+
+    output.emit(result)
+
+    # Handle warn-only mode
+    if opts.warn_only and not results:
+        return 0
+
+    # Output results
+    if opts.format == "table":
+        _output_table(results, opts.verbose)
+    else:
+        output.render(opts.format, "Signal Disposition Monitor", warn_only=getattr(opts, 'warn_only', False))
+
+    # Set summary
+    if results:
+        high_count = len([r for r in results if r["analysis"]["severity"] == "high"])
+        output.set_summary(
+            f"Found {len(results)} process(es) with concerning signal dispositions "
+            f"({high_count} high severity)"
+        )
+    else:
+        output.set_summary("No processes with concerning signal dispositions found")
+
+    return 1 if results else 0
+
 
 
 def _output_table(results: list[dict], verbose: bool) -> None:

@@ -19,7 +19,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -178,46 +177,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         result["per_cpu"] = per_cpu
 
     # Output
-    if opts.format == "json":
-        if not opts.warn_only or issues:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or issues:
-            lines = []
-            lines.append("CPU Usage")
-            lines.append("=" * 40)
-            lines.append(f"User:    {pct['user']:>5.1f}%")
-            lines.append(f"System:  {pct['system']:>5.1f}%")
-            lines.append(f"Idle:    {pct['idle']:>5.1f}%")
-            lines.append(f"IOwait:  {pct['iowait']:>5.1f}%")
-
-            if pct["steal"] > 0:
-                lines.append(f"Steal:   {pct['steal']:>5.1f}%")
-
-            lines.append("")
-            lines.append(f"Total busy: {100 - pct['idle']:.1f}%")
-
-            if opts.verbose:
-                lines.append("")
-                lines.append("Per-CPU:")
-                for name, stats in cpu_stats.items():
-                    if name != "cpu":
-                        cpu_pct = calculate_percentages(stats)
-                        lines.append(
-                            f"  {name}: {100 - cpu_pct['idle']:.1f}% busy, "
-                            f"{cpu_pct['iowait']:.1f}% iowait"
-                        )
-
-            lines.append("")
-
-            if issues:
-                for issue in issues:
-                    prefix = "[CRITICAL]" if issue["severity"] == "CRITICAL" else "[WARNING]"
-                    lines.append(f"{prefix} {issue['message']}")
-            else:
-                lines.append("[OK] CPU usage within acceptable thresholds")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "CPU Usage Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(f"busy={100 - pct['idle']:.1f}%, iowait={pct['iowait']:.1f}%, status={status}")

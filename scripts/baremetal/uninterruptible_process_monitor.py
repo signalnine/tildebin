@@ -22,7 +22,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from collections import defaultdict
 from datetime import datetime, timezone
 
@@ -296,10 +295,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
             if p["age_seconds"] is not None and p["age_seconds"] >= opts.min_age
         ]
 
-    # Handle warn-only mode
-    if opts.warn_only and not dstate_procs:
-        return 0
-
     # Build result
     groups = group_by_wait_category(dstate_procs)
     result = {
@@ -318,13 +313,17 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "healthy": len(dstate_procs) == 0,
     }
 
+    output.emit(result)
+
+    # Handle warn-only mode
+    if opts.warn_only and not dstate_procs:
+        return 0
+
     # Output based on format
-    if opts.format == "json":
-        print(json.dumps(result, indent=2, default=str))
-    elif opts.format == "table":
+    if opts.format == "table":
         _output_table(dstate_procs, groups, opts.verbose, opts.group)
     else:
-        _output_plain(dstate_procs, groups, opts.verbose, opts.group)
+        output.render(opts.format, "Uninterruptible Process Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     if dstate_procs:
@@ -333,58 +332,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary("No D-state processes detected")
 
     return 1 if dstate_procs else 0
-
-
-def _output_plain(
-    procs: list[dict], groups: dict, verbose: bool, group_output: bool
-) -> None:
-    """Output in plain text format."""
-    if not procs:
-        print("No processes in uninterruptible sleep (D-state) detected")
-        return
-
-    print(f"Found {len(procs)} process(es) in uninterruptible sleep (D-state)")
-    print()
-
-    if group_output:
-        print(f"Grouped by {len(groups)} wait category(ies):")
-        print()
-
-        for category, members in sorted(groups.items(), key=lambda x: -len(x[1])):
-            desc = members[0]["wait_description"] if members else category
-            print(f"Category: {category.upper()} ({desc}) - {len(members)} process(es)")
-            for p in members:
-                age_str = format_age(p["age_seconds"])
-                wchan = p["wait_channel"] or "unknown"
-                print(f"  - PID {p['pid']}: {p['name']} (age: {age_str}, wchan: {wchan})")
-                if verbose and p["cmdline"]:
-                    print(f"     Command: {p['cmdline'][:60]}...")
-            print()
-    else:
-        print(f"{'PID':<8} {'Name':<16} {'Age':<10} {'Wait Channel':<20}")
-        print("-" * 58)
-
-        for p in sorted(procs, key=lambda x: -(x["age_seconds"] or 0)):
-            age_str = format_age(p["age_seconds"])
-            wchan = (p["wait_channel"] or "unknown")[:20]
-            print(f"{p['pid']:<8} {p['name'][:16]:<16} {age_str:<10} {wchan:<20}")
-
-    if verbose:
-        print()
-        print("Wait Category Summary:")
-        for category, members in sorted(groups.items(), key=lambda x: -len(x[1])):
-            print(f"  {category}: {len(members)} process(es)")
-
-        print()
-        print("Recommendations:")
-        if "nfs" in groups:
-            print("- NFS hangs detected: Check NFS server and network connectivity")
-        if "disk_io" in groups:
-            print("- Disk I/O blocks detected: Check disk health and I/O scheduler")
-        if "lock" in groups:
-            print("- Lock contention detected: May indicate kernel or driver issues")
-        if "storage_driver" in groups:
-            print("- Storage driver issues: Check dmesg for driver errors")
 
 
 def _output_table(

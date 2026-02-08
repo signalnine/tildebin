@@ -59,8 +59,12 @@ class TestFdLeakDetector:
         result = run(["--min-fds", "1"], output, context)
 
         assert result == 1
-        captured = capsys.readouterr()
-        assert "[WARNING]" in captured.out
+        processes = output.data.get("processes", [])
+        has_warning = any(
+            any(i["severity"] == "WARNING" for i in p.get("issues", []))
+            for p in processes
+        )
+        assert has_warning
 
     def test_critical_high_fd_count(self, capsys):
         """Critical when process has very high FD count."""
@@ -81,8 +85,12 @@ class TestFdLeakDetector:
         result = run(["--min-fds", "1"], output, context)
 
         assert result == 1
-        captured = capsys.readouterr()
-        assert "[CRITICAL]" in captured.out
+        processes = output.data.get("processes", [])
+        has_critical = any(
+            any(i["severity"] == "CRITICAL" for i in p.get("issues", []))
+            for p in processes
+        )
+        assert has_critical
 
     def test_approaching_limit_warning(self, capsys):
         """Warning when process approaches FD limit."""
@@ -103,8 +111,12 @@ class TestFdLeakDetector:
         result = run(["--min-fds", "1", "--fd-warning", "10000"], output, context)
 
         assert result == 1
-        captured = capsys.readouterr()
-        assert "approaching_limit" in captured.out.lower() or "% of FD limit" in captured.out
+        processes = output.data.get("processes", [])
+        has_approaching = any(
+            any(i["type"] == "approaching_limit" for i in p.get("issues", []))
+            for p in processes
+        )
+        assert has_approaching
 
     def test_json_output(self, capsys):
         """JSON output contains expected fields."""

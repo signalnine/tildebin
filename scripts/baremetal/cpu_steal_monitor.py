@@ -31,7 +31,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -249,14 +248,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "cpus": cpus_data,
     }
 
+    output.emit(result)
+
     # Early return for warn-only
     if opts.warn_only and not issues and not warnings_list:
         return 0
 
     # Output
-    if opts.format == "json":
-        print(json.dumps(result, indent=2))
-    elif opts.format == "table":
+    if opts.format == "table":
         lines = []
         lines.append(f"{'CPU':<8} {'User':>8} {'System':>8} {'Idle':>8} {'IOWait':>8} {'Steal':>8} {'Status':<10}")
         lines.append("=" * 70)
@@ -281,58 +280,7 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
         print("\n".join(lines))
     else:
-        lines = []
-        lines.append("CPU Steal Time Monitor")
-        lines.append("=" * 60)
-        lines.append("")
-
-        # Show issues first
-        if issues:
-            lines.append("CRITICAL:")
-            for issue in issues:
-                lines.append(f"  [!!] {issue['message']}")
-            lines.append("")
-
-        if warnings_list:
-            lines.append("WARNINGS:")
-            for warning in warnings_list:
-                lines.append(f"  [!] {warning['message']}")
-            lines.append("")
-
-        # System summary
-        lines.append("System-wide CPU usage:")
-        lines.append(f"  User:     {aggregate.get('user', 0):>6.1f}%")
-        lines.append(f"  System:   {aggregate.get('system', 0):>6.1f}%")
-        lines.append(f"  Idle:     {aggregate.get('idle', 0):>6.1f}%")
-        lines.append(f"  I/O Wait: {aggregate.get('iowait', 0):>6.1f}%")
-        lines.append(f"  Steal:    {aggregate.get('steal', 0):>6.1f}%")
-        lines.append("")
-
-        lines.append(f"Steal time statistics ({summary['cpu_count']} CPUs):")
-        lines.append(f"  Average: {summary['avg_steal_pct']:.2f}%")
-        lines.append(f"  Maximum: {summary['max_steal_pct']:.2f}%")
-        lines.append(f"  Minimum: {summary['min_steal_pct']:.2f}%")
-        lines.append("")
-
-        if opts.verbose:
-            lines.append("Per-CPU steal time:")
-            lines.append("-" * 60)
-            lines.append(f"{'CPU':<8} {'User':>8} {'System':>8} {'Idle':>8} {'IOWait':>8} {'Steal':>8}")
-            lines.append("-" * 60)
-
-            for cpu_name, data in sorted(cpus_data.items()):
-                if cpu_name == "cpu":
-                    continue
-                lines.append(
-                    f"{cpu_name:<8} {data['user']:>7.1f}% {data['system']:>7.1f}% "
-                    f"{data['idle']:>7.1f}% {data['iowait']:>7.1f}% {data['steal']:>7.1f}%"
-                )
-            lines.append("")
-
-        if not issues and not warnings_list:
-            lines.append(f"[OK] Steal time {aggregate_steal:.1f}% is within acceptable limits")
-
-        print("\n".join(lines))
+        output.render(opts.format, "CPU Steal Time Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(f"steal={aggregate_steal:.1f}%, status={status}")

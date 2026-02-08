@@ -33,7 +33,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -239,27 +238,27 @@ def run(args: list[str], output: Output, context: Context) -> int:
                     issue["cgroup"] = opts.cgroup
                 issues.extend(cgroup_issues)
 
-    # Output results
-    if opts.format == "json":
-        result = {
-            "system_pressure": system_pressure,
-            "issues": issues,
-            "summary": {
-                "total_issues": len(issues),
-                "critical_count": len([i for i in issues if i["severity"] == "CRITICAL"]),
-                "warning_count": len([i for i in issues if i["severity"] == "WARNING"]),
-            },
-        }
-        if opts.verbose and cgroup_data:
-            result["cgroups"] = [
-                {"name": cg["name"], "pressure": cg["pressure"]}
-                for cg in cgroup_data
-                if cg["pressure"]
-            ]
-        if not opts.warn_only or issues:
-            print(json.dumps(result, indent=2))
+    # Build result
+    result = {
+        "system_pressure": system_pressure,
+        "issues": issues,
+        "summary": {
+            "total_issues": len(issues),
+            "critical_count": len([i for i in issues if i["severity"] == "CRITICAL"]),
+            "warning_count": len([i for i in issues if i["severity"] == "WARNING"]),
+        },
+    }
+    if opts.verbose and cgroup_data:
+        result["cgroups"] = [
+            {"name": cg["name"], "pressure": cg["pressure"]}
+            for cg in cgroup_data
+            if cg["pressure"]
+        ]
 
-    elif opts.format == "table":
+    output.emit(result)
+
+    # Output results
+    if opts.format == "table":
         if not opts.warn_only or issues:
             lines = []
             lines.append(
@@ -293,41 +292,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
                     )
 
             print("\n".join(lines))
-
-    else:  # plain
-        if not opts.warn_only or issues:
-            lines = []
-            lines.append("System-wide Pressure (some/full avg10):")
-            lines.append(f"  {format_pressure_summary(system_pressure)}")
-            lines.append("")
-
-            if issues:
-                critical = [i for i in issues if i["severity"] == "CRITICAL"]
-                warnings = [i for i in issues if i["severity"] == "WARNING"]
-
-                if critical:
-                    lines.append(f"CRITICAL Issues ({len(critical)}):")
-                    for issue in critical:
-                        lines.append(f"  !!! {issue['message']}")
-                    lines.append("")
-
-                if warnings:
-                    lines.append(f"Warnings ({len(warnings)}):")
-                    for issue in warnings:
-                        lines.append(f"  {issue['message']}")
-                    lines.append("")
-            else:
-                lines.append("No pressure issues detected.")
-                lines.append("")
-
-            if opts.verbose and cgroup_data:
-                lines.append("Per-Cgroup Pressure:")
-                for cg in cgroup_data:
-                    if cg["pressure"]:
-                        lines.append(f"  {cg['name']}:")
-                        lines.append(f"    {format_pressure_summary(cg['pressure'])}")
-
-            print("\n".join(lines))
+    else:
+        output.render(opts.format, "Cgroup Pressure Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     has_critical = any(i["severity"] == "CRITICAL" for i in issues)

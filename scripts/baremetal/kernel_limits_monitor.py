@@ -27,7 +27,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -363,18 +362,17 @@ def run(args: list[str], output: Output, context: Context) -> int:
     warnings, critical = analyze_limits(limits, opts.warn, opts.crit)
 
     # Output based on format
-    if opts.format == "json":
-        result = {
-            "status": "critical" if critical else ("warning" if warnings else "ok"),
-            "critical_count": len(critical),
-            "warning_count": len(warnings),
-            "limits": limits,
-            "critical": critical,
-            "warnings": warnings,
-        }
-        print(json.dumps(result, indent=2))
+    result = {
+        "status": "critical" if critical else ("warning" if warnings else "ok"),
+        "critical_count": len(critical),
+        "warning_count": len(warnings),
+        "limits": limits,
+        "critical": critical,
+        "warnings": warnings,
+    }
+    output.emit(result)
 
-    elif opts.format == "table":
+    if opts.format == "table":
         # Filter if warn_only
         if opts.warn_only:
             display_limits = warnings + critical
@@ -410,47 +408,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
                     f"{limit['name']:<35} {current:>12} {limit['limit']:>12} "
                     f"{usage:>8} {status:<10}"
                 )
-
-    else:  # plain format
-        if critical:
-            print("CRITICAL - Kernel limits approaching exhaustion:")
-            for limit in critical:
-                print(
-                    f"  {limit['name']}: {limit['current']}/{limit['limit']} "
-                    f"({limit['usage_pct']}%) - {limit['description']}"
-                )
-            print()
-
-        if warnings:
-            print("WARNING - Kernel limits elevated:")
-            for limit in warnings:
-                print(
-                    f"  {limit['name']}: {limit['current']}/{limit['limit']} "
-                    f"({limit['usage_pct']}%) - {limit['description']}"
-                )
-            print()
-
-        if not opts.warn_only:
-            if not critical and not warnings:
-                print("OK - All kernel limits within safe thresholds")
-                print()
-
-            if opts.verbose:
-                print("All monitored limits:")
-                for limit in limits:
-                    current = (
-                        limit["current"] if limit["current"] is not None else "N/A"
-                    )
-                    usage = (
-                        f"{limit['usage_pct']}%"
-                        if limit["usage_pct"] is not None
-                        else "N/A"
-                    )
-                    print(
-                        f"  {limit['name']:<35} {current:>12} / {limit['limit']:<12} ({usage})"
-                    )
-                    if "note" in limit:
-                        print(f"    Note: {limit['note']}")
+    else:
+        output.render(opts.format, "Kernel Resource Limits Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     status = "critical" if critical else ("warning" if warnings else "ok")

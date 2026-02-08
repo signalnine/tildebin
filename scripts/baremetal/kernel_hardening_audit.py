@@ -30,7 +30,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import os
 
 from boxctl.core.context import Context
@@ -513,25 +512,24 @@ def run(args: list[str], output: Output, context: Context) -> int:
     issues, warnings = analyze_security(checks, strict=opts.strict)
 
     # Output results
-    if opts.format == "json":
-        json_output = {
-            "checks": checks,
-            "issues": issues,
-            "warnings": warnings,
-            "summary": {
-                "aslr": checks["aslr"]["status"],
-                "kaslr": checks["kaslr"]["status"],
-                "nx_dep": checks["nx_dep"]["status"],
-                "smep_smap": checks["smep_smap"]["status"],
-                "pti": checks["pti"]["status"],
-                "spectre_meltdown": checks["spectre_meltdown"]["status"],
-                "kptr_restrict": checks["kptr_restrict"]["status"],
-                "dmesg_restrict": checks["dmesg_restrict"]["status"],
-            },
-        }
-        print(json.dumps(json_output, indent=2))
+    json_output = {
+        "checks": checks,
+        "issues": issues,
+        "warnings": warnings,
+        "summary": {
+            "aslr": checks["aslr"]["status"],
+            "kaslr": checks["kaslr"]["status"],
+            "nx_dep": checks["nx_dep"]["status"],
+            "smep_smap": checks["smep_smap"]["status"],
+            "pti": checks["pti"]["status"],
+            "spectre_meltdown": checks["spectre_meltdown"]["status"],
+            "kptr_restrict": checks["kptr_restrict"]["status"],
+            "dmesg_restrict": checks["dmesg_restrict"]["status"],
+        },
+    }
+    output.emit(json_output)
 
-    elif opts.format == "table":
+    if opts.format == "table":
         print("=" * 75)
         print("KERNEL SECURITY HARDENING AUDIT")
         print("=" * 75)
@@ -583,81 +581,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
                 print("WARNINGS:")
                 for warning in warnings:
                     print(f"  * {warning}")
-
-    else:  # plain format
-        check_order = [
-            ("ASLR", "aslr"),
-            ("KASLR", "kaslr"),
-            ("NX/DEP", "nx_dep"),
-            ("SMEP/SMAP", "smep_smap"),
-            ("PTI/KPTI", "pti"),
-            ("Spectre/Meltdown", "spectre_meltdown"),
-            ("kptr_restrict", "kptr_restrict"),
-            ("dmesg_restrict", "dmesg_restrict"),
-            ("Unprivileged BPF", "unprivileged_bpf"),
-            ("Yama ptrace", "yama_ptrace"),
-        ]
-
-        good_statuses = [
-            "full",
-            "enabled",
-            "mitigated",
-            "strict",
-            "restricted",
-            "admin_only",
-        ]
-
-        for name, key in check_order:
-            check = checks[key]
-            status = check.get("status", "unknown")
-
-            # For unprivileged_bpf, 'restricted' means good
-            if key == "unprivileged_bpf" and status == "restricted":
-                is_good = True
-            else:
-                is_good = status in good_statuses
-
-            # Skip good items in warn-only mode
-            if opts.warn_only and is_good:
-                continue
-
-            # Status symbol
-            if is_good:
-                symbol = "[OK]"
-            elif status in ["partial", "allowed", "permissive", "unrestricted"]:
-                symbol = "[--]"
-            elif status in ["disabled", "exposed", "vulnerable"]:
-                symbol = "[!!]"
-            else:
-                symbol = "[??]"
-
-            print(f"{symbol} {name}: {status}")
-
-            if opts.verbose and check.get("details"):
-                for detail in check["details"]:
-                    print(f"    {detail}")
-
-        # Print vulnerabilities in verbose mode
-        if opts.verbose and checks["spectre_meltdown"].get("vulnerabilities"):
-            print()
-            print("CPU Vulnerabilities:")
-            for vuln, status in sorted(
-                checks["spectre_meltdown"]["vulnerabilities"].items()
-            ):
-                print(f"  {vuln}: {status}")
-
-        # Print issues and warnings
-        if issues:
-            print()
-            print("ISSUES:")
-            for issue in issues:
-                print(f"  ! {issue}")
-
-        if warnings and not opts.warn_only:
-            print()
-            print("WARNINGS:")
-            for warning in warnings:
-                print(f"  * {warning}")
+    else:
+        output.render(opts.format, "Kernel Security Hardening Audit", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     status = "issues" if (issues or warnings) else "secure"

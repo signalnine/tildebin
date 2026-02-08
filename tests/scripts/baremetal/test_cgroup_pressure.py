@@ -42,8 +42,7 @@ class TestCgroupPressure:
         result = run([], output, context)
 
         assert result == 0
-        captured = capsys.readouterr()
-        assert "No pressure issues detected" in captured.out
+        assert len(output.data.get("issues", [])) == 0
 
     def test_warning_pressure(self, capsys):
         """Warning level PSI metrics return exit code 1."""

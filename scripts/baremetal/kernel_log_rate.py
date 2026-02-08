@@ -19,7 +19,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import re
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -357,66 +356,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output
-    if opts.format == "json":
-        if not opts.warn_only or has_issues:
-            print(json.dumps(result_data, indent=2, default=str))
-    else:
-        if not opts.warn_only or has_issues:
-            lines_out = [f"Kernel Log Rate Monitor - Status: {status}", "=" * 50]
-
-            if stats["has_timestamps"]:
-                if stats["messages_per_minute"] is not None:
-                    lines_out.append(
-                        f"Overall rate: {stats['messages_per_minute']:.1f} messages/minute"
-                    )
-                if stats["recent_rate"] is not None:
-                    lines_out.append(
-                        f"Recent rate (5 min): {stats['recent_rate']:.1f} messages/minute"
-                    )
-                if stats["time_window_minutes"]:
-                    lines_out.append(
-                        f"Time window: {stats['time_window_minutes']:.1f} minutes"
-                    )
-            else:
-                lines_out.append(
-                    "Note: Timestamps not available, rate calculation not possible"
-                )
-
-            lines_out.append(f"Total messages in buffer: {stats['total_messages']}")
-
-            if opts.verbose and stats["priority_breakdown"]:
-                lines_out.append("")
-                lines_out.append("Priority breakdown:")
-                for priority in [
-                    "emerg",
-                    "alert",
-                    "crit",
-                    "err",
-                    "warn",
-                    "notice",
-                    "info",
-                    "debug",
-                ]:
-                    count = stats["priority_breakdown"].get(priority, 0)
-                    if count > 0:
-                        lines_out.append(f"  {priority:8s}: {count}")
-
-            if issues:
-                lines_out.append("")
-                lines_out.append("Issues detected:")
-                for issue in issues:
-                    marker = "!!!" if issue["severity"] == "CRITICAL" else " ! "
-                    lines_out.append(f"{marker} [{issue['severity']}] {issue['message']}")
-
-            if stats["bursts"] and opts.verbose:
-                lines_out.append("")
-                lines_out.append("Burst events:")
-                for burst in stats["bursts"]:
-                    lines_out.append(
-                        f"  - {burst['count']} messages at {burst['start']}"
-                    )
-
-            print("\n".join(lines_out))
+    output.emit(result_data)
+    output.render(opts.format, "Kernel Log Rate Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     rate_str = (
         f"{stats['messages_per_minute']:.1f}/min"

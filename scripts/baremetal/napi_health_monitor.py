@@ -24,7 +24,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from datetime import datetime, timezone
 
 from boxctl.core.context import Context
@@ -257,51 +256,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            lines = []
-            lines.append("NAPI Health Monitor")
-            lines.append("=" * 60)
-            lines.append("")
-
-            lines.append("Global NAPI Settings:")
-            lines.append(f"  netdev_budget:      {settings.get('netdev_budget', 'N/A'):>10}")
-            lines.append(f"  dev_weight:         {settings.get('dev_weight', 'N/A'):>10}")
-            lines.append(f"  gro_normal_batch:   {settings.get('gro_normal_batch', 'N/A'):>10}")
-            lines.append(f"  busy_poll:          {settings.get('busy_poll', 'N/A'):>10} us")
-            lines.append(f"  busy_read:          {settings.get('busy_read', 'N/A'):>10} us")
-            lines.append("")
-
-            lines.append("NET Softirq Statistics:")
-            lines.append(f"  Total NET_RX:       {softirq_stats.get('total_net_rx', 0):>15,}")
-            lines.append(f"  Total NET_TX:       {softirq_stats.get('total_net_tx', 0):>15,}")
-            lines.append("")
-
-            if opts.verbose and softirq_stats.get("net_rx"):
-                lines.append("Per-CPU NET_RX Distribution:")
-                for cpu, count in enumerate(softirq_stats["net_rx"]):
-                    lines.append(f"  CPU{cpu:<4} {count:>15,}")
-                lines.append("")
-
-            if analysis["issues"]:
-                lines.append("ISSUES:")
-                for issue in analysis["issues"]:
-                    lines.append(f"  [!] {issue['message']}")
-                lines.append("")
-
-            if analysis["warnings"]:
-                lines.append("WARNINGS:")
-                for warning in analysis["warnings"]:
-                    lines.append(f"  [*] {warning['message']}")
-                lines.append("")
-
-            if not analysis["issues"] and not analysis["warnings"]:
-                lines.append("[OK] NAPI configuration healthy")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "NAPI Health Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     output.set_summary(f"status={analysis['status']}")
 

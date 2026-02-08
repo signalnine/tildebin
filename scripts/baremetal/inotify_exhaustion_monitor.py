@@ -20,7 +20,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -276,11 +275,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
     has_critical = any(i["severity"] == "CRITICAL" for i in issues)
     has_warnings = any(i["severity"] == "WARNING" for i in issues)
 
-    if opts.warn_only and not issues:
-        if opts.format == "json":
-            print(json.dumps({"healthy": True, "issues": []}))
-        return 0
-
     # Build result
     result = {
         "limits": limits,
@@ -298,78 +292,13 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "healthy": len([i for i in issues if i["severity"] == "CRITICAL"]) == 0,
     }
 
+    output.emit(result)
+
+    if opts.warn_only and not issues:
+        return 0
+
     # Output
-    if opts.format == "json":
-        print(json.dumps(result, indent=2))
-    else:
-        lines = []
-
-        if not opts.warn_only or issues:
-            lines.append("Inotify Watch Usage Monitor")
-            lines.append("=" * 60)
-            lines.append("")
-
-            # System limits
-            lines.append("Kernel Limits:")
-            lines.append(
-                f"  max_user_watches:   {limits.get('max_user_watches', 'N/A'):>10}"
-            )
-            lines.append(
-                f"  max_user_instances: {limits.get('max_user_instances', 'N/A'):>10}"
-            )
-            lines.append(
-                f"  max_queued_events:  {limits.get('max_queued_events', 'N/A'):>10}"
-            )
-            lines.append("")
-
-            # Current usage
-            lines.append("Current Usage:")
-            lines.append(f"  Total watches:   {summary['total_watches']:>10}")
-            lines.append(f"  Total instances: {summary['total_instances']:>10}")
-
-            if summary["usage_percent"] is not None:
-                lines.append(f"  Watch usage:     {summary['usage_percent']:>9.1f}%")
-            if summary["instance_percent"] is not None:
-                lines.append(f"  Instance usage:  {summary['instance_percent']:>9.1f}%")
-            lines.append("")
-
-            # Top consumers
-            if summary["top_consumers"]:
-                lines.append("Top Consumers:")
-                lines.append(
-                    f"  {'PID':<8} {'Process':<20} {'Watches':>10} {'Instances':>10}"
-                )
-                lines.append("  " + "-" * 50)
-
-                for proc in summary["top_consumers"][:5]:
-                    name = proc["name"][:20]
-                    lines.append(
-                        f"  {proc['pid']:<8} {name:<20} "
-                        f"{proc['watches']:>10} {proc['instances']:>10}"
-                    )
-                lines.append("")
-
-        # Issues
-        if issues:
-            lines.append("Issues Detected:")
-            lines.append("-" * 60)
-            for issue in sorted(issues, key=lambda x: x["severity"] != "CRITICAL"):
-                marker = "!!!" if issue["severity"] == "CRITICAL" else " ! "
-                lines.append(f"{marker} [{issue['severity']}] {issue['message']}")
-            lines.append("")
-
-            # Remediation hints
-            lines.append("Remediation:")
-            lines.append("  Increase limit (temporary):")
-            lines.append("    sudo sysctl -w fs.inotify.max_user_watches=524288")
-            lines.append("  Make persistent:")
-            lines.append(
-                "    echo 'fs.inotify.max_user_watches=524288' | sudo tee -a /etc/sysctl.conf"
-            )
-        elif not opts.warn_only:
-            lines.append("Status: Inotify usage is healthy")
-
-        print("\n".join(lines))
+    output.render(opts.format, "Inotify Watch Exhaustion Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     status = (

@@ -57,7 +57,7 @@ class TestNumaTopologyAnalyzer:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "NUMA Nodes: 2" in captured.out
+        assert "Numa Nodes: 2" in captured.out
 
     def test_disabled_balancing_returns_1(self, capsys):
         """Disabled NUMA balancing returns exit code 1 (warning)."""

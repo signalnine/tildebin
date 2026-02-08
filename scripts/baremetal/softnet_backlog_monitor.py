@@ -24,7 +24,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from datetime import datetime, timezone
 
 from boxctl.core.context import Context
@@ -332,51 +331,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "healthy": totals["total_dropped"] == 0 and totals["total_time_squeeze"] == 0,
     }
 
-    # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            lines = []
-            lines.append("Softnet Backlog Statistics")
-            lines.append("=" * 60)
-            lines.append("")
-            lines.append("Aggregate Statistics:")
-            lines.append(f"  Packets processed:  {totals['total_processed']:>15,}")
-            lines.append(f"  Packets dropped:    {totals['total_dropped']:>15,}")
-            lines.append(f"  Time squeezes:      {totals['total_time_squeeze']:>15,}")
-            if totals["total_flow_limit"] > 0:
-                lines.append(f"  Flow limit drops:   {totals['total_flow_limit']:>15,}")
-            lines.append("")
-
-            if opts.verbose:
-                lines.append("Per-CPU Statistics:")
-                lines.append(f"  {'CPU':<6} {'Processed':>15} {'Dropped':>12} {'Squeeze':>12}")
-                lines.append("  " + "-" * 47)
-                for stat in cpu_stats:
-                    lines.append(
-                        f"  {stat['cpu']:<6} {stat['processed']:>15,} "
-                        f"{stat['dropped']:>12,} {stat['time_squeeze']:>12,}"
-                    )
-                lines.append("")
-
-            if analysis["issues"]:
-                lines.append("ISSUES:")
-                for issue in analysis["issues"]:
-                    lines.append(f"  [!] {issue['message']}")
-                lines.append("")
-
-            if analysis["warnings"]:
-                lines.append("WARNINGS:")
-                for warning in analysis["warnings"]:
-                    lines.append(f"  [*] {warning['message']}")
-                lines.append("")
-
-            if not analysis["issues"] and not analysis["warnings"]:
-                lines.append("[OK] Softnet statistics healthy")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "Softnet Backlog Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     output.set_summary(f"status={analysis['status']}")
 

@@ -21,7 +21,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from datetime import datetime, timezone
 
 from boxctl.core.context import Context
@@ -243,64 +242,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "healthy": len(analysis["issues"]) == 0,
     }
 
+    output.emit(result)
+
     # Check if we should output anything
     if opts.warn_only and analysis["status"] == "healthy":
         return 0
 
     # Output handling
-    if opts.format == "json":
-        print(json.dumps(result, indent=2))
-    else:
-        lines = []
-        lines.append("Watchdog Timer Status Report")
-        lines.append("=" * 60)
-        lines.append(f"System Uptime: {uptime_str}")
-        lines.append("")
-
-        status_icon = {"healthy": "[OK]", "warning": "[WARN]", "critical": "[CRIT]"}
-        lines.append(f"Status: {status_icon.get(analysis['status'], '[?]')} {analysis['status'].upper()}")
-        lines.append("")
-
-        lines.append("Watchdog Devices:")
-        if watchdog_info["devices"]:
-            for dev in watchdog_info["devices"]:
-                identity = dev.get("identity", "unknown")
-                timeout = dev.get("timeout", "N/A")
-                state = dev.get("state", "unknown")
-                lines.append(f"  {dev.get('path', 'N/A')}: {identity}")
-                lines.append(f"    State: {state}, Timeout: {timeout}s")
-                if opts.verbose:
-                    if "nowayout" in dev:
-                        nowayout = "enabled" if dev["nowayout"] else "disabled"
-                        lines.append(f"    Nowayout: {nowayout}")
-        else:
-            lines.append("  No watchdog devices found")
-        lines.append("")
-
-        lines.append("Watchdog Daemon:")
-        if watchdog_info["has_daemon"]:
-            status = watchdog_info["daemon_status"] or "unknown"
-            lines.append(f"  {watchdog_info['daemon_name']}: {status}")
-        else:
-            lines.append("  No watchdog daemon configured")
-        lines.append("")
-
-        if analysis["issues"]:
-            lines.append("ISSUES:")
-            for issue in analysis["issues"]:
-                lines.append(f"  [!] {issue['message']}")
-            lines.append("")
-
-        if analysis["warnings"]:
-            lines.append("WARNINGS:")
-            for warning in analysis["warnings"]:
-                lines.append(f"  [*] {warning['message']}")
-            lines.append("")
-
-        if not analysis["issues"] and not analysis["warnings"]:
-            lines.append("[OK] Watchdog properly configured and active")
-
-        print("\n".join(lines))
+    output.render(opts.format, "Watchdog Timer Status", warn_only=getattr(opts, 'warn_only', False))
 
     output.set_summary(f"status={analysis['status']}")
 

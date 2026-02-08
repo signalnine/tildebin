@@ -27,7 +27,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from datetime import datetime, timezone
 
 from boxctl.core.context import Context
@@ -240,47 +239,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            lines = []
-            lines.append("Kernel Workqueue Status")
-            lines.append("=" * 50)
-            lines.append("")
-
-            lines.append("kworker Thread Summary:")
-            lines.append(f"  Total: {kworker_stats['total_kworkers']}")
-            lines.append(f"  Running: {kworker_stats['running']}")
-            lines.append(f"  Sleeping: {kworker_stats['sleeping']}")
-            lines.append(f"  Uninterruptible (D): {kworker_stats['uninterruptible']}")
-            lines.append("")
-
-            if opts.verbose and kworker_stats["by_workqueue"]:
-                lines.append("kworker Distribution:")
-                for wq_type, count in sorted(
-                    kworker_stats["by_workqueue"].items(), key=lambda x: -x[1]
-                )[:10]:
-                    lines.append(f"  {wq_type}: {count}")
-                lines.append("")
-
-            if analysis["issues"]:
-                lines.append("ISSUES:")
-                for issue in analysis["issues"]:
-                    lines.append(f"  [!] {issue['message']}")
-                lines.append("")
-
-            if analysis["warnings"]:
-                lines.append("WARNINGS:")
-                for warning in analysis["warnings"]:
-                    lines.append(f"  [*] {warning['message']}")
-                lines.append("")
-
-            if not analysis["issues"] and not analysis["warnings"]:
-                lines.append("[OK] No workqueue issues detected")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "Kernel Workqueue Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     output.set_summary(f"status={analysis['status']}")
 

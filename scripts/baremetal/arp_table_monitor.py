@@ -20,7 +20,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from collections import defaultdict
 from datetime import datetime, timezone
 
@@ -328,13 +327,13 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "healthy": len(issues) == 0,
     }
 
+    if opts.verbose:
+        result["entries"] = entries
+
+    output.emit(result)
+
     # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or issues:
-            if opts.verbose:
-                result["entries"] = entries
-            print(json.dumps(result, indent=2))
-    elif opts.format == "table":
+    if opts.format == "table":
         if not opts.warn_only or issues:
             lines = []
             lines.append(f"{'METRIC':<30} {'VALUE':<30}")
@@ -360,47 +359,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
                 lines.append("No issues detected")
 
             print("\n".join(lines))
-    else:  # plain
-        if not opts.warn_only or issues:
-            lines = []
-            lines.append("ARP Table Analysis")
-            lines.append("=" * 60)
-            lines.append(f"Total entries: {stats['total_entries']}")
-            lines.append(f"Complete: {stats['complete']}")
-            lines.append(f"Incomplete: {stats['incomplete']}")
-
-            if limits and any(limits.values()):
-                lines.append("")
-                lines.append("ARP cache limits:")
-                lines.append(f"  gc_thresh1: {limits.get('gc_thresh1', 'N/A')}")
-                lines.append(f"  gc_thresh2: {limits.get('gc_thresh2', 'N/A')}")
-                lines.append(f"  gc_thresh3: {limits.get('gc_thresh3', 'N/A')}")
-
-            if stats["by_interface"]:
-                lines.append("")
-                lines.append("Entries by interface:")
-                for iface, count in sorted(stats["by_interface"].items()):
-                    lines.append(f"  {iface}: {count}")
-
-            if gateways:
-                lines.append("")
-                lines.append("Default gateways:")
-                for gw in gateways:
-                    lines.append(f"  {gw['ip']} via {gw['interface']}")
-
-            lines.append("")
-
-            if issues:
-                lines.append("Issues Detected:")
-                lines.append("-" * 60)
-                for issue in issues:
-                    severity = issue["severity"]
-                    message = issue["message"]
-                    lines.append(f"[{severity}] {message}")
-            else:
-                lines.append("No issues detected - ARP table healthy")
-
-            print("\n".join(lines))
+    else:
+        output.render(opts.format, "ARP Table Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(

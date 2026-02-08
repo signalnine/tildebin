@@ -18,7 +18,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import re
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -312,68 +311,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            lines = []
-            lines.append("TCP Connection Monitor")
-            lines.append("=" * 40)
-            lines.append("")
-
-            # State summary
-            lines.append("Connection States:")
-            for state in [
-                "ESTABLISHED",
-                "LISTEN",
-                "TIME_WAIT",
-                "CLOSE_WAIT",
-                "FIN_WAIT1",
-                "FIN_WAIT2",
-                "SYN_SENT",
-                "SYN_RECV",
-                "LAST_ACK",
-                "CLOSING",
-                "CLOSE",
-            ]:
-                count = analysis["state_counts"].get(state, 0)
-                if count > 0:
-                    lines.append(f"  {state:<12} {count:>6}")
-            lines.append(f"  {'TOTAL':<12} {analysis['total']:>6}")
-            lines.append("")
-
-            if analysis["issues"]:
-                lines.append("ISSUES:")
-                for issue in analysis["issues"]:
-                    lines.append(f"  [!] {issue}")
-                lines.append("")
-
-            if analysis["warnings"]:
-                lines.append("WARNINGS:")
-                for warning in analysis["warnings"]:
-                    lines.append(f"  [*] {warning}")
-                lines.append("")
-
-            if not analysis["issues"] and not analysis["warnings"]:
-                lines.append("[OK] No connection issues detected")
-
-            if opts.verbose and connections:
-                lines.append("")
-                lines.append(f"Connections (showing up to {opts.top}):")
-                lines.append(
-                    f"  {'State':<12} {'Local Port':>10} {'Remote':>15}"
-                )
-                lines.append("  " + "-" * 40)
-                for conn in connections[: opts.top]:
-                    remote = f"{conn['remote_ip']}:{conn['remote_port']}"
-                    if len(remote) > 15:
-                        remote = remote[:12] + "..."
-                    lines.append(
-                        f"  {conn['state']:<12} {conn['local_port']:>10} {remote:>15}"
-                    )
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "TCP Connection Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(f"status={analysis['status']}, total={analysis['total']}")

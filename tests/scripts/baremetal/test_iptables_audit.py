@@ -36,8 +36,9 @@ class TestIptablesAudit:
         result = run([], output, context)
 
         assert result == 0
-        captured = capsys.readouterr()
-        assert "OK" in captured.out or "Total rules" in captured.out
+        assert output.data.get("has_warnings") is False
+        assert "stats" in output.data
+        assert output.data["stats"]["total_rules"] >= 0
 
     def test_high_rules_warning(self, capsys):
         """High rule count triggers warning."""

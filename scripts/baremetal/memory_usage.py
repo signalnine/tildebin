@@ -19,7 +19,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -141,41 +140,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output
-    if opts.format == "json":
-        if not opts.warn_only or issues:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or issues:
-            lines = []
-            lines.append("Memory Usage")
-            lines.append("=" * 40)
-            lines.append(
-                f"Total:     {format_bytes(mem_total)}"
-            )
-            lines.append(
-                f"Used:      {format_bytes(mem_used)} ({used_pct:.1f}%)"
-            )
-            lines.append(
-                f"Available: {format_bytes(mem_available)} ({available_pct:.1f}%)"
-            )
-
-            if opts.verbose:
-                lines.append("")
-                lines.append("Breakdown:")
-                lines.append(f"  Free:    {format_bytes(mem_free)}")
-                lines.append(f"  Buffers: {format_bytes(buffers)}")
-                lines.append(f"  Cached:  {format_bytes(cached)}")
-
-            lines.append("")
-
-            if issues:
-                for issue in issues:
-                    prefix = "[CRITICAL]" if issue["severity"] == "CRITICAL" else "[WARNING]"
-                    lines.append(f"{prefix} {issue['message']}")
-            else:
-                lines.append("[OK] Memory usage within acceptable thresholds")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "Memory Usage", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(f"available={available_pct:.1f}%, status={status}")

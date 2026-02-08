@@ -26,7 +26,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from datetime import datetime, timezone
 
 from boxctl.core.context import Context
@@ -415,17 +414,25 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     summary = generate_summary(processes)
 
+    # Build result for output
+    result = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "summary": summary,
+        "processes": processes,
+        "high_risk_capabilities": sorted(HIGH_RISK_CAPS),
+    }
+
+    output.emit(result)
+
     # Handle warn-only
     if opts.warn_only and summary["processes_with_high_risk"] == 0:
         return 0
 
     # Output results
-    if opts.format == "json":
-        _output_json(processes, summary)
-    elif opts.format == "table":
+    if opts.format == "table":
         _output_table(processes, summary, opts.warn_only)
     else:
-        _output_plain(processes, summary, opts.verbose, opts.warn_only)
+        output.render(opts.format, "Process Capabilities Audit", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     if summary["processes_with_high_risk"] > 0:
@@ -438,62 +445,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
     # Exit code based on findings
     return 1 if summary["processes_with_high_risk"] > 0 else 0
 
-
-def _output_plain(
-    processes: list[dict], summary: dict, verbose: bool, warn_only: bool
-) -> None:
-    """Output results in plain text format."""
-    if warn_only and summary["processes_with_high_risk"] == 0:
-        print("No high-risk privileged processes found.")
-        return
-
-    print("Process Capabilities Audit")
-    print("=" * 70)
-    print(f"Privileged processes found: {summary['total_privileged_processes']}")
-    print(f"Processes with high-risk caps: {summary['processes_with_high_risk']}")
-    print(f"Unique capabilities found: {summary['unique_capabilities_found']}")
-    print()
-
-    if summary["most_common_caps"]:
-        print("Most common capabilities:")
-        for item in summary["most_common_caps"][:5]:
-            risk_marker = " [HIGH RISK]" if item["cap"] in HIGH_RISK_CAPS else ""
-            print(f"  {item['cap']}: {item['count']} processes{risk_marker}")
-        print()
-
-    if processes:
-        print("Privileged Processes:")
-        print("-" * 70)
-
-        for proc in processes:
-            risk_str = ""
-            if proc["high_risk_caps"]:
-                risk_str = f" [!] HIGH RISK: {len(proc['high_risk_caps'])} caps"
-
-            print(f"PID {proc['pid']}: {proc['comm']} (user: {proc['user']}){risk_str}")
-            caps_str = ", ".join(proc["effective_caps"][:5])
-            print(f"  Effective caps ({proc['cap_count']}): {caps_str}")
-            if len(proc["effective_caps"]) > 5:
-                print(f"    ... and {len(proc['effective_caps']) - 5} more")
-
-            if verbose:
-                if proc["cmdline"] and proc["cmdline"] != proc["comm"]:
-                    print(f"  Command: {proc['cmdline'][:60]}...")
-                if proc["high_risk_caps"]:
-                    print(f"  High-risk: {', '.join(proc['high_risk_caps'])}")
-
-            print()
-
-
-def _output_json(processes: list[dict], summary: dict) -> None:
-    """Output results in JSON format."""
-    result = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "summary": summary,
-        "processes": processes,
-        "high_risk_capabilities": sorted(HIGH_RISK_CAPS),
-    }
-    print(json.dumps(result, indent=2))
 
 
 def _output_table(processes: list[dict], summary: dict, warn_only: bool) -> None:

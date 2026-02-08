@@ -19,7 +19,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -266,40 +265,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output
-    if opts.format == "json":
-        if not opts.warn_only or has_issues:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or has_issues:
-            lines = ["Logrotate Status Monitor", "=" * 50]
-
-            lines.append(
-                f"State file: {'found' if state_file_found else 'not found'}"
-            )
-            if state_file_found:
-                lines.append(f"Tracked logs: {len(logrotate_state)}")
-
-            lines.append("")
-
-            if large_logs:
-                lines.append(f"Large log files (>{opts.max_size} MB):")
-                for log in large_logs[:10]:
-                    lines.append(f"  - {log['path']}: {log['size_mb']} MB")
-                lines.append("")
-
-            if stale_logs:
-                lines.append(f"Stale logs (not rotated in >{opts.max_age} days):")
-                for log in stale_logs[:10]:
-                    lines.append(f"  - {log['path']}: {log['age_days']} days ago")
-                lines.append("")
-
-            if issues:
-                for issue in issues:
-                    lines.append(f"[{issue['severity']}] {issue['message']}")
-            else:
-                lines.append("[OK] No logrotate issues detected")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "Logrotate Status Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     status = "warning" if has_issues else "healthy"
     output.set_summary(f"large={len(large_logs)}, stale={len(stale_logs)}, status={status}")

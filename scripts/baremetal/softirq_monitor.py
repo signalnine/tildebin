@@ -24,7 +24,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from collections import defaultdict
 from datetime import datetime, timezone
 
@@ -223,44 +222,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "healthy": len(analysis["issues"]) == 0,
     }
 
-    # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            lines = []
-            lines.append("Softirq Monitor")
-            lines.append("=" * 50)
-            lines.append("")
-            lines.append(f"CPU Count: {cpu_count}")
-            lines.append(f"Softirq Types: {len(softirqs)}")
-            lines.append("")
-
-            if opts.verbose:
-                lines.append("Softirq Totals:")
-                lines.append("-" * 50)
-                for irq_type in sorted(analysis["totals"].keys()):
-                    total = analysis["totals"][irq_type]
-                    lines.append(f"  {irq_type:<15} {total:>15,}")
-                lines.append("")
-
-            if analysis["issues"]:
-                lines.append("ISSUES:")
-                for issue in analysis["issues"]:
-                    lines.append(f"  [!] {issue['message']}")
-                lines.append("")
-
-            if analysis["warnings"]:
-                lines.append("WARNINGS:")
-                for warning in analysis["warnings"]:
-                    lines.append(f"  [*] {warning['message']}")
-                lines.append("")
-
-            if not analysis["issues"] and not analysis["warnings"]:
-                lines.append("[OK] Softirq distribution is balanced")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "Softirq Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     output.set_summary(f"status={analysis['status']}")
 

@@ -34,7 +34,7 @@ class TestOomKillHistory:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "No OOM kill events found" in captured.out
+        assert output.data["analysis"]["total_events"] == 0
 
     def test_oom_kills_returns_1(self, capsys):
         """OOM kills detected returns exit code 1."""
@@ -51,7 +51,7 @@ class TestOomKillHistory:
 
         assert result == 1
         captured = capsys.readouterr()
-        assert "Total OOM kills found" in captured.out
+        assert output.data["analysis"]["total_events"] > 0
 
     def test_parses_multiple_oom_events(self, capsys):
         """Parses multiple OOM kill events correctly."""

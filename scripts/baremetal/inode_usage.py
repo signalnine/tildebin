@@ -18,7 +18,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -159,33 +158,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output
-    if opts.format == "json":
-        if not opts.warn_only or issues:
-            print(json.dumps(result_data, indent=2))
-    else:
-        if not opts.warn_only or issues:
-            lines = []
-            lines.append("Inode Usage Monitor")
-            lines.append("=" * 50)
-
-            if opts.verbose:
-                lines.append(f"{'Mount Point':<25} {'Usage':>10} {'Used':>12} {'Total':>12}")
-                lines.append("-" * 50)
-                for fs in filesystems:
-                    lines.append(
-                        f"{fs['mount_point']:<25} {fs['usage_percent']:>9.1f}% "
-                        f"{fs['inodes_used']:>12,} {fs['inodes_total']:>12,}"
-                    )
-                lines.append("")
-
-            if issues:
-                for issue in issues:
-                    prefix = "[CRITICAL]" if issue["severity"] == "CRITICAL" else "[WARNING]"
-                    lines.append(f"{prefix} {issue['message']}")
-            else:
-                lines.append(f"[OK] All {len(filesystems)} filesystem(s) have healthy inode usage")
-
-            print("\n".join(lines))
+    output.emit(result_data)
+    output.render(opts.format, "Inode Usage Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     output.set_summary(f"filesystems={len(filesystems)}, issues={len(issues)}, status={status}")
 

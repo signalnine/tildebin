@@ -60,12 +60,13 @@ class Output:
                 lines.append(f"{key}: {value}")
         return "\n".join(lines)
 
-    def render(self, format: str = "plain", title: str | None = None) -> None:
+    def render(self, format: str = "plain", title: str | None = None, warn_only: bool = False) -> None:
         """Print output in the specified format.
 
         Args:
             format: Output format - "json" or "plain"
             title: Optional title for plain text output
+            warn_only: If True, only print if issues or warnings exist
         """
         if self._printed:
             return
@@ -73,6 +74,12 @@ class Output:
 
         if not self.data:
             return
+
+        if warn_only:
+            issues = self.data.get("issues", [])
+            warnings = self.data.get("warnings", [])
+            if not issues and not warnings:
+                return
 
         if format == "json":
             print(self.to_json())
@@ -123,6 +130,18 @@ class Output:
         elif status in ("healthy", "ok"):
             lines.append("")
             lines.append("[OK] No issues detected")
+
+        # Warnings section
+        warnings = self.data.get("warnings", [])
+        if warnings:
+            lines.append("")
+            lines.append("Warnings:")
+            for warning in warnings:
+                if isinstance(warning, dict):
+                    message = warning.get("message", str(warning))
+                    lines.append(f"  [WARNING] {message}")
+                else:
+                    lines.append(f"  [WARNING] {warning}")
 
         print("\n".join(lines))
 

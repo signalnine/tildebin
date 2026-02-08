@@ -31,7 +31,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from datetime import datetime, timezone
 
 from boxctl.core.context import Context
@@ -347,14 +346,31 @@ def run(args: list[str], output: Output, context: Context) -> int:
         ]
         warnings: list[dict] = []
 
-        if opts.format == "json":
-            _output_json(processes, opts.top, warn_threshold, snapshot=True)
-        elif opts.format == "table":
+        sorted_procs = sorted(processes, key=lambda x: x["total_rate"], reverse=True)
+        active_procs = [p for p in sorted_procs if p["total_rate"] > 0 or True]
+
+        snapshot_result = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "status": "ok",
+            "warn_threshold_bytes_sec": warn_threshold,
+            "snapshot_mode": True,
+            "summary": {
+                "total_processes_sampled": len(processes),
+                "processes_with_io": len(active_procs),
+                "warning_count": 0,
+                "total_read_rate": sum(p["read_rate"] for p in processes),
+                "total_write_rate": sum(p["write_rate"] for p in processes),
+            },
+            "warnings": [],
+            "top_consumers": active_procs[:opts.top],
+        }
+
+        output.emit(snapshot_result)
+
+        if opts.format == "table":
             _output_table(processes, opts.top, opts.warn_only, warn_threshold, snapshot=True)
         else:
-            _output_plain(
-                processes, opts.top, opts.warn_only, opts.verbose, warn_threshold, snapshot=True
-            )
+            output.render(opts.format, "Process I/O Monitor", warn_only=getattr(opts, 'warn_only', False))
 
         output.set_summary(f"Snapshot: {len(processes)} processes sampled")
         return 0
@@ -379,13 +395,30 @@ def run(args: list[str], output: Output, context: Context) -> int:
     active_procs = [p for p in sorted_procs if p["total_rate"] > 0]
     warnings = [p for p in active_procs if p["total_rate"] >= warn_threshold]
 
+    # Build result for output
+    result = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "status": "warning" if warnings else "ok",
+        "warn_threshold_bytes_sec": warn_threshold,
+        "snapshot_mode": False,
+        "summary": {
+            "total_processes_sampled": len(processes),
+            "processes_with_io": len(active_procs),
+            "warning_count": len(warnings),
+            "total_read_rate": sum(p["read_rate"] for p in processes),
+            "total_write_rate": sum(p["write_rate"] for p in processes),
+        },
+        "warnings": warnings[:opts.top],
+        "top_consumers": active_procs[:opts.top],
+    }
+
+    output.emit(result)
+
     # Output based on format
-    if opts.format == "json":
-        _output_json(processes, opts.top, warn_threshold)
-    elif opts.format == "table":
+    if opts.format == "table":
         _output_table(processes, opts.top, opts.warn_only, warn_threshold)
     else:
-        _output_plain(processes, opts.top, opts.warn_only, opts.verbose, warn_threshold)
+        output.render(opts.format, "Process I/O Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     if warnings:
@@ -395,100 +428,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     return 1 if warnings else 0
 
-
-def _output_plain(
-    processes: list[dict],
-    top_n: int,
-    warn_only: bool,
-    verbose: bool,
-    warn_threshold: float,
-    snapshot: bool = False,
-) -> None:
-    """Output in plain text format."""
-    if not processes:
-        if not warn_only:
-            print("No I/O activity detected during sampling interval")
-        return
-
-    sorted_procs = sorted(processes, key=lambda x: x["total_rate"], reverse=True)
-    active_procs = [p for p in sorted_procs if p["total_rate"] > 0 or snapshot]
-    warnings = [p for p in active_procs if p["total_rate"] >= warn_threshold]
-
-    if warnings and not snapshot:
-        print(f"WARNING - High I/O processes (>= {format_rate(warn_threshold)}):")
-        for proc in warnings[:top_n]:
-            print(
-                f"  PID {proc['pid']:>7} ({proc['comm']:<15}): "
-                f"read={format_rate(proc['read_rate']):>10} "
-                f"write={format_rate(proc['write_rate']):>10} "
-                f"total={format_rate(proc['total_rate']):>10} "
-                f"user={proc['user']}"
-            )
-        print()
-
-    if not warn_only:
-        if not warnings and not snapshot:
-            print("OK - No processes exceeding I/O threshold")
-            print()
-
-        display_procs = active_procs[:top_n] if active_procs else sorted_procs[:top_n]
-        if display_procs:
-            if snapshot:
-                print(f"Top {min(top_n, len(display_procs))} I/O consumers (cumulative):")
-                for proc in display_procs:
-                    print(
-                        f"  PID {proc['pid']:>7} ({proc['comm']:<15}): "
-                        f"read={format_bytes(proc['read_bytes']):>10} "
-                        f"write={format_bytes(proc['write_bytes']):>10} "
-                        f"user={proc['user']}"
-                    )
-            else:
-                print(f"Top {min(top_n, len(display_procs))} I/O consumers:")
-                for proc in display_procs:
-                    print(
-                        f"  PID {proc['pid']:>7} ({proc['comm']:<15}): "
-                        f"read={format_rate(proc['read_rate']):>10} "
-                        f"write={format_rate(proc['write_rate']):>10} "
-                        f"total={format_rate(proc['total_rate']):>10} "
-                        f"user={proc['user']}"
-                    )
-
-            if verbose:
-                print()
-                print("Detailed syscall counts:")
-                for proc in display_procs:
-                    if proc["syscr"] > 0 or proc["syscw"] > 0:
-                        print(
-                            f"  PID {proc['pid']:>7} ({proc['comm']:<15}): "
-                            f"read_syscalls={proc['syscr']:>8} "
-                            f"write_syscalls={proc['syscw']:>8}"
-                        )
-
-
-def _output_json(
-    processes: list[dict], top_n: int, warn_threshold: float, snapshot: bool = False
-) -> None:
-    """Output in JSON format."""
-    sorted_procs = sorted(processes, key=lambda x: x["total_rate"], reverse=True)
-    active_procs = [p for p in sorted_procs if p["total_rate"] > 0 or snapshot]
-    warnings = [p for p in active_procs if p["total_rate"] >= warn_threshold]
-
-    result = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "status": "warning" if warnings and not snapshot else "ok",
-        "warn_threshold_bytes_sec": warn_threshold,
-        "snapshot_mode": snapshot,
-        "summary": {
-            "total_processes_sampled": len(processes),
-            "processes_with_io": len(active_procs),
-            "warning_count": len(warnings) if not snapshot else 0,
-            "total_read_rate": sum(p["read_rate"] for p in processes),
-            "total_write_rate": sum(p["write_rate"] for p in processes),
-        },
-        "warnings": warnings[:top_n] if not snapshot else [],
-        "top_consumers": active_procs[:top_n],
-    }
-    print(json.dumps(result, indent=2))
 
 
 def _output_table(

@@ -28,7 +28,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -283,10 +282,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     has_findings = issues or warnings
 
-    # Early return for warn-only
-    if opts.warn_only and not has_findings:
-        return 0
-
     # Build result
     result = {
         "numa_nodes": len(node_ids),
@@ -300,10 +295,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "healthy": status == "healthy",
     }
 
+    output.emit(result)
+
+    # Early return for warn-only
+    if opts.warn_only and not has_findings:
+        return 0
+
     # Output
-    if opts.format == "json":
-        print(json.dumps(result, indent=2))
-    elif opts.format == "table":
+    if opts.format == "table":
         lines = []
         lines.append("+" + "-" * 62 + "+")
         lines.append("| NUMA Topology Analyzer" + " " * 39 + "|")
@@ -352,72 +351,7 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
         print("\n".join(lines))
     else:
-        lines = []
-        lines.append("NUMA Topology Analyzer")
-        lines.append("=" * 50)
-        lines.append("")
-
-        # Overview
-        total_cpus = sum(len(node_data[n].get("cpus", [])) for n in node_ids)
-        total_mem = sum(node_data[n].get("memory", {}).get("MemTotal", 0) for n in node_ids)
-        lines.append(f"NUMA Nodes: {len(node_ids)}")
-        lines.append(f"Total CPUs: {total_cpus}")
-        lines.append(f"Total Memory: {bytes_to_human(total_mem)}")
-        lines.append("")
-
-        # Per-node info
-        for node_id in node_ids:
-            data = node_data[node_id]
-            cpus = data.get("cpus", [])
-            mem = data.get("memory", {})
-            stats = data.get("stats", {})
-
-            lines.append(f"Node {node_id}:")
-            cpu_str = (
-                f"{len(cpus)} ({','.join(map(str, cpus[:8]))}{'...' if len(cpus) > 8 else ''})"
-            )
-            lines.append(f"  CPUs: {cpu_str}")
-
-            mem_total = mem.get("MemTotal", 0)
-            mem_free = mem.get("MemFree", 0)
-            mem_used = mem_total - mem_free if mem_total and mem_free else 0
-            lines.append(
-                f"  Memory: {bytes_to_human(mem_total)} total, {bytes_to_human(mem_used)} used"
-            )
-
-            if opts.verbose and stats:
-                hits = stats.get("numa_hit", 0)
-                misses = stats.get("numa_miss", 0)
-                if hits + misses > 0:
-                    hit_ratio = hits / (hits + misses) * 100
-                    lines.append(
-                        f"  NUMA hit ratio: {hit_ratio:.1f}% ({hits} hits, {misses} misses)"
-                    )
-            lines.append("")
-
-        # Balancing status
-        if balancing["enabled"] is not None:
-            status_str = "enabled" if balancing["enabled"] else "disabled"
-            lines.append(f"NUMA Balancing (AutoNUMA): {status_str}")
-            lines.append("")
-
-        # Issues and warnings
-        if issues:
-            lines.append("ISSUES:")
-            for issue in issues:
-                lines.append(f"  [!] {issue}")
-            lines.append("")
-
-        if warnings:
-            lines.append("WARNINGS:")
-            for warning in warnings:
-                lines.append(f"  [*] {warning}")
-            lines.append("")
-
-        if not issues and not warnings:
-            lines.append("[OK] NUMA topology is healthy")
-
-        print("\n".join(lines))
+        output.render(opts.format, "NUMA Topology Analyzer", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(f"nodes={len(node_ids)}, status={status}")

@@ -151,6 +151,5 @@ class TestInterruptBalanceMonitor:
 
         result = run(["--verbose"], output, context)
 
-        captured = capsys.readouterr()
-        assert "CPU0" in captured.out
-        assert "CPU1" in captured.out
+        assert "cpu_totals" in output.data
+        assert len(output.data["cpu_totals"]) >= 2

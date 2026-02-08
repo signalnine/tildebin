@@ -28,7 +28,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import re
 import time
 from typing import Any
@@ -214,10 +213,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
     summary = generate_summary(processes)
     unfiltered_processes = [p for p in processes if p["seccomp_mode"] == 0]
 
-    # Handle warn-only mode
-    if opts.warn_only and not unfiltered_processes:
-        return 0
-
     # Build result data
     data = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -228,13 +223,17 @@ def run(args: list[str], output: Output, context: Context) -> int:
     if opts.verbose:
         data["all_processes"] = processes
 
+    output.emit(data)
+
+    # Handle warn-only mode
+    if opts.warn_only and not unfiltered_processes:
+        return 0
+
     # Output results
-    if opts.format == "json":
-        print(json.dumps(data, indent=2))
-    elif opts.format == "table":
+    if opts.format == "table":
         _output_table(summary, unfiltered_processes, processes if opts.verbose else None)
     else:
-        _output_plain(summary, unfiltered_processes, processes if opts.verbose else None)
+        output.render(opts.format, "Seccomp Filter Audit", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(
@@ -243,42 +242,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
     )
 
     return 0
-
-
-def _output_plain(
-    summary: dict, unfiltered: list[dict], all_processes: list[dict] | None
-) -> None:
-    """Output results in plain text format."""
-    print("Seccomp Filter Audit")
-    print("=" * 60)
-    print(f"Total processes scanned: {summary['total_processes']}")
-    print(f"Seccomp disabled (mode 0): {summary['seccomp_disabled']}")
-    print(f"Seccomp strict  (mode 1): {summary['seccomp_strict']}")
-    print(f"Seccomp filter  (mode 2): {summary['seccomp_filter']}")
-    print(f"Filtered (mode 1+2): {summary['filtered']}")
-    print(f"Unfiltered (mode 0): {summary['unfiltered']}")
-    print()
-
-    if unfiltered:
-        print(f"Unfiltered Processes ({len(unfiltered)}):")
-        print("-" * 60)
-        print(f"{'PID':<8} {'Process':<30}")
-        print("-" * 38)
-        for proc in unfiltered:
-            print(f"{proc['pid']:<8} {proc['comm']:<30}")
-        print()
-
-    if all_processes is not None:
-        print(f"All Processes ({len(all_processes)}):")
-        print("-" * 60)
-        print(f"{'PID':<8} {'Process':<20} {'Mode':<10} {'Filters':<10}")
-        print("-" * 48)
-        for proc in all_processes:
-            filters = str(proc["filter_count"]) if proc["filter_count"] is not None else "-"
-            print(
-                f"{proc['pid']:<8} {proc['comm']:<20} "
-                f"{proc['seccomp_mode_name']:<10} {filters:<10}"
-            )
 
 
 def _output_table(

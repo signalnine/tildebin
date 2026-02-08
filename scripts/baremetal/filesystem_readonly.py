@@ -17,7 +17,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -114,29 +113,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output
-    if opts.format == "json":
-        if not opts.warn_only or readonly_count > 0:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or readonly_count > 0:
-            lines = []
-            lines.append("Filesystem Read-Only Check")
-            lines.append("=" * 40)
-
-            if opts.verbose:
-                for fs in filesystems:
-                    status_str = "RO" if fs["readonly"] else "RW"
-                    lines.append(f"  [{status_str}] {fs['mount_point']} ({fs['fs_type']})")
-                lines.append("")
-
-            if readonly_count > 0:
-                lines.append(f"[CRITICAL] {readonly_count} filesystem(s) are read-only:")
-                for fs in readonly_fs:
-                    lines.append(f"  - {fs['mount_point']} ({fs['device']})")
-            else:
-                lines.append(f"[OK] All {len(filesystems)} filesystem(s) are read-write")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "Filesystem Read-Only Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     output.set_summary(f"ro={readonly_count}, total={len(filesystems)}, status={status}")
 

@@ -17,7 +17,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -156,33 +155,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output
-    if opts.format == "json":
-        if not opts.warn_only or issues:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or issues:
-            lines = []
-            lines.append("Disk I/O Latency Monitor")
-            lines.append("=" * 60)
-
-            if opts.verbose:
-                lines.append(f"{'Device':<12} {'Read Lat':>10} {'Write Lat':>10} {'Avg Lat':>10}")
-                lines.append("-" * 60)
-                for dev in devices:
-                    lines.append(
-                        f"{dev['device']:<12} {dev['read_latency_ms']:>9.1f}ms "
-                        f"{dev['write_latency_ms']:>9.1f}ms {dev['avg_latency_ms']:>9.1f}ms"
-                    )
-                lines.append("")
-
-            if issues:
-                for issue in issues:
-                    prefix = "[CRITICAL]" if issue["severity"] == "CRITICAL" else "[WARNING]"
-                    lines.append(f"{prefix} {issue['message']}")
-            else:
-                lines.append(f"[OK] All {len(devices)} device(s) have healthy latency")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "Disk I/O Latency Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     output.set_summary(f"devices={len(devices)}, issues={len(issues)}, status={status}")
 

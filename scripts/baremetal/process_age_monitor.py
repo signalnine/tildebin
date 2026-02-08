@@ -26,7 +26,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import re
 from datetime import datetime, timezone
 
@@ -405,23 +404,17 @@ def run(args: list[str], output: Output, context: Context) -> int:
         return 2
 
     if not processes:
-        if opts.format == "json":
-            print(
-                json.dumps(
-                    {
-                        "status": "ok",
-                        "summary": {
-                            "total_processes": 0,
-                            "critical_count": 0,
-                            "warning_count": 0,
-                        },
-                        "message": "No matching processes found",
-                    },
-                    indent=2,
-                )
-            )
-        else:
-            print("No matching processes found")
+        result = {
+            "status": "ok",
+            "summary": {
+                "total_processes": 0,
+                "critical_count": 0,
+                "warning_count": 0,
+            },
+            "message": "No matching processes found",
+        }
+        output.emit(result)
+        output.render(opts.format, "Process Age Monitor", warn_only=getattr(opts, 'warn_only', False))
 
         output.set_summary("No matching processes found")
         return 0
@@ -431,88 +424,7 @@ def run(args: list[str], output: Output, context: Context) -> int:
         processes, opts.warn_days, opts.crit_days
     )
 
-    # Output based on format
-    if opts.format == "json":
-        _output_json(processes, critical, warnings, boot_time)
-    elif opts.format == "table":
-        _output_table(processes, critical, warnings, opts.warn_only, opts.top)
-    else:
-        _output_plain(
-            processes, critical, warnings, opts.warn_only, opts.verbose, opts.group
-        )
-
-    # Set summary
-    status = "critical" if critical else ("warning" if warnings else "ok")
-    output.set_summary(
-        f"status={status}, critical={len(critical)}, warning={len(warnings)}"
-    )
-
-    return 1 if critical or warnings else 0
-
-
-def _output_plain(
-    processes: list[dict],
-    critical: list[dict],
-    warnings: list[dict],
-    warn_only: bool,
-    verbose: bool,
-    group_by_cmd: bool,
-) -> None:
-    """Output in plain text format."""
-    if critical:
-        print("CRITICAL - Processes exceeding critical age threshold:")
-        for proc in sorted(critical, key=lambda x: x["age_seconds"], reverse=True):
-            print(
-                f"  PID {proc['pid']:>7} ({proc['comm']:<15}): "
-                f"age {format_age(proc['age_seconds']):>10} "
-                f"user={proc['user']}"
-            )
-            if verbose:
-                print(f"           Started: {proc['start_datetime']}")
-                print(f"           Command: {proc['cmdline'][:60]}")
-        print()
-
-    if warnings:
-        print("WARNING - Processes exceeding warning age threshold:")
-        for proc in sorted(warnings, key=lambda x: x["age_seconds"], reverse=True):
-            print(
-                f"  PID {proc['pid']:>7} ({proc['comm']:<15}): "
-                f"age {format_age(proc['age_seconds']):>10} "
-                f"user={proc['user']}"
-            )
-            if verbose:
-                print(f"           Started: {proc['start_datetime']}")
-        print()
-
-    if not warn_only:
-        if not critical and not warnings:
-            print("OK - No processes exceed age thresholds")
-            print()
-
-        if group_by_cmd and processes:
-            groups = group_by_command(processes)
-            print(f"Process Summary by Command ({len(processes)} total processes):")
-            print(f"{'Command':<20} {'Count':>6} {'Oldest':>12} {'User':<12}")
-            print("-" * 54)
-
-            for comm in sorted(groups.keys()):
-                procs = groups[comm]
-                oldest = max(procs, key=lambda x: x["age_seconds"])
-                print(
-                    f"{comm:<20} {len(procs):>6} "
-                    f"{format_age(oldest['age_seconds']):>12} "
-                    f"{oldest['user']:<12}"
-                )
-            print()
-
-
-def _output_json(
-    processes: list[dict],
-    critical: list[dict],
-    warnings: list[dict],
-    boot_time: float,
-) -> None:
-    """Output in JSON format."""
+    # Build result for output
     for proc in processes:
         proc["age_formatted"] = format_age_long(proc["age_seconds"])
 
@@ -536,7 +448,23 @@ def _output_json(
         "warnings": warnings,
         "all_processes": processes,
     }
-    print(json.dumps(result, indent=2))
+
+    output.emit(result)
+
+    # Output based on format
+    if opts.format == "table":
+        _output_table(processes, critical, warnings, opts.warn_only, opts.top)
+    else:
+        output.render(opts.format, "Process Age Monitor", warn_only=getattr(opts, 'warn_only', False))
+
+    # Set summary
+    status = "critical" if critical else ("warning" if warnings else "ok")
+    output.set_summary(
+        f"status={status}, critical={len(critical)}, warning={len(warnings)}"
+    )
+
+    return 1 if critical or warnings else 0
+
 
 
 def _output_table(

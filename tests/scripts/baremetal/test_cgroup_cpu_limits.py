@@ -36,8 +36,7 @@ class TestCgroupCpuLimits:
         result = run([], output, context)
 
         assert result == 0
-        captured = capsys.readouterr()
-        assert "No CPU limit issues detected" in captured.out
+        assert len(output.data.get("issues", [])) == 0
 
     def test_throttled_cpu_warning(self, capsys):
         """Throttled CPU returns exit code 1 with warning."""

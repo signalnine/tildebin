@@ -17,7 +17,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from datetime import datetime, timezone
 
 from boxctl.core.context import Context
@@ -206,59 +205,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            lines = []
-            lines.append("System Load Average Monitor")
-            lines.append("=" * 40)
-            lines.append("")
-            lines.append(f"CPUs: {cpu_count}")
-            lines.append("")
-            lines.append("Load Averages:")
-            lines.append(
-                f"  1-min:  {load_averages['1min']:>6.2f}  "
-                f"({analysis['normalized']['1min']:.2f} per CPU)"
-            )
-            lines.append(
-                f"  5-min:  {load_averages['5min']:>6.2f}  "
-                f"({analysis['normalized']['5min']:.2f} per CPU)"
-            )
-            lines.append(
-                f"  15-min: {load_averages['15min']:>6.2f}  "
-                f"({analysis['normalized']['15min']:.2f} per CPU)"
-            )
-            lines.append("")
-            trend_symbol = {"increasing": "^", "decreasing": "v", "stable": "-"}
-            lines.append(
-                f"Trend: {trend_symbol.get(analysis['trend'], '?')} {analysis['trend']}"
-            )
-            lines.append("")
-
-            if opts.verbose and processes["total"] > 0:
-                lines.append(
-                    f"Processes: {processes['running']} running / {processes['total']} total"
-                )
-                lines.append("")
-
-            if analysis["issues"]:
-                lines.append("ISSUES:")
-                for issue in analysis["issues"]:
-                    lines.append(f"  [!] {issue}")
-                lines.append("")
-
-            if analysis["warnings"]:
-                lines.append("WARNINGS:")
-                for warning in analysis["warnings"]:
-                    lines.append(f"  [*] {warning}")
-                lines.append("")
-
-            if not analysis["issues"] and not analysis["warnings"]:
-                lines.append("[OK] Load averages within acceptable thresholds")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "System Load Average Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary for output
     output.set_summary(f"status={analysis['status']}, trend={analysis['trend']}")

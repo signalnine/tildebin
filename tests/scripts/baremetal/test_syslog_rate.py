@@ -43,7 +43,7 @@ class TestSyslogRate:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "Total messages" in captured.out
+        assert "Total Count" in captured.out
 
     def test_high_rate_warning(self, capsys):
         """High message rate triggers warning (exit code 1)."""
@@ -69,8 +69,8 @@ class TestSyslogRate:
         result = run(["--since", "1", "--threshold", "10"], output, context)
 
         assert result == 1
-        captured = capsys.readouterr()
-        assert "HIGH RATE" in captured.out
+        assert output.data["has_issues"] is True
+        assert len(output.data["high_rate_sources"]) > 0
 
     def test_json_output(self, capsys):
         """JSON output contains expected fields."""

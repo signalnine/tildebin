@@ -41,8 +41,7 @@ class TestSeccompAudit:
         result = run([], output, context)
 
         assert result == 0
-        captured = capsys.readouterr()
-        assert "Unfiltered (mode 0): 0" in captured.out
+        assert output.data["summary"]["unfiltered"] == 0
 
     def test_mixed_filtering(self, capsys):
         """Mix of filtered and unfiltered processes returns exit code 0."""
@@ -66,9 +65,8 @@ class TestSeccompAudit:
         result = run([], output, context)
 
         assert result == 0
-        captured = capsys.readouterr()
-        assert "Unfiltered (mode 0): 2" in captured.out
-        assert "Filtered (mode 1+2): 2" in captured.out
+        assert output.data["summary"]["unfiltered"] == 2
+        assert output.data["summary"]["filtered"] == 2
 
     def test_process_disappeared(self, capsys):
         """PID dir exists in glob but status read fails is gracefully skipped."""
@@ -91,9 +89,8 @@ class TestSeccompAudit:
         result = run([], output, context)
 
         assert result == 0
-        captured = capsys.readouterr()
         # Should only count the 2 processes that had valid status files
-        assert "Total processes scanned: 2" in captured.out
+        assert output.data["summary"]["total_processes"] == 2
 
     def test_json_output(self, capsys):
         """JSON output contains summary stats and process list."""

@@ -30,8 +30,8 @@ class TestUninterruptibleProcessMonitor:
         result = run([], output, context)
 
         assert result == 0
-        captured = capsys.readouterr()
-        assert "No" in captured.out and "D-state" in captured.out
+        assert output.data["total_dstate"] == 0
+        assert output.data["healthy"] is True
 
     def test_single_dstate_returns_one(self, capsys):
         """Single D-state process returns exit code 1."""

@@ -18,7 +18,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -189,45 +188,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     result = {"system": system_stats, "processes": processes}
 
     # Output
-    if opts.format == "json":
-        print(json.dumps(result, indent=2))
-    else:
-        lines = []
-        if system_stats:
-            lines.append(
-                f"System FD Usage: {system_stats['allocated']}/{system_stats['max']} "
-                f"({system_stats['usage_percent']}%)"
-            )
-            lines.append(f"System FDs Free: {system_stats['free']}")
-            lines.append("")
-
-        if not processes:
-            if opts.all or opts.verbose:
-                lines.append("No processes found matching criteria")
-            else:
-                lines.append("No processes using >80% of FD limit")
-        else:
-            lines.append("Processes with High FD Usage (>80% of limit):")
-            lines.append(
-                f"{'PID':<8} {'User':<12} {'Name':<20} {'FDs':<8} {'Limit':<10} {'Usage':<8}"
-            )
-            lines.append("-" * 76)
-
-            for proc in processes:
-                limit_str = (
-                    str(proc["soft_limit"])
-                    if proc["soft_limit"] != "unlimited"
-                    else "unlimited"
-                )
-                lines.append(
-                    f"{proc['pid']:<8} {proc['user']:<12} {proc['name']:<20} "
-                    f"{proc['fd_count']:<8} {limit_str:<10} {proc['usage_percent']:<8}%"
-                )
-
-        if opts.verbose:
-            lines.append(f"\nTotal processes checked: {len(processes)}")
-
-        print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "File Descriptor Limit Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     status = "warning" if has_warnings else "healthy"

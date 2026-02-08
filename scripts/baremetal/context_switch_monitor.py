@@ -28,7 +28,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -322,14 +321,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "status": status,
     }
 
+    output.emit(result)
+
     # Early return for warn-only
     if opts.warn_only and not issues:
         return 0
 
     # Output
-    if opts.format == "json":
-        print(json.dumps(result, indent=2))
-    elif opts.format == "table":
+    if opts.format == "table":
         lines = []
         lines.append(f"{'Metric':<30} {'Value':>15} {'Per CPU':>15}")
         lines.append("=" * 60)
@@ -354,46 +353,7 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
         print("\n".join(lines))
     else:
-        lines = []
-        lines.append("Context Switch Monitor")
-        lines.append("=" * 50)
-        lines.append(f"  CPUs: {cpu_count}")
-        lines.append("")
-        lines.append("Context Switches")
-        lines.append("-" * 50)
-        lines.append(f"  Total: {stats.get('context_switches', 0):,}")
-        lines.append(f"  Per-CPU: {ctxt_per_cpu:,.0f}")
-        lines.append("")
-        lines.append("Interrupts")
-        lines.append("-" * 50)
-        lines.append(f"  Total: {stats.get('interrupts', 0):,}")
-        lines.append(f"  Per-CPU: {intr_per_cpu:,.0f}")
-        lines.append("")
-        lines.append("Process Activity")
-        lines.append("-" * 50)
-        lines.append(f"  Processes running: {stats.get('procs_running', 0)}")
-        lines.append(f"  Processes blocked: {stats.get('procs_blocked', 0)}")
-        lines.append(f"  Processes created: {stats.get('processes_created', 0)}")
-
-        if opts.verbose and vmstat:
-            lines.append("")
-            lines.append("Memory Activity")
-            lines.append("-" * 50)
-            lines.append(f"  Page faults: {vmstat.get('pgfault', 0):,}")
-            lines.append(f"  Major page faults: {vmstat.get('pgmajfault', 0):,}")
-
-        lines.append("")
-
-        if issues:
-            lines.append("Issues Detected")
-            lines.append("=" * 50)
-            for issue in sorted(issues, key=lambda x: (x["severity"] != "CRITICAL", x["category"])):
-                marker = "!!!" if issue["severity"] == "CRITICAL" else "  "
-                lines.append(f"{marker} [{issue['severity']}] {issue['message']}")
-        else:
-            lines.append("[OK] No issues detected")
-
-        print("\n".join(lines))
+        output.render(opts.format, "Context Switch Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(f"ctxt={ctxt_per_cpu:.0f}/cpu, running={stats.get('procs_running', 0)}, status={status}")

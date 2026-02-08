@@ -26,7 +26,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from typing import Any
 
 from boxctl.core.context import Context
@@ -319,17 +318,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
     issues = analyze_hugepages(hugepages, vmstat, thresholds)
 
     # Output
-    if opts.format == 'json':
-        result: dict[str, Any] = {
-            'hugepages': hugepages,
-            'transparent_huge_pages': thp,
-            'issues': issues
-        }
-        if opts.verbose:
-            result['vmstat'] = vmstat
-        print(json.dumps(result, indent=2))
+    result: dict[str, Any] = {
+        'hugepages': hugepages,
+        'transparent_huge_pages': thp,
+        'issues': issues
+    }
+    if opts.verbose:
+        result['vmstat'] = vmstat
+    output.emit(result)
 
-    elif opts.format == 'table':
+    if opts.format == 'table':
         lines = []
         if not opts.warn_only:
             lines.append("=" * 70)
@@ -366,39 +364,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             lines.append("")
 
         print('\n'.join(lines))
-
-    else:  # plain
-        lines = []
-        if not opts.warn_only:
-            # Summary
-            lines.append(f"Hugepages: {hugepages['used']}/{hugepages['total']} "
-                        f"({format_size(hugepages['pagesize_kb'])} pages)")
-            if hugepages['total'] > 0:
-                usage_pct = (hugepages['used'] / hugepages['total']) * 100
-                lines.append(f"Usage: {usage_pct:.1f}% used, "
-                            f"{hugepages['free']} free, {hugepages['reserved']} reserved")
-                lines.append(f"Memory: {format_size(hugepages['used_kb'])} used / "
-                            f"{format_size(hugepages['total_kb'])} total")
-            lines.append("")
-
-            # THP status
-            if thp['enabled']:
-                lines.append(f"Transparent Huge Pages: {thp['enabled']}")
-                if thp['defrag']:
-                    lines.append(f"THP Defrag: {thp['defrag']}")
-                lines.append("")
-
-        # Issues
-        for issue in issues:
-            if opts.warn_only and issue['severity'] == 'INFO':
-                continue
-            prefix = f"[{issue['severity']}]"
-            lines.append(f"{prefix} {issue['message']}")
-
-        if not issues and not opts.warn_only:
-            lines.append("No hugepage issues detected.")
-
-        print('\n'.join(lines))
+    else:
+        output.render(opts.format, "Hugepage Allocation and Usage Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     has_critical = any(i['severity'] == 'CRITICAL' for i in issues)

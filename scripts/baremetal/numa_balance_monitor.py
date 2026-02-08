@@ -25,7 +25,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -298,70 +297,10 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "status": "healthy" if not issues else "warning",
     }
 
+    output.emit(result)
+
     # Output
-    if opts.format == "json":
-        if not opts.warn_only or issues:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or issues:
-            lines = []
-            lines.append(f"NUMA Nodes: {summary['node_count']}")
-            lines.append(f"Total Memory: {format_bytes(summary['total_memory_kb'])}")
-            lines.append(f"Average Usage: {summary['avg_usage_percent']:.1f}%")
-            lines.append("")
-
-            if issues:
-                lines.append(f"Found {len(issues)} NUMA balance issues:")
-                lines.append("")
-                for issue in issues:
-                    if issue["type"] == "memory_imbalance":
-                        lines.append(
-                            f"[WARNING] Node {issue['node']}: Memory imbalance - "
-                            f"{issue['usage_percent']:.1f}% used vs "
-                            f"{issue['avg_usage_percent']:.1f}% average "
-                            f"(deviation: {issue['deviation']:.1f}%)"
-                        )
-                    elif issue["type"] == "low_free_memory":
-                        lines.append(
-                            f"[WARNING] Node {issue['node']}: Low free memory - "
-                            f"{issue['free_percent']:.1f}% free ({format_bytes(issue['free_kb'])})"
-                        )
-                    elif issue["type"] == "high_numa_miss":
-                        lines.append(
-                            f"[WARNING] Node {issue['node']}: High NUMA miss ratio - "
-                            f"{issue['miss_ratio']:.1f}% (hits: {issue['numa_hit']}, "
-                            f"misses: {issue['numa_miss']})"
-                        )
-            else:
-                lines.append("[OK] No NUMA balance issues detected")
-
-            if opts.verbose:
-                lines.append("")
-                lines.append("Per-Node Details:")
-                for node in nodes:
-                    mem = node["memory"]
-                    lines.append(f"  Node {node['node_id']}:")
-                    cpu_range = (
-                        f"{node['cpus'][0]}-{node['cpus'][-1]}"
-                        if node["cpus"]
-                        else "none"
-                    )
-                    lines.append(f"    CPUs: {len(node['cpus'])} ({cpu_range})")
-                    if "MemTotal" in mem:
-                        lines.append(
-                            f"    Memory: {format_bytes(mem.get('MemUsed', 0))} / "
-                            f"{format_bytes(mem['MemTotal'])} "
-                            f"({mem.get('used_percent', 0):.1f}% used)"
-                        )
-                    if node["numastat"]:
-                        stats = node["numastat"]
-                        lines.append(
-                            f"    NUMA stats: hits={stats.get('numa_hit', 0)}, "
-                            f"misses={stats.get('numa_miss', 0)}, "
-                            f"foreign={stats.get('numa_foreign', 0)}"
-                        )
-
-            print("\n".join(lines))
+    output.render(opts.format, "NUMA Balance Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     status = "healthy" if not issues else "warning"

@@ -17,8 +17,6 @@ Exit codes:
 """
 
 import argparse
-import json
-
 from boxctl.core.context import Context
 from boxctl.core.output import Output
 
@@ -265,51 +263,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             "pswpout": vmstat.get("pswpout", 0),
         }
 
-    # Output
-    if opts.format == "json":
-        if not opts.warn_only or has_critical or has_warning:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or has_critical or has_warning:
-            lines = []
-            lines.append(
-                f"Swap: {format_bytes(swap_used)} / {format_bytes(swap_total)} "
-                f"({swap_used_pct:.1f}% used)"
-            )
-
-            if swap_cached > 0:
-                lines.append(f"Swap cached: {format_bytes(swap_cached)}")
-
-            if opts.verbose:
-                lines.append(
-                    f"Memory available: {format_bytes(mem_available)} / {format_bytes(mem_total)} "
-                    f"({mem_available_pct:.1f}%)"
-                )
-
-                if vmstat:
-                    pswpin = vmstat.get("pswpin", 0)
-                    pswpout = vmstat.get("pswpout", 0)
-                    if pswpin > 0 or pswpout > 0:
-                        lines.append(
-                            f"Swap I/O since boot: {pswpin} pages in, {pswpout} pages out"
-                        )
-
-            lines.append("")
-
-            # Print issues
-            for issue in issues:
-                severity = issue["severity"]
-                message = issue["message"]
-
-                if opts.warn_only and severity == "INFO":
-                    continue
-
-                prefix = {"CRITICAL": "[CRITICAL]", "WARNING": "[WARNING]", "INFO": "[INFO]"}.get(
-                    severity, "[UNKNOWN]"
-                )
-                lines.append(f"{prefix} {message}")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "Swap Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     status = "critical" if has_critical else ("warning" if has_warning else "healthy")

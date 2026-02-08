@@ -287,49 +287,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or total_issues > 0:
-            print(json.dumps(results, indent=2))
-    else:
-        if not opts.warn_only or total_issues > 0:
-            lines = []
-            lines.append("Network Namespace Health Report")
-            lines.append("=" * 50)
-            lines.append("")
-
-            lines.append(f"Named namespaces:      {results['summary']['named_count']}")
-            lines.append(f"Veth pairs:            {results['summary']['veth_count']}")
-            lines.append(f"Issues detected:       {results['summary']['total_issues']}")
-            lines.append("")
-
-            if named_namespaces and (opts.verbose or not opts.warn_only):
-                lines.append("Named Namespaces:")
-                lines.append("-" * 40)
-                for ns in named_namespaces:
-                    status = "OK"
-                    if ns.get("issues"):
-                        status = f"ISSUES: {len(ns['issues'])}"
-                    lines.append(f"  {ns['name']}: {status}")
-                    if opts.verbose and ns.get("issues"):
-                        for issue in ns["issues"]:
-                            lines.append(f"    - {issue}")
-                lines.append("")
-
-            if dangling_veths:
-                lines.append("Dangling Veth Interfaces:")
-                lines.append("-" * 40)
-                for veth in dangling_veths:
-                    lines.append(
-                        f"  {veth['name']}: {veth['reason']} (state: {veth['operstate']})"
-                    )
-                lines.append("")
-
-            if total_issues == 0:
-                lines.append("[OK] All network namespaces healthy")
-            else:
-                lines.append(f"[WARNING] {total_issues} issue(s) detected")
-
-            print("\n".join(lines))
+    output.emit(results)
+    output.render(opts.format, "Network Namespace Health Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(

@@ -74,7 +74,8 @@ class TestNicFirmware:
 
         assert result == 1
         captured = capsys.readouterr()
-        assert "Inconsistent" in captured.out or "ISSUE" in captured.out
+        assert output.data["inconsistencies"]
+        assert output.data["summary"]["inconsistency_count"] > 0
 
     def test_different_drivers_no_issue(self, capsys):
         """Different drivers with different versions is not an inconsistency."""

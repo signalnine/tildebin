@@ -20,7 +20,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from collections import defaultdict
 from datetime import datetime, timezone
 
@@ -287,10 +286,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or issues:
-            print(json.dumps(result, indent=2))
-    elif opts.format == "table":
+    output.emit(result)
+    if opts.format == "table":
         if not opts.warn_only or issues:
             lines = []
             # Group by port
@@ -323,33 +320,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
                     )
 
             print("\n".join(lines))
-    else:  # plain
-        if not opts.warn_only or issues:
-            lines = []
-            lines.append("Listening Ports:")
-            lines.append(
-                f"{'Proto':<8} {'Address':<40} {'Port':>6} {'Bind'}"
-            )
-            lines.append("-" * 70)
-            for entry in sorted(all_listening, key=lambda x: (x["port"], x["protocol"])):
-                lines.append(
-                    f"{entry['protocol']:<8} {entry['ip']:<40} "
-                    f"{entry['port']:>6} {entry['bind_type']}"
-                )
-
-            if issues:
-                lines.append("")
-                lines.append(f"Issues Found ({len(issues)}):")
-                for issue in issues:
-                    severity = issue["severity"].upper()
-                    lines.append(f"  [{severity}] {issue['message']}")
-            else:
-                lines.append("")
-                lines.append(
-                    f"[OK] {len(all_listening)} listening ports found, no issues detected"
-                )
-
-            print("\n".join(lines))
+    else:
+        output.render(opts.format, "Listening Port Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(

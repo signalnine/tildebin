@@ -25,7 +25,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import re
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -357,43 +356,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or display_issues:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or display_issues:
-            lines = []
-            lines.append("Iptables Firewall Audit")
-            lines.append("=" * 50)
-            lines.append("")
-            lines.append(f"Table: {opts.table}")
-            lines.append(f"Total chains: {stats['total_chains']}")
-            lines.append(f"Total rules: {stats['total_rules']}")
-            lines.append(f"Empty chains: {stats['empty_chains']}")
-            lines.append(f"Rules with zero packets: {stats['unused_rules']}")
-            lines.append("")
-
-            if opts.verbose:
-                lines.append("Rules per chain:")
-                for chain, count in sorted(
-                    stats["chains_by_rule_count"].items(),
-                    key=lambda x: x[1],
-                    reverse=True,
-                ):
-                    if count > 0:
-                        lines.append(f"  {chain}: {count}")
-                lines.append("")
-
-            if display_issues:
-                lines.append("Issues:")
-                for issue in display_issues:
-                    prefix = f"[{issue['severity']}]"
-                    lines.append(f"  {prefix} {issue['message']}")
-                lines.append("")
-            else:
-                lines.append("[OK] No issues detected")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "Iptables Firewall Audit", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(

@@ -35,7 +35,7 @@ class TestSlabMonitor:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "Kernel Slab Allocator Status" in captured.out
+        assert "Slab Allocator Monitor" in captured.out
 
     def test_high_dentry_cache_returns_1(self, capsys):
         """High dentry cache usage returns exit code 1."""

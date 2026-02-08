@@ -54,7 +54,7 @@ class TestWorkqueueMonitor:
         assert result == 0
         captured = capsys.readouterr()
         assert "uninterruptible" in captured.out.lower()
-        assert "WARNINGS" in captured.out
+        assert "[WARNING]" in captured.out
 
     def test_uninterruptible_critical(self, capsys):
         """Uninterruptible kworkers above critical threshold."""
@@ -109,7 +109,7 @@ class TestWorkqueueMonitor:
         result = run(["--verbose"], output, context)
 
         captured = capsys.readouterr()
-        assert "Distribution" in captured.out
+        assert "By Workqueue" in captured.out
 
     def test_custom_thresholds(self, capsys):
         """Custom thresholds are respected."""

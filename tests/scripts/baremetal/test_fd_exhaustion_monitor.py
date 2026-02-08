@@ -33,8 +33,9 @@ class TestFdExhaustionMonitor:
         result = run([], output, context)
 
         assert result == 0
-        captured = capsys.readouterr()
-        assert "System FDs:" in captured.out
+        assert "system" in output.data
+        assert "allocated" in output.data["system"]
+        assert "max" in output.data["system"]
 
     def test_warning_fd_usage(self, capsys):
         """Warning FD usage (75-90%) returns exit code 1."""

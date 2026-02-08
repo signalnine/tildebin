@@ -30,7 +30,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from datetime import datetime, timezone
 
 from boxctl.core.context import Context
@@ -264,42 +263,10 @@ def run(args: list[str], output: Output, context: Context) -> int:
         if "timeouts" in stats:
             result["timeouts"] = stats["timeouts"]
 
+    output.emit(result)
+
     # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or issues:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or issues:
-            lines = []
-            lines.append("Connection Tracking Monitor")
-            lines.append("=" * 50)
-            lines.append("")
-            lines.append(
-                f"Conntrack: {stats['count']} / {stats['max']} "
-                f"({stats['usage_percent']:.1f}% used)"
-            )
-            lines.append(f"Available: {stats['available']} slots")
-
-            if opts.verbose:
-                if "buckets" in stats:
-                    lines.append(f"Hash buckets: {stats['buckets']}")
-
-                if "timeouts" in stats:
-                    lines.append("")
-                    lines.append("Timeouts:")
-                    for name, val in stats["timeouts"].items():
-                        lines.append(f"  {name}: {val}s")
-
-            lines.append("")
-
-            if issues:
-                for issue in issues:
-                    prefix = f"[{issue['severity']}]"
-                    lines.append(f"{prefix} {issue['message']}")
-            else:
-                lines.append("[OK] Connection tracking usage is healthy")
-
-            print("\n".join(lines))
+    output.render(opts.format, "Connection Tracking Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(f"usage={stats['usage_percent']:.1f}%, count={stats['count']}")

@@ -130,7 +130,7 @@ class TestNapiHealthMonitor:
         result = run(["--verbose"], output, context)
 
         captured = capsys.readouterr()
-        assert "Per-CPU" in captured.out or "CPU0" in captured.out
+        assert "Net Rx:" in captured.out and output.data["softirq_stats"]["net_rx"]
 
     def test_missing_settings_returns_error(self, capsys):
         """Missing NAPI settings return exit code 2."""

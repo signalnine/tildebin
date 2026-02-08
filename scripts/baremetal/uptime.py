@@ -17,7 +17,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -109,27 +108,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output
-    if opts.format == "json":
-        if not opts.warn_only or issues:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or issues:
-            lines = []
-            lines.append(f"System Uptime: {uptime_human}")
-
-            if opts.verbose:
-                lines.append(f"  Total seconds: {uptime_seconds:.0f}")
-                lines.append(f"  Idle seconds:  {idle_seconds:.0f}")
-
-            lines.append("")
-
-            if issues:
-                for issue in issues:
-                    lines.append(f"[WARNING] {issue['message']}")
-            else:
-                lines.append("[OK] System has been running for sufficient time")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "System Uptime Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     output.set_summary(f"uptime={uptime_human}, status={status}")
 

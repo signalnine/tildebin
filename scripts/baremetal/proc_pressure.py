@@ -32,7 +32,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -253,18 +252,19 @@ def run(args: list[str], output: Output, context: Context) -> int:
         metrics, opts.warn_some, opts.crit_some, opts.warn_full, opts.crit_full
     )
 
+    # Build result
+    result = {
+        "psi_available": True,
+        "metrics": metrics,
+        "status": analysis["status"],
+        "issues": analysis["issues"],
+        "warnings": analysis["warnings"],
+    }
+
+    output.emit(result)
+
     # Format output
-    if opts.format == "json":
-        result = {
-            "psi_available": True,
-            "metrics": metrics,
-            "status": analysis["status"],
-            "issues": analysis["issues"],
-            "warnings": analysis["warnings"],
-        }
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            print(json.dumps(result, indent=2))
-    elif opts.format == "table":
+    if opts.format == "table":
         if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
             lines = []
             lines.append("+" + "-" * 72 + "+")
@@ -322,69 +322,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             lines.append(f"| Overall Status: {overall:<54} |")
             lines.append("+" + "-" * 72 + "+")
             print("\n".join(lines))
-    else:  # plain
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            lines = []
-            lines.append("Pressure Stall Information (PSI) Monitor")
-            lines.append("=" * 50)
-            lines.append("")
-
-            for resource in resources:
-                if resource not in metrics:
-                    lines.append(f"{resource.upper()}: not available")
-                    continue
-
-                data = metrics[resource]
-                if "error" in data:
-                    lines.append(f"{resource.upper()}: {data['error']}")
-                    continue
-
-                lines.append(f"{resource.upper()}:")
-
-                if "some" in data:
-                    some = data["some"]
-                    lines.append(
-                        f"  some: {some.get('avg10', 0):.2f}% (10s) "
-                        f"{some.get('avg60', 0):.2f}% (60s) "
-                        f"{some.get('avg300', 0):.2f}% (300s)"
-                    )
-                    if opts.verbose and "total" in some:
-                        lines.append(f"        total: {some['total']:,} us")
-
-                if "full" in data:
-                    full = data["full"]
-                    lines.append(
-                        f"  full: {full.get('avg10', 0):.2f}% (10s) "
-                        f"{full.get('avg60', 0):.2f}% (60s) "
-                        f"{full.get('avg300', 0):.2f}% (300s)"
-                    )
-                    if opts.verbose and "total" in full:
-                        lines.append(f"        total: {full['total']:,} us")
-
-                lines.append("")
-
-            # Show issues and warnings
-            if analysis["issues"]:
-                lines.append("ISSUES:")
-                for issue in analysis["issues"]:
-                    lines.append(f"  [!] {issue['message']}")
-                lines.append("")
-
-            if analysis["warnings"]:
-                lines.append("WARNINGS:")
-                for warning in analysis["warnings"]:
-                    lines.append(f"  [*] {warning['message']}")
-                lines.append("")
-
-            # Summary
-            if analysis["status"] == "healthy":
-                lines.append("[OK] All pressure metrics within acceptable thresholds")
-            elif analysis["status"] == "warning":
-                lines.append(f"[WARN] {len(analysis['warnings'])} warning(s) detected")
-            else:
-                lines.append(f"[CRITICAL] {len(analysis['issues'])} issue(s) detected")
-
-            print("\n".join(lines))
+    else:
+        output.render(opts.format, "Pressure Stall Information (PSI) Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(f"status={analysis['status']}")

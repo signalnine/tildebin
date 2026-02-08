@@ -42,7 +42,7 @@ class TestLinkFlap:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "STABLE" in captured.out or "No link flapping" in captured.out
+        assert output.data["healthy"] is True
 
     def test_flapping_interface(self, capsys):
         """Flapping interface with high carrier changes returns exit code 1."""
@@ -119,7 +119,7 @@ class TestLinkFlap:
 
         captured = capsys.readouterr()
         assert "eth0" in captured.out
-        assert "DOWN" in captured.out
+        assert "down" in captured.out.lower()
 
     def test_json_output(self, capsys):
         """JSON output contains expected fields."""

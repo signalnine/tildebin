@@ -35,7 +35,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import re
 
 from boxctl.core.context import Context
@@ -407,77 +406,48 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "issues_found": processes_with_issues > 0,
     }
 
+    output.emit(results)
+
     # Output
-    if opts.format == "json":
-        print(json.dumps(results, indent=2))
-
-    elif opts.format == "table":
-        display_processes = processes
-        if opts.warn_only:
-            display_processes = [p for p in processes if p["issues"]]
-
-        if not display_processes:
-            print("No processes with limit concerns found.")
-        else:
-            print(
-                f"{'PID':<8} {'Name':<20} {'FD%':<8} {'VM%':<8} {'Stack%':<8} {'Issues':<10}"
-            )
-            print("-" * 70)
-
-            for proc in display_processes:
-                fd_pct = proc["metrics"].get("open_files", {}).get("percent_used", "-")
-                vm_pct = proc["metrics"].get("address_space", {}).get("percent_used", "-")
-                stk_pct = proc["metrics"].get("stack_size", {}).get("percent_used", "-")
-                issue_count = len(proc["issues"])
-
-                print(
-                    f"{proc['pid']:<8} {proc['name']:<20} {fd_pct!s:<8} "
-                    f"{vm_pct!s:<8} {stk_pct!s:<8} {issue_count:<10}"
-                )
-
-            print()
-            print(f"Total: {len(display_processes)} processes shown")
-
-    else:  # plain format
-        display_processes = processes
-        if opts.warn_only:
-            display_processes = [p for p in processes if p["issues"]]
-
-        if not opts.warn_only:
-            print("Process Limits Monitor")
-            print("=" * 60)
-            print(f"Processes scanned: {results['total_scanned']}")
-            print(f"Processes with issues: {results['processes_with_issues']}")
-            print()
-
-        for proc in display_processes:
-            print(f"PID {proc['pid']} ({proc['name']})")
-
-            if proc["issues"]:
-                for issue in proc["issues"]:
-                    print(f"  [{issue['severity']}] {issue['message']}")
-            elif opts.verbose:
-                for metric, data in proc["metrics"].items():
-                    if "percent_used" in data:
-                        print(
-                            f"  {metric}: {data['percent_used']}% "
-                            f"({data['current']}/{data['soft_limit']})"
-                        )
-            print()
-
-        if not display_processes and opts.warn_only:
-            print("No processes at risk.")
-
-        if results["issues_found"]:
-            print("Status: ISSUES DETECTED")
-        else:
-            print("Status: OK")
+    if opts.format == "table":
+        _output_table(processes, opts.warn_only)
+    else:
+        output.render(opts.format, "Process Limits Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     status = "issues" if results["issues_found"] else "ok"
     output.set_summary(f"processes_at_risk={processes_with_issues}, status={status}")
 
     return 1 if results["issues_found"] else 0
+
+
+def _output_table(processes: list[dict], warn_only: bool) -> None:
+    """Output results in table format."""
+    display_processes = processes
+    if warn_only:
+        display_processes = [p for p in processes if p["issues"]]
+
+    if not display_processes:
+        print("No processes with limit concerns found.")
+    else:
+        print(
+            f"{'PID':<8} {'Name':<20} {'FD%':<8} {'VM%':<8} {'Stack%':<8} {'Issues':<10}"
+        )
+        print("-" * 70)
+
+        for proc in display_processes:
+            fd_pct = proc["metrics"].get("open_files", {}).get("percent_used", "-")
+            vm_pct = proc["metrics"].get("address_space", {}).get("percent_used", "-")
+            stk_pct = proc["metrics"].get("stack_size", {}).get("percent_used", "-")
+            issue_count = len(proc["issues"])
+
+            print(
+                f"{proc['pid']:<8} {proc['name']:<20} {fd_pct!s:<8} "
+                f"{vm_pct!s:<8} {stk_pct!s:<8} {issue_count:<10}"
+            )
+
+        print()
+        print(f"Total: {len(display_processes)} processes shown")
 
 
 if __name__ == "__main__":

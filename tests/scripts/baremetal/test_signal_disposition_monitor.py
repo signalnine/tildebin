@@ -66,8 +66,8 @@ SigCgt:\t0000000180000002
         result = run([], output, context)
 
         assert result == 1
-        captured = capsys.readouterr()
-        assert "SIGTERM" in captured.out or "HIGH" in captured.out
+        assert output.data["total_concerning"] == 1
+        assert output.data["high_severity_count"] == 1
 
     def test_sigterm_blocked_returns_one(self, capsys):
         """Process blocking SIGTERM returns exit code 1."""

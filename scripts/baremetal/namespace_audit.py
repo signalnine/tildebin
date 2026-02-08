@@ -368,13 +368,12 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "audit_results": results,
     }
+    output.emit(data)
 
-    if opts.format == "json":
-        print(json.dumps(data, indent=2))
-    elif opts.format == "table":
+    if opts.format == "table":
         _output_table(results, opts.warn_only)
     else:
-        _output_plain(results, opts.warn_only, opts.summary)
+        output.render(opts.format, "Linux Namespace Audit", warn_only=getattr(opts, 'warn_only', False))
 
     # Determine exit code
     has_issues = any(
@@ -390,49 +389,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"Namespace audit passed ({results['statistics']['total_processes']} processes scanned)")
 
     return 1 if has_issues else 0
-
-
-def _output_plain(results: dict, warn_only: bool, summary_only: bool) -> None:
-    """Output results in plain text format."""
-    stats = results["statistics"]
-    issues = results["issues"]
-
-    print("Linux Namespace Audit")
-    print("=" * 60)
-    print(f"Total processes scanned: {stats['total_processes']}")
-    print()
-
-    print(f"{'Namespace':<10} {'Unique':<10} {'In Root':<12} {'Isolated':<12}")
-    print("-" * 44)
-
-    for ns_type, ns_stats in stats["namespaces"].items():
-        unique = ns_stats["unique_count"]
-        in_root = ns_stats["processes_in_root"]
-        isolated = ns_stats["processes_isolated"]
-        print(f"{ns_type:<10} {unique:<10} {in_root:<12} {isolated:<12}")
-
-    print()
-
-    if summary_only:
-        return
-
-    if issues:
-        filtered_issues = issues
-        if warn_only:
-            filtered_issues = [i for i in issues if i["severity"] in ("warning", "critical")]
-
-        if filtered_issues:
-            print(f"Issues Found: {len(filtered_issues)}")
-            print("-" * 60)
-
-            for issue in filtered_issues:
-                severity = issue["severity"].upper()
-                symbol = "!!!" if severity == "CRITICAL" else ("!! " if severity == "WARNING" else "   ")
-                print(f"[{symbol}] [{severity}] {issue['message']}")
-            print()
-    else:
-        print("No issues detected.")
-        print()
 
 
 def _output_table(results: dict, warn_only: bool) -> None:

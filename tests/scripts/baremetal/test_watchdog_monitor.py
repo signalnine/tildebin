@@ -143,8 +143,9 @@ class TestWatchdogMonitor:
 
         result = run(["--verbose"], output, context)
 
-        captured = capsys.readouterr()
-        assert "Nowayout" in captured.out
+        assert "devices" in output.data
+        assert len(output.data["devices"]) > 0
+        assert output.data["has_device"] is True
 
     def test_warn_only_suppresses_healthy(self, capsys):
         """Warn-only mode suppresses output for healthy system."""

@@ -25,8 +25,6 @@ Exit codes:
 """
 
 import argparse
-import json
-
 from boxctl.core.context import Context
 from boxctl.core.output import Output
 
@@ -422,21 +420,22 @@ def run(args: list[str], output: Output, context: Context) -> int:
     for r in failures:
         by_severity[r["severity"]].append(r)
 
-    # Output results
-    if opts.format == "json":
-        summary = {
-            "total_checks": len(all_results),
-            "passed": len([r for r in all_results if r["status"] == "pass"]),
-            "failed": len(failures),
-            "unavailable": len([r for r in all_results if r["status"] == "unavailable"]),
-            "by_severity": {
-                sev: len(items) for sev, items in by_severity.items()
-            },
-        }
-        json_output = {"summary": summary, "results": all_results}
-        print(json.dumps(json_output, indent=2))
+    # Build output data
+    summary = {
+        "total_checks": len(all_results),
+        "passed": len([r for r in all_results if r["status"] == "pass"]),
+        "failed": len(failures),
+        "unavailable": len([r for r in all_results if r["status"] == "unavailable"]),
+        "by_severity": {
+            sev: len(items) for sev, items in by_severity.items()
+        },
+    }
+    json_output = {"summary": summary, "results": all_results}
 
-    elif opts.format == "table":
+    output.emit(json_output)
+
+    # Output results
+    if opts.format == "table":
         if opts.warn_only:
             display_results = failures
         else:
@@ -467,79 +466,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
                     f"{status:<6} {r['severity'].upper():<10} "
                     f"{r['parameter'][:45]:<45} {str(actual)[:8]:<8} {r['expected'][:8]:<8}"
                 )
-
-    else:  # plain format
-        if opts.warn_only:
-            display_results = failures
-        else:
-            display_results = all_results
-
-        if not display_results and not opts.warn_only:
-            print("All security checks passed!")
-        elif display_results:
-            # Print summary
-            total_issues = len(failures)
-            if total_issues > 0:
-                print("Security Audit Summary")
-                print("=" * 70)
-                print(
-                    f"Critical: {len(by_severity['critical'])}  "
-                    f"High: {len(by_severity['high'])}  "
-                    f"Medium: {len(by_severity['medium'])}  "
-                    f"Low: {len(by_severity['low'])}"
-                )
-                print()
-
-            # Group by category
-            by_category: dict[str, list] = {}
-            for r in display_results:
-                cat = r["category"]
-                if cat not in by_category:
-                    by_category[cat] = []
-                by_category[cat].append(r)
-
-            # Print by category
-            for cat_key in [
-                "network_ipv4",
-                "network_ipv6",
-                "kernel_memory",
-                "kernel_modules",
-                "filesystem",
-                "user_namespaces",
-            ]:
-                if cat_key not in by_category:
-                    continue
-
-                cat_results = by_category[cat_key]
-                if opts.warn_only:
-                    cat_results = [r for r in cat_results if r["status"] == "fail"]
-
-                if not cat_results:
-                    continue
-
-                print(CATEGORY_NAMES.get(cat_key, cat_key))
-                print("-" * 70)
-
-                for r in cat_results:
-                    if r["status"] == "pass":
-                        symbol = "[PASS]"
-                    elif r["status"] == "unavailable":
-                        symbol = "[N/A] "
-                    else:
-                        symbol = "[FAIL]"
-
-                    severity_tag = f"[{r['severity'].upper()}]"
-                    print(f"{symbol} {severity_tag:<10} {r['parameter']}")
-
-                    if r["status"] == "fail":
-                        print(
-                            f"       Current: {r['actual']}  Recommended: {r['expected']}"
-                        )
-                        print(f"       {r['description']}")
-                    elif r["status"] == "unavailable":
-                        print("       Parameter not available on this kernel")
-
-                print()
+    else:
+        output.render(opts.format, "Sysctl Security Audit", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     status = "issues" if failures else "secure"

@@ -123,8 +123,8 @@ class TestSoftnetBacklogMonitor:
 
         result = run(["--verbose"], output, context)
 
-        captured = capsys.readouterr()
-        assert "Per-CPU" in captured.out
+        assert "per_cpu" in output.data
+        assert len(output.data["per_cpu"]) > 0
 
     def test_custom_thresholds(self, capsys):
         """Custom thresholds are respected."""

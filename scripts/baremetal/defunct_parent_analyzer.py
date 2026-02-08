@@ -24,7 +24,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from datetime import datetime, timezone
 
 from boxctl.core.context import Context
@@ -391,18 +390,19 @@ def run(args: list[str], output: Output, context: Context) -> int:
     summary = generate_summary(orphans)
     has_issues = summary["with_issues"] > 0
 
+    # Build result
+    result = {"summary": summary, "orphans": orphans}
+    output.emit(result)
+
     # Handle warn-only mode
     if opts.warn_only and not has_issues:
         return 0
 
     # Output results
-    if opts.format == "json":
-        result = {"summary": summary, "orphans": orphans}
-        print(json.dumps(result, indent=2))
-    elif opts.format == "table":
+    if opts.format == "table":
         _output_table(orphans, summary)
     else:
-        _output_plain(orphans, summary, opts.verbose)
+        output.render(opts.format, "Defunct Parent Analyzer", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     if has_issues:
@@ -411,46 +411,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary("No orphaned processes with issues detected")
 
     return 1 if has_issues else 0
-
-
-def _output_plain(orphans: list[dict], summary: dict, verbose: bool) -> None:
-    """Output results in plain text format."""
-    print("Defunct Parent Analyzer - Orphaned Process Report")
-    print("=" * 60)
-    print(f"Total orphaned processes (ppid=1): {summary['total_orphans']}")
-    print(f"Processes with issues: {summary['with_issues']}")
-    print(f"Long-running (>1 day): {summary['long_running']}")
-    print()
-
-    if orphans:
-        print("Orphaned Processes:")
-        print("-" * 60)
-
-        for orphan in orphans:
-            status = "[ISSUE]" if orphan["issues"] else "[OK]"
-            print(f"{status} PID {orphan['pid']}: {orphan['comm']}")
-            print(
-                f"    User: {orphan['user']}, Age: {orphan['age_human']}, "
-                f"State: {orphan['state']}"
-            )
-
-            if verbose and orphan["cmdline"]:
-                print(f"    Cmd: {orphan['cmdline'][:60]}...")
-
-            for issue in orphan["issues"]:
-                print(f"    [{issue['severity']}] {issue['message']}")
-
-            print()
-
-    if summary["by_user"]:
-        print("By User:")
-        for user, count in sorted(summary["by_user"].items(), key=lambda x: -x[1])[:5]:
-            print(f"  {user}: {count}")
-
-    if summary["by_process"]:
-        print("\nBy Process Name:")
-        for proc, count in sorted(summary["by_process"].items(), key=lambda x: -x[1])[:5]:
-            print(f"  {proc}: {count}")
 
 
 def _output_table(orphans: list[dict], summary: dict) -> None:

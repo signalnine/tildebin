@@ -36,8 +36,7 @@ class TestCgroupMemoryLimits:
         result = run([], output, context)
 
         assert result == 0
-        captured = capsys.readouterr()
-        assert "No memory limit issues detected" in captured.out
+        assert len(output.data.get("issues", [])) == 0
 
     def test_high_memory_warning(self, capsys):
         """High memory usage returns exit code 1 with warning."""

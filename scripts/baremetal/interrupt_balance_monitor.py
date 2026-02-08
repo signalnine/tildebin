@@ -25,7 +25,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -193,14 +192,14 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "status": "healthy" if not issues else "warning",
     }
 
+    output.emit(result)
+
     # Early return for warn-only
     if opts.warn_only and not issues:
         return 0
 
     # Output
-    if opts.format == "json":
-        print(json.dumps(result, indent=2))
-    elif opts.format == "table":
+    if opts.format == "table":
         lines = []
         lines.append(f"{'CPU':<6} {'Interrupts':>15} {'Percentage':>12}")
         lines.append("-" * 35)
@@ -224,37 +223,7 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
         print("\n".join(lines))
     else:
-        lines = []
-        lines.append(f"CPU Count: {num_cpus}")
-        lines.append(f"Total Interrupts: {total_interrupts:,}")
-        lines.append("")
-
-        if issues:
-            lines.append(f"Found {len(issues)} interrupt balance issues:")
-            lines.append("")
-            for issue in issues:
-                if issue["type"] == "cpu_overload":
-                    lines.append(
-                        f"[WARNING] CPU{issue['cpu']}: {issue['percentage']:.1f}% of all "
-                        f"interrupts ({issue['count']:,} total)"
-                    )
-                elif issue["type"] == "irq_imbalance":
-                    lines.append(
-                        f"[WARNING] IRQ {issue['irq']} ({issue['device']}): "
-                        f"{issue['percentage']:.1f}% on CPU{issue['cpu']} ({issue['total']:,} total)"
-                    )
-            lines.append("")
-        else:
-            lines.append("[OK] No interrupt balance issues detected")
-            lines.append("")
-
-        if opts.verbose:
-            lines.append("Per-CPU Interrupt Distribution:")
-            for cpu_id, count in enumerate(cpu_totals):
-                percentage = (count / total_interrupts * 100) if total_interrupts > 0 else 0
-                lines.append(f"  CPU{cpu_id}: {count:>12,} interrupts ({percentage:>5.1f}%)")
-
-        print("\n".join(lines))
+        output.render(opts.format, "Interrupt Balance Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     status = "healthy" if not issues else "warning"

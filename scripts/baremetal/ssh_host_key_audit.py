@@ -24,7 +24,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import os
 import re
 from datetime import datetime, timezone
@@ -304,17 +303,17 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "healthy": len(results["issues"]) == 0,
     }
 
+    output.emit(data)
+
     # Handle warn-only mode
     if opts.warn_only and not results["issues"] and not results["warnings"]:
         return 0
 
     # Output results
-    if opts.format == "json":
-        print(json.dumps(data, indent=2))
-    elif opts.format == "table":
+    if opts.format == "table":
         _output_table(results)
     else:
-        _output_plain(results, opts.verbose)
+        output.render(opts.format, "SSH Host Key Audit", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     if results["issues"]:
@@ -325,65 +324,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary("All SSH host keys pass security checks")
 
     return 1 if results["issues"] else 0
-
-
-def _output_plain(results: dict, verbose: bool) -> None:
-    """Format output as plain text."""
-    print("SSH Host Key Audit")
-    print("=" * 50)
-    print(f"SSH Directory: {results['ssh_dir']}")
-    print()
-
-    summary = results["summary"]
-    print(f"Total host keys: {summary['total_keys']}")
-    print(f"Secure keys: {summary['secure_keys']}")
-    print(f"Keys with issues: {summary['weak_keys']}")
-    print()
-
-    if verbose or results["issues"]:
-        print("Key Details:")
-        print("-" * 50)
-        for key in results["keys"]:
-            status = "SECURE" if not key["issues"] else "ISSUES"
-            bits = key.get("bits", "?")
-            key_type = key.get("key_type", "unknown").upper()
-            print(f"  {key['filename']}")
-            print(f"    Type: {key_type}, Bits: {bits}, Status: {status}")
-
-            if key.get("fingerprint"):
-                print(f"    Fingerprint: {key['fingerprint']}")
-
-            if key["issues"]:
-                for issue in key["issues"]:
-                    print(f"    [!] {issue}")
-
-            if verbose and key["warnings"]:
-                for warning in key["warnings"]:
-                    print(f"    [*] {warning}")
-
-            print()
-
-    # Show issues
-    if results["issues"]:
-        print("ISSUES:")
-        for issue in results["issues"]:
-            print(f"  [!] {issue}")
-        print()
-
-    # Show warnings
-    if results["warnings"]:
-        print("WARNINGS:")
-        for warning in results["warnings"]:
-            print(f"  [*] {warning}")
-        print()
-
-    # Summary
-    if not results["issues"] and not results["warnings"]:
-        print("[OK] All SSH host keys pass security checks")
-    elif results["issues"]:
-        print("[!!] Security issues detected - action required")
-    else:
-        print("[*] Warnings detected - review recommended")
 
 
 def _output_table(results: dict) -> None:

@@ -29,7 +29,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from typing import Any
 
 from boxctl.core.context import Context
@@ -265,21 +264,21 @@ def run(args: list[str], output: Output, context: Context) -> int:
     has_warning = any(i['severity'] == 'WARNING' for i in issues)
     status = 'warning' if has_warning else 'healthy'
 
-    # Output
-    if opts.format == 'json':
-        result: dict[str, Any] = {
-            'thp_settings': {
-                'enabled': enabled,
-                'defrag': defrag,
-            },
-            'vmstat': vmstat,
-            'khugepaged': khugepaged,
-            'status': status,
-            'issues': issues,
-        }
-        print(json.dumps(result, indent=2))
+    # Build result
+    result: dict[str, Any] = {
+        'thp_settings': {
+            'enabled': enabled,
+            'defrag': defrag,
+        },
+        'vmstat': vmstat,
+        'khugepaged': khugepaged,
+        'status': status,
+        'issues': issues,
+    }
+    output.emit(result)
 
-    elif opts.format == 'table':
+    # Output
+    if opts.format == 'table':
         lines = []
         if not opts.warn_only:
             lines.append('=' * 70)
@@ -316,62 +315,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             lines.append('')
 
         print('\n'.join(lines))
-
-    else:  # plain
-        lines = []
-        if not opts.warn_only:
-            lines.append(f"THP Enabled: {enabled or 'unknown'}")
-            lines.append(f"THP Defrag: {defrag or 'unknown'}")
-            lines.append('')
-
-            compact_stall = vmstat.get('compact_stall', 0)
-            compact_fail = vmstat.get('compact_fail', 0)
-            compact_success = vmstat.get('compact_success', 0)
-            lines.append(f"Compaction: {compact_stall} stalls, "
-                        f"{compact_success} successes, {compact_fail} failures")
-
-            thp_fault_alloc = vmstat.get('thp_fault_alloc', 0)
-            thp_fault_fallback = vmstat.get('thp_fault_fallback', 0)
-            total_fault = thp_fault_alloc + thp_fault_fallback
-            if total_fault > 0:
-                fallback_pct = thp_fault_fallback / total_fault * 100
-                lines.append(f"THP Faults: {thp_fault_alloc} alloc, "
-                            f"{thp_fault_fallback} fallback ({fallback_pct:.1f}% fallback)")
-            else:
-                lines.append(f"THP Faults: {thp_fault_alloc} alloc, "
-                            f"{thp_fault_fallback} fallback")
-
-            thp_collapse_alloc = vmstat.get('thp_collapse_alloc', 0)
-            thp_collapse_alloc_failed = vmstat.get('thp_collapse_alloc_failed', 0)
-            lines.append(f"khugepaged: {thp_collapse_alloc} collapses, "
-                        f"{thp_collapse_alloc_failed} failures")
-
-            if opts.verbose and khugepaged:
-                lines.append('')
-                lines.append('khugepaged tuning:')
-                for key, val in khugepaged.items():
-                    lines.append(f"  {key}: {val}")
-
-            lines.append('')
-
-        # Issues
-        warning_issues = [i for i in issues if i['severity'] == 'WARNING']
-        info_issues = [i for i in issues if i['severity'] == 'INFO']
-
-        if warning_issues:
-            for issue in warning_issues:
-                lines.append(f"[WARNING] {issue['message']}")
-            lines.append('')
-
-        if info_issues and not opts.warn_only:
-            for issue in info_issues:
-                lines.append(f"[INFO] {issue['message']}")
-            lines.append('')
-
-        if not issues and not opts.warn_only:
-            lines.append('No THP issues detected.')
-
-        print('\n'.join(lines))
+    else:
+        output.render(opts.format, "THP Compaction Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(f"enabled={enabled}, defrag={defrag}, status={status}")

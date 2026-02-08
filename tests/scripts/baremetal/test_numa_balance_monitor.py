@@ -47,7 +47,7 @@ class TestNumaBalanceMonitor:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "NUMA Nodes: 2" in captured.out
+        assert "Node Count: 2" in captured.out
         assert "[OK]" in captured.out
 
     def test_memory_imbalance_returns_1(self, capsys):

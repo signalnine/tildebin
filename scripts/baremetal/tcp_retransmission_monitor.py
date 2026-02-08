@@ -21,7 +21,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from datetime import datetime, timezone
 
 from boxctl.core.context import Context
@@ -239,57 +238,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or analysis["issues"] or analysis["warnings"]:
-            lines = []
-            lines.append("TCP Retransmission Monitor")
-            lines.append("=" * 40)
-            lines.append("")
-
-            status_symbol = (
-                "OK" if analysis["status"] == "healthy" else analysis["status"].upper()
-            )
-            lines.append(f"Status: [{status_symbol}]")
-            lines.append("")
-
-            lines.append("Retransmission Metrics:")
-            lines.append(f"  Retransmission rate: {analysis['retransmission_pct']:.4f}%")
-            lines.append(f"  Segments out:        {analysis['out_segs']:,}")
-            lines.append(f"  Retransmits:         {analysis['retrans_segs']:,}")
-            lines.append(f"  Segments in:         {analysis['in_segs']:,}")
-
-            if opts.verbose:
-                lines.append("")
-                lines.append("Detailed Metrics:")
-                lines.append(f"  TCP timeouts:        {analysis['timeouts']:,}")
-                lines.append(f"  Fast retransmits:    {analysis['fast_retrans']:,}")
-                lines.append(
-                    f"  Slow start retrans:  {analysis['slow_start_retrans']:,}"
-                )
-                lines.append(f"  RST segments out:    {analysis['out_rsts']:,}")
-                lines.append(f"  Errors in:           {analysis['in_errs']:,}")
-                lines.append(f"  Spurious RTOs:       {analysis['spurious_rtos']:,}")
-
-            if analysis["issues"]:
-                lines.append("")
-                lines.append("ISSUES:")
-                for issue in analysis["issues"]:
-                    lines.append(f"  [!] {issue}")
-
-            if analysis["warnings"]:
-                lines.append("")
-                lines.append("WARNINGS:")
-                for warning in analysis["warnings"]:
-                    lines.append(f"  [*] {warning}")
-
-            if not analysis["issues"] and not analysis["warnings"]:
-                lines.append("")
-                lines.append("[OK] TCP retransmission rate within thresholds")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "TCP Retransmission Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(

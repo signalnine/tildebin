@@ -21,7 +21,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import re
 from datetime import datetime, timezone
 
@@ -373,17 +372,17 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "healthy": len(issues) == 0,
     }
 
+    output.emit(data)
+
     # Handle warn-only mode
     if opts.warn_only and not issues:
         return 0
 
     # Output based on format
-    if opts.format == "json":
-        print(json.dumps(data, indent=2, default=str))
-    elif opts.format == "table":
+    if opts.format == "table":
         _output_table(data, opts.verbose)
     else:
-        _output_plain(data, opts.verbose)
+        output.render(opts.format, "Active Sessions Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     if issues:
@@ -392,30 +391,6 @@ def run(args: list[str], output: Output, context: Context) -> int:
         output.set_summary(f"No issues in {len(sessions)} active session(s)")
 
     return 1 if issues else 0
-
-
-def _output_plain(data: dict, verbose: bool) -> None:
-    """Output results in plain text format."""
-    print(f"Host: {data['hostname']}")
-    print(f"Active Sessions: {data['session_count']}")
-    print(f"Unique Users: {len(data['unique_users'])}")
-    print()
-
-    if data["sessions"]:
-        print("Sessions:")
-        for session in data["sessions"]:
-            source = session.get("source", "local")
-            idle = session.get("idle_formatted", "0s")
-            cmd = session.get("command", "")
-            if cmd and verbose:
-                print(f"  {session['username']:<12} {session['tty']:<10} {source:<20} idle: {idle:<10} {cmd}")
-            else:
-                print(f"  {session['username']:<12} {session['tty']:<10} {source:<20} idle: {idle}")
-
-    if data["issues"]:
-        print("\nIssues:")
-        for issue in data["issues"]:
-            print(f"  [{issue['severity']}] {issue['message']}")
 
 
 def _output_table(data: dict, verbose: bool) -> None:

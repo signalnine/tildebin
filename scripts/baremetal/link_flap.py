@@ -25,7 +25,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from datetime import datetime, timezone
 
 from boxctl.core.context import Context
@@ -240,10 +239,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output results
-    if opts.format == "json":
-        if not opts.warn_only or issues:
-            print(json.dumps(output_data, indent=2))
-    elif opts.format == "table":
+    output.emit(output_data)
+    if opts.format == "table":
         if not opts.warn_only or issues:
             # Header
             print(
@@ -279,49 +276,7 @@ def run(args: list[str], output: Output, context: Context) -> int:
                 for issue in issues:
                     print(f"  [{issue['severity'].upper()}] {issue['message']}")
     else:
-        if not opts.warn_only or issues:
-            lines = []
-            lines.append("Link Flapping Detection")
-            lines.append("=" * 70)
-            lines.append(f"Threshold: {opts.threshold} carrier changes")
-            lines.append("")
-
-            for result in results:
-                if opts.warn_only and not result["flapping"]:
-                    continue
-
-                status = "FLAPPING" if result["flapping"] else "STABLE"
-                carrier = result["carrier"].upper()
-                speed = (
-                    f"{result['speed_mbps']}Mbps"
-                    if result["speed_mbps"]
-                    else "N/A"
-                )
-
-                lines.append(f"[{status}] {result['interface']} ({carrier}) - {speed}")
-
-                total = result.get("total_carrier_changes", "N/A")
-                lines.append(f"  Total carrier changes since boot: {total}")
-
-                if result["carrier_up_count"] is not None:
-                    lines.append(
-                        f"  Carrier up/down count: "
-                        f"{result['carrier_up_count']}/{result['carrier_down_count']}"
-                    )
-
-                lines.append("")
-
-            # Summary
-            if issues:
-                lines.append(
-                    f"Summary: {len(issues)} interface(s) with link flapping detected"
-                )
-                for issue in issues:
-                    lines.append(f"  [{issue['severity'].upper()}] {issue['message']}")
-            elif not opts.warn_only:
-                lines.append("Summary: No link flapping detected")
-
-            print("\n".join(lines))
+        output.render(opts.format, "Link Flapping Detection", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(

@@ -32,7 +32,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -302,22 +301,21 @@ def run(args: list[str], output: Output, context: Context) -> int:
         reverse=True,
     )
 
-    # Output results
-    if opts.format == "json":
-        result = {
-            "cgroups": results,
-            "issues": all_issues,
-            "summary": {
-                "total_cgroups": len(results),
-                "with_limits": len([r for r in results if r["max"] is not None]),
-                "critical_count": len([i for i in all_issues if i["severity"] == "CRITICAL"]),
-                "warning_count": len([i for i in all_issues if i["severity"] == "WARNING"]),
-            },
-        }
-        if not opts.warn_only or all_issues:
-            print(json.dumps(result, indent=2))
+    # Build result
+    result = {
+        "cgroups": results,
+        "issues": all_issues,
+        "summary": {
+            "total_cgroups": len(results),
+            "with_limits": len([r for r in results if r["max"] is not None]),
+            "critical_count": len([i for i in all_issues if i["severity"] == "CRITICAL"]),
+            "warning_count": len([i for i in all_issues if i["severity"] == "WARNING"]),
+        },
+    }
+    output.emit(result)
 
-    elif opts.format == "table":
+    # Output results
+    if opts.format == "table":
         if opts.warn_only:
             # Only show cgroups with issues
             issue_cgroups = set(i["cgroup"] for i in all_issues)
@@ -352,63 +350,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
                 )
 
             print("\n".join(lines))
-
-    else:  # plain
-        if not opts.warn_only or all_issues:
-            lines = []
-            lines.append("Cgroup Memory Limits Monitor")
-            lines.append("=" * 60)
-            lines.append("")
-
-            # Show top N consumers
-            lines.append(f"Top {opts.top} Memory Consumers (by utilization):")
-            lines.append(f"{'Cgroup':<40} {'Usage':<12} {'Limit':<12} {'%':>6}")
-            lines.append("-" * 72)
-
-            for stats in sorted_results[: opts.top]:
-                name = stats["name"]
-                if len(name) > 38:
-                    name = "..." + name[-35:]
-
-                current = format_bytes(stats["current"])
-                max_val = format_bytes(stats["max"])
-                util = stats["utilization"] if stats["utilization"] is not None else 0.0
-
-                lines.append(f"{name:<40} {current:<12} {max_val:<12} {util:>5.1f}%")
-
-            lines.append("")
-
-            # Show issues
-            if all_issues:
-                critical = [i for i in all_issues if i["severity"] == "CRITICAL"]
-                warnings = [i for i in all_issues if i["severity"] == "WARNING"]
-
-                if critical:
-                    lines.append(f"CRITICAL Issues ({len(critical)}):")
-                    for issue in critical:
-                        lines.append(f"  !!! {issue['cgroup']}: {issue['message']}")
-                    lines.append("")
-
-                if warnings:
-                    lines.append(f"Warnings ({len(warnings)}):")
-                    for issue in warnings:
-                        lines.append(f"  {issue['cgroup']}: {issue['message']}")
-                    lines.append("")
-            else:
-                lines.append("No memory limit issues detected.")
-                lines.append("")
-
-            # Verbose: show summary
-            if opts.verbose:
-                limited = [r for r in results if r["max"] is not None]
-                unlimited = [
-                    r for r in results if r["max"] is None and r["current"] is not None
-                ]
-                lines.append(
-                    f"Summary: {len(limited)} cgroups with limits, {len(unlimited)} unlimited"
-                )
-
-            print("\n".join(lines))
+    else:
+        output.render(opts.format, "Cgroup Memory Limits Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     has_critical = any(i["severity"] == "CRITICAL" for i in all_issues)

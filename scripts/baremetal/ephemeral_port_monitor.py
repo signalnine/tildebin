@@ -25,7 +25,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from collections import defaultdict
 from datetime import datetime, timezone
 
@@ -335,45 +334,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or issues:
-            print(json.dumps(result, indent=2))
-    else:
-        if not opts.warn_only or issues:
-            lines = []
-            lines.append("Ephemeral Port Usage Monitor")
-            lines.append("=" * 50)
-            lines.append("")
-            lines.append(
-                f"Range: {analysis['port_range']['low']}-{analysis['port_range']['high']} ({analysis['total_available']} ports)"
-            )
-            lines.append(f"Used:  {analysis['used']} ({analysis['usage_percent']}%)")
-            lines.append(f"Free:  {analysis['free']}")
-            lines.append("")
-
-            if analysis["by_state"]:
-                lines.append("By Connection State:")
-                for state, count in sorted(
-                    analysis["by_state"].items(), key=lambda x: x[1], reverse=True
-                ):
-                    lines.append(f"  {state:<15} {count:>6}")
-                lines.append("")
-
-            if opts.verbose and analysis["by_remote"]:
-                lines.append("Top Remote Destinations:")
-                for remote, count in list(analysis["by_remote"].items())[:5]:
-                    lines.append(f"  {remote:<35} {count:>6} ports")
-                lines.append("")
-
-            if issues:
-                lines.append("Issues Detected:")
-                for issue in issues:
-                    severity = issue["severity"]
-                    lines.append(f"  [{severity}] {issue['message']}")
-            else:
-                lines.append("[OK] Ephemeral port usage is healthy")
-
-            print("\n".join(lines))
+    output.emit(result)
+    output.render(opts.format, "Ephemeral Port Usage Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(f"usage={analysis['usage_percent']}%, used={analysis['used']}")

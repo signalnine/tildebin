@@ -24,7 +24,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from typing import Any
 
 from boxctl.core.context import Context
@@ -317,23 +316,24 @@ def run(args: list[str], output: Output, context: Context) -> int:
         processes, mem_total_kb, opts.warn, opts.crit
     )
 
-    # Output results
-    if opts.format == 'json':
-        result = {
-            'system': {
-                'mem_total_kb': mem_total_kb,
-                'processes_analyzed': len(processes)
-            },
-            'thresholds': {
-                'warn': opts.warn,
-                'crit': opts.crit
-            },
-            'top_processes': sorted_procs[:opts.top_n],
-            'issues': issues
-        }
-        print(json.dumps(result, indent=2))
+    # Build result
+    result = {
+        'system': {
+            'mem_total_kb': mem_total_kb,
+            'processes_analyzed': len(processes)
+        },
+        'thresholds': {
+            'warn': opts.warn,
+            'crit': opts.crit
+        },
+        'top_processes': sorted_procs[:opts.top_n],
+        'issues': issues
+    }
 
-    elif opts.format == 'table':
+    output.emit(result)
+
+    # Output results
+    if opts.format == 'table':
         lines = []
         if not opts.warn_only:
             lines.append("=" * 100)
@@ -366,41 +366,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             lines.append("")
 
         print('\n'.join(lines))
-
-    else:  # plain
-        lines = []
-        if not opts.warn_only:
-            lines.append(f"System memory: {format_bytes(mem_total_kb)}")
-            lines.append(f"Processes analyzed: {len(processes)}")
-            lines.append("")
-            lines.append(f"Top {opts.top_n} processes by OOM score:")
-            lines.append("-" * 80)
-
-            for proc in sorted_procs[:opts.top_n]:
-                score = proc['oom_score']
-                adj = proc['oom_score_adj']
-                rss = format_bytes(proc['rss_kb'])
-                rss_pct = proc['rss_percent']
-                risk = proc['risk_level']
-                name = proc['name']
-                pid = proc['pid']
-
-                adj_str = f"+{adj}" if adj >= 0 else str(adj)
-                lines.append(f"[{risk:8}] {name:<20} PID:{pid:<7} Score:{score:<5} "
-                            f"Adj:{adj_str:<6} RSS:{rss} ({rss_pct:.1f}%)")
-
-            lines.append("")
-
-        # Print issues
-        if issues:
-            for issue in issues:
-                severity = issue['severity']
-                message = issue['message']
-                lines.append(f"[{severity}] {message}")
-        elif not opts.warn_only:
-            lines.append("No high-risk processes detected.")
-
-        print('\n'.join(lines))
+    else:
+        output.render(opts.format, "OOM Risk Analyzer", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     has_critical = any(issue['severity'] == 'CRITICAL' for issue in issues)

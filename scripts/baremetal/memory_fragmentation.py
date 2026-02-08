@@ -28,7 +28,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from typing import Any
 
 from boxctl.core.context import Context
@@ -365,16 +364,16 @@ def run(args: list[str], output: Output, context: Context) -> int:
         zones, opts.frag_warn, opts.frag_crit, opts.hugepage_warn
     )
 
-    # Output
-    if opts.format == "json":
-        result = {
-            'summary': summary,
-            'zones': zone_stats,
-            'issues': issues,
-        }
-        print(json.dumps(result, indent=2))
+    # Build result dict
+    result = {
+        'summary': summary,
+        'zones': zone_stats,
+        'issues': issues,
+    }
 
-    elif opts.format == "table":
+    # Output
+    output.emit(result)
+    if opts.format == "table":
         lines = []
         if not opts.warn_only:
             lines.append(f"Free Memory: {format_bytes(summary['total_free_bytes'])} | "
@@ -410,60 +409,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
                 )
 
         print('\n'.join(lines))
-
-    else:  # plain
-        lines = []
-        if not opts.warn_only:
-            lines.append("Memory Fragmentation Analysis:")
-            lines.append("")
-            lines.append(f"  Total free memory: {format_bytes(summary['total_free_bytes'])}")
-            lines.append(f"  Zones analyzed: {summary['total_zones']}")
-            lines.append(f"  Max fragmentation index: {summary['max_fragmentation_index']:.1f}%")
-            lines.append(f"  Hugepage-capable blocks (order 9+): {summary['total_hugepage_capable']}")
-            lines.append(f"  Large page blocks (order 7+): {summary['total_large_pages']}")
-            lines.append("")
-
-        if opts.verbose and not opts.warn_only:
-            lines.append("Per-Zone Details:")
-            for stats in zone_stats:
-                lines.append(f"  Node {stats['node']}, Zone {stats['zone']}:")
-                lines.append(f"    Free: {format_bytes(stats['total_free_bytes'])}")
-                lines.append(f"    Fragmentation: {stats['fragmentation_index']:.1f}%")
-                lines.append(f"    Hugepage blocks: {stats['hugepage_capable']}")
-
-                # Show order distribution
-                order_str = " ".join(
-                    f"{stats['counts'][i]}" for i in range(min(11, len(stats['counts'])))
-                )
-                lines.append(f"    Order counts [0-10]: {order_str}")
-            lines.append("")
-
-            # Explain order sizes
-            lines.append("Order size reference:")
-            lines.append("  Order 0=4KB, 1=8KB, 2=16KB, 3=32KB, 4=64KB, 5=128KB")
-            lines.append("  Order 6=256KB, 7=512KB, 8=1MB, 9=2MB (hugepage), 10=4MB")
-            lines.append("")
-
-        if issues:
-            critical = [i for i in issues if i['severity'] == 'CRITICAL']
-            warnings = [i for i in issues if i['severity'] == 'WARNING']
-
-            if critical:
-                lines.append(f"CRITICAL Issues ({len(critical)}):")
-                for issue in critical:
-                    lines.append(f"  !!! Node {issue['node']} {issue['zone']}: {issue['message']}")
-                lines.append("")
-
-            if warnings:
-                lines.append(f"Warnings ({len(warnings)}):")
-                for issue in warnings:
-                    lines.append(f"  [WARNING] Node {issue['node']} {issue['zone']}: {issue['message']}")
-                lines.append("")
-        elif not opts.warn_only:
-            lines.append("No fragmentation issues detected.")
-            lines.append("")
-
-        print('\n'.join(lines))
+    else:
+        output.render(opts.format, "Memory Fragmentation Analysis", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     has_critical = any(i['severity'] == 'CRITICAL' for i in issues)

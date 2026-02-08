@@ -42,7 +42,7 @@ class TestNicLinkSpeed:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "10000Mb/s" in captured.out or "10Gb/s" in captured.out
+        assert output.data["interfaces"][0]["info"]["speed"] == 10000
 
     def test_slow_interface_warning(self, capsys):
         """Interface at 100Mb/s when max is 10Gb/s returns exit code 1."""

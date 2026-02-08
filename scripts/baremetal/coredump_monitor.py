@@ -23,7 +23,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import re
 
 from boxctl.core.context import Context
@@ -287,46 +286,10 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "status": status,
     }
 
+    output.emit(result_data)
+
     # Output
-    if opts.format == "json":
-        if not opts.warn_only or has_issues:
-            print(json.dumps(result_data, indent=2, default=str))
-    else:
-        if not opts.warn_only or has_issues:
-            lines = ["Coredump Configuration", "-" * 50]
-            lines.append(f"Core Pattern: {core_pattern}")
-
-            soft = ulimit_info["soft_limit"]
-            if isinstance(soft, int):
-                soft = format_bytes(soft)
-            lines.append(
-                f"Core Size Limit: {soft} (soft), {ulimit_info['hard_limit']} (hard)"
-            )
-            lines.append(f"Core Uses PID: {core_uses_pid}")
-
-            if is_systemd_coredump:
-                lines.append("")
-                lines.append("systemd-coredump: enabled")
-                if systemd_config.get("Storage"):
-                    lines.append(f"  Storage: {systemd_config['Storage']}")
-                if systemd_config.get("Compress"):
-                    lines.append(f"  Compress: {systemd_config['Compress']}")
-                if systemd_config.get("MaxUse"):
-                    lines.append(f"  Max Use: {systemd_config['MaxUse']}")
-
-            lines.append("")
-
-            # Print issues
-            if issues:
-                filtered_issues = [
-                    i for i in issues if not (opts.warn_only and i["severity"] == "INFO")
-                ]
-                for issue in filtered_issues:
-                    lines.append(f"[{issue['severity']}] {issue['message']}")
-            else:
-                lines.append("[OK] No coredump configuration issues detected.")
-
-            print("\n".join(lines))
+    output.render(opts.format, "Coredump Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     output.set_summary(f"pattern={'systemd' if is_systemd_coredump else 'file'}, status={status}")
 

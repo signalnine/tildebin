@@ -227,66 +227,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output
-    if opts.format == "json":
-        if not opts.warn_only or has_issues:
-            print(json.dumps(result_data, indent=2))
-    else:
-        if not opts.warn_only or has_issues:
-            lines = [
-                f"Syslog Rate Monitor - Last {opts.since} minutes",
-                "=" * 60,
-                f"Total messages: {analysis['total_count']}",
-                f"Rate: {analysis['rate_per_minute']:.1f} msg/min",
-                f"Unique sources: {analysis['unique_sources']}",
-                "",
-            ]
-
-            # Priority breakdown
-            ps = analysis["priority_summary"]
-            high_priority = ps["emergency"] + ps["alert"] + ps["critical"] + ps["error"]
-            if high_priority > 0 or opts.verbose:
-                lines.append("Priority breakdown:")
-                if ps["emergency"] > 0:
-                    lines.append(f"  EMERGENCY: {ps['emergency']}")
-                if ps["alert"] > 0:
-                    lines.append(f"  ALERT:     {ps['alert']}")
-                if ps["critical"] > 0:
-                    lines.append(f"  CRITICAL:  {ps['critical']}")
-                if ps["error"] > 0:
-                    lines.append(f"  ERROR:     {ps['error']}")
-                if opts.verbose:
-                    lines.append(f"  WARNING:   {ps['warning']}")
-                    lines.append(f"  NOTICE:    {ps['notice']}")
-                    lines.append(f"  INFO:      {ps['info']}")
-                    lines.append(f"  DEBUG:     {ps['debug']}")
-                lines.append("")
-
-            # High rate sources
-            if analysis["high_rate_sources"]:
-                lines.append(f"HIGH RATE SOURCES (>{opts.threshold} msg/min):")
-                lines.append("-" * 60)
-                for source in analysis["high_rate_sources"]:
-                    lines.append(f"  !!! {source['source']}")
-                    lines.append(
-                        f"      {source['count']} msgs, {source['rate_per_minute']:.1f}/min, "
-                        f"{source['percentage']:.1f}% of total"
-                    )
-                lines.append("")
-
-            # Top sources
-            if opts.verbose or not analysis["high_rate_sources"]:
-                lines.append(f"Top {len(analysis['top_sources'])} sources:")
-                lines.append("-" * 60)
-                for source in analysis["top_sources"]:
-                    marker = (
-                        "!!!" if source["rate_per_minute"] > opts.threshold else "   "
-                    )
-                    lines.append(
-                        f"{marker} {source['source']:<40} "
-                        f"{source['count']:>6} msgs  {source['rate_per_minute']:>6.1f}/min"
-                    )
-
-            print("\n".join(lines))
+    output.emit(result_data)
+    output.render(opts.format, "Syslog Message Rate Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     output.set_summary(
         f"rate={analysis['rate_per_minute']:.1f}/min, "

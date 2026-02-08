@@ -342,23 +342,24 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
     total_drift = len(drift["changed"]) + len(drift["missing"])
 
-    # Output results
-    if opts.format == "json":
-        result = {
-            "summary": {
-                "changed_count": len(drift["changed"]),
-                "missing_count": len(drift["missing"]),
-                "extra_count": len(drift["extra"]),
-                "total_drift": total_drift,
-            },
-            "changed": drift["changed"],
-            "missing": drift["missing"],
-        }
-        if opts.verbose:
-            result["extra"] = drift["extra"]
-        print(json.dumps(result, indent=2))
+    # Build result
+    result = {
+        "summary": {
+            "changed_count": len(drift["changed"]),
+            "missing_count": len(drift["missing"]),
+            "extra_count": len(drift["extra"]),
+            "total_drift": total_drift,
+        },
+        "changed": drift["changed"],
+        "missing": drift["missing"],
+    }
+    if opts.verbose:
+        result["extra"] = drift["extra"]
 
-    elif opts.format == "table":
+    output.emit(result)
+
+    # Output results
+    if opts.format == "table":
         if not total_drift and not opts.warn_only:
             print("No configuration drift detected.")
         else:
@@ -395,35 +396,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
                     expected = str(item["expected"])[:29]
                     print(f"{key:<45} {expected:<30}")
                 print()
-
-    else:  # plain format
-        if not opts.warn_only:
-            print("Sysctl Drift Detection Report")
-            print("=" * 60)
-            print(f"Changed parameters: {len(drift['changed'])}")
-            print(f"Missing parameters: {len(drift['missing'])}")
-            print()
-
-        if drift["changed"]:
-            print("CHANGED PARAMETERS:")
-            print("-" * 60)
-            for item in sorted(drift["changed"], key=lambda x: x["key"]):
-                print(f"  {item['key']}")
-                print(f"    Expected: {item['expected']}")
-                print(f"    Actual:   {item['actual']}")
-                if opts.verbose:
-                    print(f"    Category: {item['category']}")
-            print()
-
-        if drift["missing"]:
-            print("MISSING PARAMETERS (in baseline but not on system):")
-            print("-" * 60)
-            for item in sorted(drift["missing"], key=lambda x: x["key"]):
-                print(f"  {item['key']} = {item['expected']}")
-            print()
-
-        if total_drift == 0 and not opts.warn_only:
-            print("No configuration drift detected.")
+    else:
+        output.render(opts.format, "Sysctl Drift Detector", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     status = "drift" if total_drift > 0 else "clean"

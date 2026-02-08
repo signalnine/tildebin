@@ -20,7 +20,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from collections import defaultdict
 from datetime import datetime, timezone
 
@@ -235,11 +234,10 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "healthy": len(issues) == 0,
     }
 
+    output.emit(result)
+
     # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or issues:
-            print(json.dumps(result, indent=2))
-    elif opts.format == "table":
+    if opts.format == "table":
         if not opts.warn_only or issues:
             lines = []
             lines.append(f"{'State':<15} {'Count':>10}")
@@ -262,30 +260,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
                     )
 
             print("\n".join(lines))
-    else:  # plain
-        if not opts.warn_only or issues:
-            lines = []
-            lines.append("Socket State Distribution:")
-            for state in sorted(state_counts.keys()):
-                count = state_counts[state]
-                lines.append(f"  {state:<15} {count:>6}")
-
-            if issues:
-                lines.append("")
-                lines.append("Detected Issues:")
-                for issue in issues:
-                    severity = issue["severity"].upper()
-                    lines.append(f"  [{severity}] {issue['message']}")
-                    if opts.verbose:
-                        lines.append(
-                            f"           Current: {issue['count']}, "
-                            f"Threshold: {issue['threshold']}"
-                        )
-            else:
-                lines.append("")
-                lines.append("[OK] No anomalies detected")
-
-            print("\n".join(lines))
+    else:
+        output.render(opts.format, "Socket State Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(f"total={total_sockets}, issues={len(issues)}")

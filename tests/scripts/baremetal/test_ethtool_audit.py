@@ -39,8 +39,7 @@ class TestEthtoolAudit:
         result = run([], output, context)
 
         assert result == 0
-        captured = capsys.readouterr()
-        assert "HEALTHY" in captured.out or "OK" in captured.out
+        assert output.data.get("healthy") is True
 
     def test_half_duplex_issue(self, capsys):
         """Half duplex detection returns exit code 1."""

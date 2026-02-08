@@ -35,7 +35,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from datetime import datetime, timezone
 
 from boxctl.core.context import Context
@@ -433,9 +432,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output results
-    if opts.format == "json":
-        print(json.dumps(output_data, indent=2))
-    elif opts.format == "table":
+    output.emit(output_data)
+    if opts.format == "table":
         if opts.warn_only and not analysis["issues"] and not analysis["warnings"]:
             print("No MTU issues detected")
         else:
@@ -466,66 +464,7 @@ def run(args: list[str], output: Output, context: Context) -> int:
                     f"{info['type']:<10} {info['operstate']:<8} {iface_status:<10}"
                 )
     else:
-        if opts.warn_only and not analysis["issues"] and not analysis["warnings"]:
-            pass  # Silent
-        else:
-            lines = []
-            lines.append("MTU Mismatch Detector")
-            lines.append("=" * 60)
-            lines.append("")
-
-            # Show issues first
-            if analysis["issues"]:
-                lines.append("ISSUES:")
-                for issue in analysis["issues"]:
-                    lines.append(f"  [ERROR] {issue['message']}")
-                lines.append("")
-
-            if analysis["warnings"]:
-                lines.append("WARNINGS:")
-                for warning in analysis["warnings"]:
-                    lines.append(f"  [WARN] {warning['message']}")
-                lines.append("")
-
-            if not opts.warn_only:
-                # Summary
-                summary = analysis["summary"]
-                lines.append("Summary:")
-                lines.append(f"  Total interfaces: {summary['total_interfaces']}")
-                lines.append(f"  Standard MTU (1500): {summary['standard_mtu']}")
-                lines.append(f"  Jumbo MTU (9000/9216): {summary['jumbo_mtu']}")
-                lines.append(f"  Other MTU: {summary['other_mtu']}")
-                if summary["bonds"] > 0:
-                    lines.append(f"  Bond interfaces: {summary['bonds']}")
-                if summary["bridges"] > 0:
-                    lines.append(f"  Bridge interfaces: {summary['bridges']}")
-                if summary["vlans"] > 0:
-                    lines.append(f"  VLAN interfaces: {summary['vlans']}")
-                lines.append("")
-
-                if opts.verbose:
-                    lines.append("Interface Details:")
-                    lines.append("-" * 60)
-                    lines.append(
-                        f"{'Interface':<15} {'MTU':>6} {'Type':<10} "
-                        f"{'State':<8} {'Speed':<10}"
-                    )
-                    lines.append("-" * 60)
-
-                    for iface, info in sorted(analysis["interfaces"].items()):
-                        speed = (
-                            f"{info['speed_mbps']}M" if info["speed_mbps"] else "N/A"
-                        )
-                        lines.append(
-                            f"{iface:<15} {info['mtu']:>6} {info['type']:<10} "
-                            f"{info['operstate']:<8} {speed:<10}"
-                        )
-                    lines.append("")
-
-            if not analysis["issues"] and not analysis["warnings"]:
-                lines.append("Status: OK - No MTU mismatches detected")
-
-            print("\n".join(lines))
+        output.render(opts.format, "MTU Mismatch Detector", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(

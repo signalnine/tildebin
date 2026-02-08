@@ -27,7 +27,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import os
 
 from boxctl.core.context import Context
@@ -432,31 +431,37 @@ def run(args: list[str], output: Output, context: Context) -> int:
         elif runtime == "podman":
             results.append(check_podman_health(context, opts.storage_warn))
 
-    # Output results
-    if opts.format == "json":
-        result = {
-            "runtimes": results,
-            "summary": {
-                "total_runtimes": len(results),
-                "healthy": sum(
-                    1
-                    for r in results
-                    if r.get("responsive")
-                    and not any(i["severity"] == "CRITICAL" for i in r.get("issues", []))
-                ),
-                "has_warnings": any(
-                    any(i["severity"] == "WARNING" for i in r.get("issues", []))
-                    for r in results
-                ),
-                "has_errors": any(
-                    any(i["severity"] == "CRITICAL" for i in r.get("issues", []))
-                    for r in results
-                ),
-            },
-        }
-        print(json.dumps(result, indent=2))
+    # Build result
+    result = {
+        "runtimes": results,
+        "issues": [
+            issue
+            for r in results
+            for issue in r.get("issues", [])
+        ],
+        "summary": {
+            "total_runtimes": len(results),
+            "healthy": sum(
+                1
+                for r in results
+                if r.get("responsive")
+                and not any(i["severity"] == "CRITICAL" for i in r.get("issues", []))
+            ),
+            "has_warnings": any(
+                any(i["severity"] == "WARNING" for i in r.get("issues", []))
+                for r in results
+            ),
+            "has_errors": any(
+                any(i["severity"] == "CRITICAL" for i in r.get("issues", []))
+                for r in results
+            ),
+        },
+    }
 
-    elif opts.format == "table":
+    output.emit(result)
+
+    # Output results
+    if opts.format == "table":
         lines = []
         lines.append("=" * 80)
         lines.append("CONTAINER RUNTIME HEALTH SUMMARY")
@@ -466,15 +471,15 @@ def run(args: list[str], output: Output, context: Context) -> int:
         )
         lines.append("-" * 80)
 
-        for result in results:
-            runtime = result["runtime"]
-            status = "OK" if result.get("responsive") else "DOWN"
-            version = result.get("version", "N/A")[:14]
+        for rt in results:
+            runtime = rt["runtime"]
+            status = "OK" if rt.get("responsive") else "DOWN"
+            version = rt.get("version", "N/A")[:14]
 
-            containers = result.get("containers", {})
+            containers = rt.get("containers", {})
             container_str = f"{containers.get('running', 0)}/{containers.get('total', 0)}"
 
-            issues = result.get("issues", [])
+            issues = rt.get("issues", [])
             critical = sum(1 for i in issues if i["severity"] == "CRITICAL")
             warnings = sum(1 for i in issues if i["severity"] == "WARNING")
             issue_str = f"{critical}C/{warnings}W"
@@ -488,11 +493,11 @@ def run(args: list[str], output: Output, context: Context) -> int:
 
         # Print all issues
         all_issues = []
-        for result in results:
-            for issue in result.get("issues", []):
+        for rt in results:
+            for issue in rt.get("issues", []):
                 if opts.warn_only and issue["severity"] == "INFO":
                     continue
-                all_issues.append((result["runtime"], issue))
+                all_issues.append((rt["runtime"], issue))
 
         if all_issues:
             lines.append("ISSUES DETECTED")
@@ -502,62 +507,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
             lines.append("")
 
         print("\n".join(lines))
-
-    else:  # plain
-        for result in results:
-            runtime = result["runtime"]
-            issues = result.get("issues", [])
-
-            # Skip if no issues and warn_only mode
-            if opts.warn_only and not any(
-                i["severity"] in ["CRITICAL", "WARNING"] for i in issues
-            ):
-                continue
-
-            lines = []
-            lines.append(f"=== {runtime.upper()} ===")
-
-            if result.get("responsive"):
-                version = result.get("version", "unknown")
-                lines.append(f"Status: Running (version {version})")
-            else:
-                lines.append("Status: Not responsive")
-
-            service = result.get("service")
-            if service:
-                status = "active" if service["active"] else "inactive"
-                enabled = "enabled" if service["enabled"] else "disabled"
-                lines.append(f"Service: {status} ({enabled})")
-
-            storage = result.get("storage")
-            if storage and opts.verbose:
-                lines.append(
-                    f"Storage: {format_bytes(storage['used_bytes'])} / {format_bytes(storage['total_bytes'])} "
-                    f"({storage['usage_percent']:.1f}% used)"
-                )
-
-            containers = result.get("containers")
-            if containers and opts.verbose:
-                lines.append(
-                    f"Containers: {containers['total']} total, {containers['running']} running, "
-                    f"{containers['stopped']} stopped"
-                )
-                if containers.get("dead", 0) > 0:
-                    lines.append(f"  Dead containers: {containers['dead']}")
-
-            images = result.get("images")
-            if images and opts.verbose:
-                lines.append(f"Images: {images['total']} total, {images['dangling']} dangling")
-
-            # Print issues
-            for issue in issues:
-                severity = issue["severity"]
-                if opts.warn_only and severity == "INFO":
-                    continue
-                lines.append(f"[{severity}] {issue['message']}")
-
-            lines.append("")
-            print("\n".join(lines))
+    else:
+        output.render(opts.format, "Container Runtime Health", warn_only=getattr(opts, 'warn_only', False))
 
     # Determine exit code
     has_critical = any(

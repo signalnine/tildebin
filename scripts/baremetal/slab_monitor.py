@@ -34,7 +34,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from typing import Any
 
 from boxctl.core.context import Context
@@ -351,89 +350,22 @@ def run(args: list[str], output: Output, context: Context) -> int:
         caches, total_memory, opts.warn_pct, opts.crit_pct, opts.warn_ratio, opts.top
     )
 
+    # Build result for output
+    result: dict[str, Any] = {
+        'summary': summary,
+        'issues': issues,
+        'top_caches': top_caches,
+    }
+    if opts.all_caches:
+        result['all_caches'] = list(caches.values())
+
+    output.emit(result)
+
     # Output
-    if opts.format == "json":
-        result: dict[str, Any] = {
-            'summary': summary,
-            'issues': issues,
-            'top_caches': top_caches,
-        }
-        if opts.all_caches:
-            result['all_caches'] = list(caches.values())
-        print(json.dumps(result, indent=2))
-
-    elif opts.format == "table":
-        lines = []
-        if not opts.warn_only:
-            lines.append(f"Slab Memory: {format_bytes(summary['total_slab_bytes'])} "
-                        f"({summary['slab_pct_of_memory']:.1f}% of system memory)")
-            lines.append("")
-            lines.append(f"{'Cache Name':<30} {'Memory':>12} {'Active':>10} {'Total':>10} {'Ratio':>8}")
-            lines.append("-" * 74)
-
-            for cache in top_caches:
-                ratio_str = f"{cache['active_ratio']:.1%}" if cache['num_objs'] > 0 else "N/A"
-                lines.append(
-                    f"{cache['name']:<30} "
-                    f"{format_bytes(cache['memory_bytes']):>12} "
-                    f"{cache['active_objs']:>10} "
-                    f"{cache['num_objs']:>10} "
-                    f"{ratio_str:>8}"
-                )
-
-            lines.append("")
-
-        if issues:
-            lines.append(f"{'Severity':<10} {'Cache':<25} {'Message':<40}")
-            lines.append("-" * 75)
-
-            for issue in issues:
-                lines.append(f"{issue['severity']:<10} {issue['cache']:<25} {issue['message']:<40}")
-
-        print('\n'.join(lines))
-
-    else:  # plain
-        lines = []
-        if not opts.warn_only:
-            lines.append("Kernel Slab Allocator Status:")
-            lines.append("")
-            lines.append(f"  Total caches: {summary['total_caches']}")
-            lines.append(f"  Total slab memory: {format_bytes(summary['total_slab_bytes'])}")
-
-            if summary['total_memory_mb']:
-                lines.append(f"  Slab % of memory: {summary['slab_pct_of_memory']:.1f}%")
-
-            lines.append("")
-            lines.append(f"Top {len(top_caches)} caches by memory usage:")
-
-            for cache in top_caches:
-                ratio_str = f"{cache['active_ratio']:.0%}" if cache['num_objs'] > 0 else "N/A"
-                lines.append(
-                    f"  {cache['name']:<30} {format_bytes(cache['memory_bytes']):>10} "
-                    f"({cache['active_objs']:>8}/{cache['num_objs']:<8} objs, {ratio_str} active)"
-                )
-
-            lines.append("")
-
-        if issues:
-            critical = [i for i in issues if i['severity'] == 'CRITICAL']
-            warnings = [i for i in issues if i['severity'] == 'WARNING']
-
-            if critical:
-                lines.append(f"CRITICAL Issues ({len(critical)}):")
-                for issue in critical:
-                    lines.append(f"  !!! [{issue['cache']}] {issue['message']}")
-                lines.append("")
-
-            if warnings:
-                lines.append(f"Warnings ({len(warnings)}):")
-                for issue in warnings:
-                    lines.append(f"  [{issue['cache']}] {issue['message']}")
-                lines.append("")
-        elif not opts.warn_only:
-            lines.append("No slab issues detected.")
-
-        print('\n'.join(lines))
+    if opts.format == "table":
+        _output_table(summary, issues, top_caches, opts.warn_only)
+    else:
+        output.render(opts.format, "Slab Allocator Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     has_critical = any(i['severity'] == 'CRITICAL' for i in issues)
@@ -448,6 +380,43 @@ def run(args: list[str], output: Output, context: Context) -> int:
         return 1
     else:
         return 0
+
+
+def _output_table(
+    summary: dict[str, Any],
+    issues: list[dict[str, Any]],
+    top_caches: list[dict[str, Any]],
+    warn_only: bool,
+) -> None:
+    """Output results in table format."""
+    lines = []
+    if not warn_only:
+        lines.append(f"Slab Memory: {format_bytes(summary['total_slab_bytes'])} "
+                    f"({summary['slab_pct_of_memory']:.1f}% of system memory)")
+        lines.append("")
+        lines.append(f"{'Cache Name':<30} {'Memory':>12} {'Active':>10} {'Total':>10} {'Ratio':>8}")
+        lines.append("-" * 74)
+
+        for cache in top_caches:
+            ratio_str = f"{cache['active_ratio']:.1%}" if cache['num_objs'] > 0 else "N/A"
+            lines.append(
+                f"{cache['name']:<30} "
+                f"{format_bytes(cache['memory_bytes']):>12} "
+                f"{cache['active_objs']:>10} "
+                f"{cache['num_objs']:>10} "
+                f"{ratio_str:>8}"
+            )
+
+        lines.append("")
+
+    if issues:
+        lines.append(f"{'Severity':<10} {'Cache':<25} {'Message':<40}")
+        lines.append("-" * 75)
+
+        for issue in issues:
+            lines.append(f"{issue['severity']:<10} {issue['cache']:<25} {issue['message']:<40}")
+
+    print('\n'.join(lines))
 
 
 if __name__ == "__main__":

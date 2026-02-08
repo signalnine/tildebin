@@ -32,7 +32,6 @@ Exit codes:
 """
 
 import argparse
-import json
 
 from boxctl.core.context import Context
 from boxctl.core.output import Output
@@ -361,23 +360,23 @@ def run(args: list[str], output: Output, context: Context) -> int:
         reverse=True,
     )
 
-    # Output results
-    if opts.format == "json":
-        result = {
-            "cgroups": results,
-            "issues": all_issues,
-            "summary": {
-                "total_cgroups": len(results),
-                "with_limits": len([r for r in results if r.get("cpu_limit_pct") is not None]),
-                "throttled": len([r for r in results if r.get("throttle_pct", 0) > 0]),
-                "critical_count": len([i for i in all_issues if i["severity"] == "CRITICAL"]),
-                "warning_count": len([i for i in all_issues if i["severity"] == "WARNING"]),
-            },
-        }
-        if not opts.warn_only or all_issues:
-            print(json.dumps(result, indent=2))
+    # Build result
+    result = {
+        "cgroups": results,
+        "issues": all_issues,
+        "summary": {
+            "total_cgroups": len(results),
+            "with_limits": len([r for r in results if r.get("cpu_limit_pct") is not None]),
+            "throttled": len([r for r in results if r.get("throttle_pct", 0) > 0]),
+            "critical_count": len([i for i in all_issues if i["severity"] == "CRITICAL"]),
+            "warning_count": len([i for i in all_issues if i["severity"] == "WARNING"]),
+        },
+    }
 
-    elif opts.format == "table":
+    output.emit(result)
+
+    # Output results
+    if opts.format == "table":
         if opts.warn_only:
             # Only show cgroups with issues
             issue_cgroups = set(i["cgroup"] for i in all_issues)
@@ -413,82 +412,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
                 )
 
             print("\n".join(lines))
-
-    else:  # plain
-        if not opts.warn_only or all_issues:
-            lines = []
-            lines.append("Cgroup CPU Limits Monitor")
-            lines.append("=" * 70)
-            lines.append("")
-
-            # Show top N by throttling
-            throttled = [r for r in sorted_results if r.get("throttle_pct", 0) > 0]
-            if throttled:
-                lines.append("Top Throttled Cgroups:")
-                lines.append(f"{'Cgroup':<45} {'Limit':<12} {'Throttle%':>10}")
-                lines.append("-" * 70)
-
-                for stats in throttled[: opts.top]:
-                    name = stats["name"]
-                    if len(name) > 43:
-                        name = "..." + name[-40:]
-
-                    limit = format_cpu_limit(stats)
-                    throttle = stats.get("throttle_pct", 0)
-
-                    lines.append(f"{name:<45} {limit:<12} {throttle:>9.1f}%")
-
-                lines.append("")
-
-            # Show cgroups with limits
-            limited = [r for r in results if r.get("cpu_limit_pct") is not None]
-            if limited and opts.verbose:
-                lines.append(f"Cgroups with CPU Limits ({len(limited)}):")
-                lines.append(f"{'Cgroup':<45} {'Limit':<12} {'Weight':>8}")
-                lines.append("-" * 70)
-
-                for stats in sorted(limited, key=lambda x: x.get("cpu_limit_pct", 0)):
-                    name = stats["name"]
-                    if len(name) > 43:
-                        name = "..." + name[-40:]
-
-                    limit = format_cpu_limit(stats)
-                    weight = stats.get("weight", "-")
-
-                    lines.append(f"{name:<45} {limit:<12} {weight:>8}")
-
-                lines.append("")
-
-            # Show issues
-            if all_issues:
-                critical = [i for i in all_issues if i["severity"] == "CRITICAL"]
-                warnings = [i for i in all_issues if i["severity"] == "WARNING"]
-
-                if critical:
-                    lines.append(f"CRITICAL Issues ({len(critical)}):")
-                    for issue in critical:
-                        lines.append(f"  !!! {issue['cgroup']}: {issue['message']}")
-                    lines.append("")
-
-                if warnings:
-                    lines.append(f"Warnings ({len(warnings)}):")
-                    for issue in warnings:
-                        lines.append(f"  {issue['cgroup']}: {issue['message']}")
-                    lines.append("")
-            else:
-                lines.append("No CPU limit issues detected.")
-                lines.append("")
-
-            # Summary
-            if opts.verbose:
-                total = len(results)
-                limited = len([r for r in results if r.get("cpu_limit_pct") is not None])
-                throttled = len([r for r in results if r.get("throttle_pct", 0) > 0])
-                lines.append(
-                    f"Summary: {total} cgroups, {limited} with limits, {throttled} experiencing throttling"
-                )
-
-            print("\n".join(lines))
+    else:
+        output.render(opts.format, "Cgroup CPU Limits Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     has_critical = any(i["severity"] == "CRITICAL" for i in all_issues)

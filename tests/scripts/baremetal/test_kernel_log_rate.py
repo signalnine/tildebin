@@ -157,4 +157,4 @@ class TestKernelLogRate:
 
         assert result == 0
         captured = capsys.readouterr()
-        assert "Priority breakdown" in captured.out or "Total messages" in captured.out
+        assert "Priority Breakdown:" in captured.out or "Total Messages:" in captured.out

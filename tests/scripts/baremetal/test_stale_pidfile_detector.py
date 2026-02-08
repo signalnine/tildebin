@@ -27,8 +27,8 @@ class TestStalePidfileDetector:
         result = run(["-d", "/var/run"], output, context)
 
         assert result == 0
-        captured = capsys.readouterr()
-        assert "No PID files" in captured.out or "OK" in captured.out
+        assert output.data["has_issues"] is False
+        assert output.data["summary"]["total"] == 0
 
     def test_valid_pidfiles(self, capsys):
         """Valid PID files return exit code 0."""
@@ -47,8 +47,8 @@ class TestStalePidfileDetector:
         result = run(["-d", "/var/run"], output, context)
 
         assert result == 0
-        captured = capsys.readouterr()
-        assert "stale" not in captured.out.lower() or "No stale" in captured.out
+        assert output.data["has_issues"] is False
+        assert output.data["summary"]["stale"] == 0
 
     def test_stale_pidfile_detected(self, capsys):
         """Stale PID file (process doesn't exist) returns exit code 1."""

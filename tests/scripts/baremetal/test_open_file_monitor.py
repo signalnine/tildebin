@@ -58,8 +58,7 @@ class TestOpenFileMonitor:
         result = run(["--min-fds", "1"], output, context)
 
         assert result == 1
-        captured = capsys.readouterr()
-        assert "High FD usage" in captured.out
+        assert any("High FD usage" in w for p in output.data["processes"] for w in p["warnings"])
 
     def test_warning_deleted_files(self, capsys):
         """Warning when process holds deleted files."""
@@ -163,8 +162,7 @@ class TestOpenFileMonitor:
 
         result = run(["--verbose", "--min-fds", "1"], output, context)
 
-        captured = capsys.readouterr()
-        assert "Types:" in captured.out
+        assert any("type_breakdown" in p for p in output.data["processes"])
 
     def test_missing_proc_filesystem(self, capsys):
         """Missing /proc filesystem returns exit code 2."""

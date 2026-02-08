@@ -18,7 +18,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import re
 
 from boxctl.core.context import Context
@@ -294,28 +293,8 @@ def run(args: list[str], output: Output, context: Context) -> int:
     }
 
     # Output
-    if opts.format == "json":
-        if not opts.warn_only or has_issues:
-            print(json.dumps(result_data, indent=2))
-    else:
-        if not opts.warn_only or has_issues:
-            lines = [f"Journal Disk Usage Monitor: [{status}]", ""]
-
-            if issues:
-                for issue in issues:
-                    lines.append(f"  ! {issue}")
-                lines.append("")
-
-            lines.append(f"  Total Usage: {usage_data.get('total_human', 'unknown')}")
-
-            if opts.verbose and config:
-                lines.append("")
-                lines.append("  Configuration:")
-                for key, value in config.items():
-                    if value:
-                        lines.append(f"    {key}: {value}")
-
-            print("\n".join(lines))
+    output.emit(result_data)
+    output.render(opts.format, "Journal Disk Usage Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     output.set_summary(f"usage={usage_data.get('total_human', 'unknown')}, status={status}")
 

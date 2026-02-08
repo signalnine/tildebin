@@ -110,8 +110,8 @@ class TestSoftirqMonitor:
         result = run(["--verbose"], output, context)
 
         captured = capsys.readouterr()
-        assert "Softirq Totals" in captured.out
-        assert "NET_RX" in captured.out
+        assert "Totals:" in captured.out
+        assert "Net Rx" in captured.out
 
     def test_custom_imbalance_threshold(self, capsys):
         """Custom imbalance threshold affects detection."""

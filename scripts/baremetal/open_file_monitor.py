@@ -18,7 +18,6 @@ Exit codes:
 """
 
 import argparse
-import json
 from collections import defaultdict
 
 from boxctl.core.context import Context
@@ -269,68 +268,10 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "processes": processes,
     }
 
+    output.emit(result)
+
     # Output
-    if opts.format == "json":
-        print(json.dumps(result, indent=2, default=str))
-    else:
-        lines = []
-        lines.append("Open File Handle Monitor")
-        lines.append("=" * 70)
-        lines.append(f"Host: {hostname}")
-        lines.append("")
-
-        lines.append("Summary:")
-        lines.append(f"  Processes checked: {summary['total_processes_checked']}")
-        lines.append(f"  Processes reported: {summary['processes_reported']}")
-        lines.append(f"  Total open FDs (reported): {summary['total_open_fds']}")
-        lines.append(f"  Processes with warnings: {summary['processes_with_warnings']}")
-        lines.append(
-            f"  Processes holding deleted files: {summary['processes_with_deleted_files']}"
-        )
-        lines.append(
-            f"  Total deleted files held open: {summary['total_deleted_files_held']}"
-        )
-        lines.append("")
-
-        if not processes:
-            lines.append("No processes match the criteria.")
-        else:
-            lines.append("Process Details:")
-            lines.append("-" * 70)
-
-            for proc in processes:
-                usage_str = (
-                    f"{proc['usage_percent']}%"
-                    if proc["fd_limit_soft"] > 0
-                    else "N/A"
-                )
-                lines.append(f"{proc['name']} (PID {proc['pid']}) - {proc['user']}")
-                lines.append(
-                    f"  Open FDs: {proc['fd_count']} / {proc['fd_limit_soft']} ({usage_str})"
-                )
-
-                if opts.verbose:
-                    types = proc["type_breakdown"]
-                    type_str = ", ".join(
-                        f"{k}:{v}" for k, v in sorted(types.items(), key=lambda x: -x[1])
-                    )
-                    if type_str:
-                        lines.append(f"  Types: {type_str}")
-
-                for warning in proc["warnings"]:
-                    lines.append(f"  [!] {warning}")
-
-                if proc["deleted_files"]:
-                    for df in proc["deleted_files"][:3]:
-                        lines.append(f"      Deleted: {df}")
-                    if len(proc["deleted_files"]) > 3:
-                        lines.append(
-                            f"      ... and {len(proc['deleted_files']) - 3} more"
-                        )
-
-                lines.append("")
-
-        print("\n".join(lines))
+    output.render(opts.format, "Open File Handle Monitor", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     status = "warning" if (has_warnings or has_deleted) else "healthy"

@@ -28,7 +28,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import time as time_module
 from datetime import datetime, timezone
 
@@ -468,66 +467,10 @@ def run(args: list[str], output: Output, context: Context) -> int:
         "has_issues": len(all_issues) > 0,
     }
 
+    output.emit(output_data)
+
     # Output handling
-    if opts.format == "json":
-        if not opts.warn_only or all_issues:
-            print(json.dumps(output_data, indent=2))
-    else:
-        if not opts.warn_only or all_issues:
-            lines = []
-            lines.append("Packet Drop Analysis")
-            lines.append("=" * 70)
-            lines.append(f"Sample interval: {opts.interval}s")
-            lines.append("")
-
-            for result in results:
-                if opts.warn_only and result["status"] == "ok":
-                    continue
-
-                status_symbol = {"ok": "OK", "warning": "WARN", "critical": "CRIT"}
-                symbol = status_symbol.get(result["status"], "??")
-
-                lines.append(f"[{symbol}] {result['interface']} ({result['operstate']})")
-
-                rates = result["rates"]
-                totals = result["totals"]
-
-                lines.append(
-                    f"  Traffic: {rates['rx_packets_per_sec']:.0f} rx/s, "
-                    f"{rates['tx_packets_per_sec']:.0f} tx/s"
-                )
-
-                if totals["total_rx_drops"] > 0 or totals["total_tx_drops"] > 0 or opts.verbose:
-                    lines.append(
-                        f"  Drops:   {rates['rx_drop_rate']:.2f} rx/s, "
-                        f"{rates['tx_drop_rate']:.2f} tx/s "
-                        f"(totals: {totals['total_rx_drops']:,} rx, "
-                        f"{totals['total_tx_drops']:,} tx)"
-                    )
-
-                for issue in result["issues"]:
-                    severity = issue["severity"]
-                    lines.append(
-                        f"    [{severity}] {issue['description']}: "
-                        f"{issue['rate_per_sec']}/sec"
-                    )
-                    if opts.verbose:
-                        lines.append(f"           Hint: {issue['hint']}")
-
-                lines.append("")
-
-            # Summary
-            if all_issues:
-                critical = len([i for i in all_issues if i["severity"] == "CRITICAL"])
-                warning = len([i for i in all_issues if i["severity"] == "WARNING"])
-                lines.append(
-                    f"Summary: {len(all_issues)} issue(s) detected "
-                    f"({critical} critical, {warning} warning)"
-                )
-            else:
-                lines.append("[OK] No packet drop issues detected")
-
-            print("\n".join(lines))
+    output.render(opts.format, "Packet Drop Analysis", warn_only=getattr(opts, 'warn_only', False))
 
     # Set summary
     output.set_summary(

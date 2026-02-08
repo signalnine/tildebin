@@ -197,8 +197,8 @@ cancelled_write_bytes: 0
         output = Output()
         result = run(["--snapshot", "--verbose"], output, context)
 
-        captured = capsys.readouterr()
-        assert "syscall" in captured.out.lower()
+        assert output.data["top_consumers"][0]["syscr"] == 1000
+        assert output.data["top_consumers"][0]["syscw"] == 500
 
     def test_io_stats_parsed_correctly(self, capsys):
         """I/O stats are parsed correctly from /proc/[pid]/io."""

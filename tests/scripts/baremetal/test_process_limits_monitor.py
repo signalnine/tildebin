@@ -113,9 +113,10 @@ class TestProcessLimitsMonitor:
         assert result == 0
 
         # With warn=70, crit=90, should be WARNING
+        output2 = Output()
         result = run(
             ["--pid", "1234", "--fd-count", "750", "--warn", "70", "--crit", "90"],
-            output,
+            output2,
             context,
         )
         assert result == 1
@@ -172,9 +173,10 @@ class TestProcessLimitsMonitor:
         assert len(data["processes"]) == 1
 
         # Filter by "apache" should not find it
+        output2 = Output()
         result = run(
             ["--pid", "1234", "--fd-count", "50", "--name", "apache", "--format", "json"],
-            output,
+            output2,
             context,
         )
         captured = capsys.readouterr()
