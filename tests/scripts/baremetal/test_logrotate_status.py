@@ -2,6 +2,7 @@
 
 import json
 import pytest
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from boxctl.core.output import Output
@@ -16,6 +17,18 @@ def load_fixture(name: str) -> str:
     return (FIXTURES_DIR / name).read_text()
 
 
+def make_logrotate_state(days_ago: int = 2) -> str:
+    """Generate logrotate state content with dates relative to now."""
+    dt = datetime.now() - timedelta(days=days_ago)
+    ts = f"{dt.year}-{dt.month}-{dt.day}-{dt.hour}:{dt.minute}:{dt.second}"
+    return (
+        f'logrotate state -- version 2\n'
+        f'"/var/log/syslog" {ts}\n'
+        f'"/var/log/auth.log" {ts}\n'
+        f'"/var/log/kern.log" {ts}\n'
+    )
+
+
 class TestLogrotateStatus:
     """Tests for logrotate_status."""
 
@@ -25,7 +38,7 @@ class TestLogrotateStatus:
 
         context = MockContext(
             file_contents={
-                "/var/lib/logrotate/status": load_fixture("logrotate_state_healthy.txt"),
+                "/var/lib/logrotate/status": make_logrotate_state(days_ago=2),
                 "/var/log": "",  # Directory marker
                 "/var/log/syslog": "some log content",
                 "/var/log/auth.log": "auth log content",
@@ -37,8 +50,8 @@ class TestLogrotateStatus:
         result = run([], output, context)
 
         assert result == 0
-        captured = capsys.readouterr()
-        assert "No logrotate issues detected" in captured.out
+        assert output.data["status"] == "healthy"
+        assert len(output.data["stale_logs"]) == 0
 
     def test_stale_logs_warning(self, capsys):
         """Stale logs return warning (exit code 1)."""
@@ -46,12 +59,11 @@ class TestLogrotateStatus:
 
         context = MockContext(
             file_contents={
-                "/var/lib/logrotate/status": load_fixture("logrotate_state_stale.txt"),
+                "/var/lib/logrotate/status": make_logrotate_state(days_ago=60),
                 "/var/log": "",
                 "/var/log/syslog": "log content",
                 "/var/log/auth.log": "auth content",
                 "/var/log/kern.log": "kern content",
-                "/var/log/daemon.log": "daemon content",
             },
         )
         output = Output()
@@ -71,7 +83,7 @@ class TestLogrotateStatus:
 
         context = MockContext(
             file_contents={
-                "/var/lib/logrotate/status": load_fixture("logrotate_state_healthy.txt"),
+                "/var/lib/logrotate/status": make_logrotate_state(days_ago=2),
                 "/var/log": "",
                 "/var/log/syslog": large_content,
             },
@@ -90,7 +102,7 @@ class TestLogrotateStatus:
 
         context = MockContext(
             file_contents={
-                "/var/lib/logrotate/status": load_fixture("logrotate_state_healthy.txt"),
+                "/var/lib/logrotate/status": make_logrotate_state(days_ago=2),
                 "/var/log": "",
             },
         )
@@ -113,7 +125,7 @@ class TestLogrotateStatus:
 
         context = MockContext(
             file_contents={
-                "/var/lib/logrotate/status": load_fixture("logrotate_state_healthy.txt"),
+                "/var/lib/logrotate/status": make_logrotate_state(days_ago=2),
                 "/var/log": "",
             },
         )
