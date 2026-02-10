@@ -1,0 +1,22 @@
+smartctl 7.4 2024-10-15 r5620 [x86_64-linux-6.17.4-2-pve] (local build)
+Copyright (C) 2002-23, Bruce Allen, Christian Franke, www.smartmontools.org
+
+=== START OF INFORMATION SECTION ===
+Vendor:               SEAGATE
+Product:              OOS10000G
+Revision:             OOS1
+Compliance:           SPC-4
+User Capacity:        10,000,831,348,736 bytes [10.0 TB]
+Logical block size:   512 bytes
+Physical block size:  4096 bytes
+Rotation Rate:        7200 rpm
+Form Factor:          3.5 inches
+Logical Unit id:      0x5000c500a63602d7
+Serial number:        0006Y5CH0000C840JP4A
+Device type:          disk
+Transport protocol:   SAS (SPL-4)
+SMART support is:     Available - device has SMART capability.
+SMART support is:     Enabled
+
+=== START OF READ SMART DATA SECTION ===
+SMART Health Status: OK

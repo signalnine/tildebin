@@ -18,6 +18,12 @@ def smartctl_failing(fixtures_dir):
     return (fixtures_dir / "smartctl" / "failing_hdd.txt").read_text()
 
 
+@pytest.fixture
+def smartctl_sas_healthy(fixtures_dir):
+    """Load healthy SAS drive smartctl output."""
+    return (fixtures_dir / "smartctl" / "healthy_sas.txt").read_text()
+
+
 class TestDiskHealth:
     """Tests for disk_health script."""
 
@@ -92,6 +98,65 @@ class TestDiskHealth:
         assert exit_code == 0
         # Verbose mode should include model info
         assert "model" in output.data["disks"][0]
+
+    def test_sas_drive_healthy(self, mock_context, smartctl_sas_healthy):
+        """SAS drives reporting 'SMART Health Status: OK' are detected as PASSED."""
+        from scripts.baremetal import disk_health
+
+        ctx = mock_context(
+            tools_available=["smartctl", "lsblk"],
+            command_outputs={
+                ("lsblk", "-d", "-n", "-o", "NAME,TYPE"): "sda disk\n",
+                ("smartctl", "-H", "/dev/sda"): smartctl_sas_healthy,
+            }
+        )
+        output = Output()
+
+        exit_code = disk_health.run(["--verbose"], output, ctx)
+
+        assert exit_code == 0
+        assert output.data["disks"][0]["status"] == "PASSED"
+        assert output.data["disks"][0]["model"] == "OOS10000G"
+        assert output.data["disks"][0]["serial"] == "0006Y5CH0000C840JP4A"
+
+    def test_mixed_sata_sas(self, mock_context, smartctl_healthy, smartctl_sas_healthy):
+        """Mixed SATA and SAS drives both detected correctly."""
+        from scripts.baremetal import disk_health
+
+        ctx = mock_context(
+            tools_available=["smartctl", "lsblk"],
+            command_outputs={
+                ("lsblk", "-d", "-n", "-o", "NAME,TYPE"): "sda disk\nsdb disk\n",
+                ("smartctl", "-H", "/dev/sda"): smartctl_healthy,
+                ("smartctl", "-H", "/dev/sdb"): smartctl_sas_healthy,
+            }
+        )
+        output = Output()
+
+        exit_code = disk_health.run([], output, ctx)
+
+        assert exit_code == 0
+        assert all(d["status"] == "PASSED" for d in output.data["disks"])
+
+    def test_unknown_status_not_failure(self, mock_context):
+        """UNKNOWN status (e.g. USB device) should not trigger exit code 1."""
+        from scripts.baremetal import disk_health
+
+        ctx = mock_context(
+            tools_available=["smartctl", "lsblk"],
+            command_outputs={
+                ("lsblk", "-d", "-n", "-o", "NAME,TYPE"): "sda disk\nsdi disk\n",
+                ("smartctl", "-H", "/dev/sda"): "SMART overall-health self-assessment test result: PASSED\nDevice Model: Test SSD\n",
+                ("smartctl", "-H", "/dev/sdi"): "/dev/sdi: Unknown USB bridge [0x13fe:0x6400 (0x100)]\nPlease specify device type with the -d option.\n",
+            }
+        )
+        output = Output()
+
+        exit_code = disk_health.run([], output, ctx)
+
+        assert exit_code == 0
+        assert output.data["disks"][0]["status"] == "PASSED"
+        assert output.data["disks"][1]["status"] == "UNKNOWN"
 
     def test_no_disks_found(self, mock_context):
         """Returns 1 with warning when no disks found."""

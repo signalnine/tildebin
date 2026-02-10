@@ -41,9 +41,15 @@ def check_smart_health(disk: str, context: Context) -> dict[str, Any]:
     output = result.stdout
 
     status = "UNKNOWN"
+    # SATA drives
     if "SMART overall-health self-assessment test result: PASSED" in output:
         status = "PASSED"
     elif "SMART overall-health self-assessment test result: FAILED" in output:
+        status = "FAILED"
+    # SAS drives
+    elif "SMART Health Status: OK" in output:
+        status = "PASSED"
+    elif "SMART Health Status:" in output and "OK" not in output.split("SMART Health Status:")[1].split("\n")[0]:
         status = "FAILED"
     elif "SMART support is: Unavailable" in output:
         status = "UNAVAILABLE"
@@ -55,13 +61,13 @@ def check_smart_health(disk: str, context: Context) -> dict[str, Any]:
         "status": status,
     }
 
-    # Extract model if present
-    model_match = re.search(r"Device Model:\s+(.+)", output)
+    # Extract model — SATA uses "Device Model:", SAS uses "Product:"
+    model_match = re.search(r"(?:Device Model|Product):\s+(.+)", output)
     if model_match:
         info["model"] = model_match.group(1).strip()
 
-    # Extract serial if present
-    serial_match = re.search(r"Serial Number:\s+(.+)", output)
+    # Extract serial — SATA uses "Serial Number:", SAS uses "Serial number:"
+    serial_match = re.search(r"Serial [Nn]umber:\s+(.+)", output)
     if serial_match:
         info["serial"] = serial_match.group(1).strip()
 
@@ -116,7 +122,7 @@ def run(args: list[str], output: Output, context: Context) -> int:
         info = check_smart_health(disk, context)
         results.append(info)
 
-        if info["status"] in ("FAILED", "UNKNOWN"):
+        if info["status"] == "FAILED":
             has_issues = True
 
         if not opts.verbose:
